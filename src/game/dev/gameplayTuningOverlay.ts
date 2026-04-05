@@ -1,5 +1,6 @@
 import type { CombatHitAttackKind } from "../combat/combatEventBus";
-import type { BaseAttackMoveId } from "../combat/baseMoveTable";
+import { COMPOUND_MOVE_DESIGN_ROWS } from "../combat/compoundMoveTable";
+import type { StrikeMoveId } from "../input/combatIntent";
 import type {
   BaseStrikeTuningRow,
   GameplayRuntimeTuning,
@@ -270,23 +271,27 @@ export function attachGameplayTuningOverlay(
     });
   }
 
-  function wireBaseStrikes(): void {
-    body.appendChild(sectionTitle("Base strikes (WS-080)"));
+  function wireStrikes(): void {
+    body.appendChild(sectionTitle("Strikes (WS-080 + WS-081)"));
     const note = document.createElement("p");
     note.style.cssText =
       "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
     note.textContent =
-      "Sphere hit probe vs bag + input cooldown after the active window. Pick a limb row, tune numbers, Reset restores shipped table defaults.";
+      "Sphere hit probe vs bag + input cooldown after the active window. Pick any base limb, chord, or sequence row; Reset restores shipped table defaults.";
     body.appendChild(note);
 
-    const MOVE_ROWS: { id: BaseAttackMoveId; label: string }[] = [
-      { id: "atk_lp", label: "LP — left punch (U)" },
-      { id: "atk_rp", label: "RP — right punch (I)" },
-      { id: "atk_lk", label: "LK — left kick (J)" },
-      { id: "atk_rk", label: "RK — right kick (K)" },
+    const MOVE_ROWS: { id: StrikeMoveId; label: string }[] = [
+      { id: "atk_lp", label: "Base — LP (U)" },
+      { id: "atk_rp", label: "Base — RP (I)" },
+      { id: "atk_lk", label: "Base — LK (J)" },
+      { id: "atk_rk", label: "Base — RK (K)" },
+      ...COMPOUND_MOVE_DESIGN_ROWS.map((r) => ({
+        id: r.moveId,
+        label: `Chord/seq — ${r.moveId}`,
+      })),
     ];
 
-    let selectedMove: BaseAttackMoveId = "atk_lp";
+    let selectedMove: StrikeMoveId = "atk_lp";
 
     const moveWrap = document.createElement("div");
     moveWrap.style.cssText = "margin:8px 0;";
@@ -306,7 +311,7 @@ export function attachGameplayTuningOverlay(
       moveSel.appendChild(opt);
     }
     moveSel.addEventListener("change", () => {
-      selectedMove = moveSel.value as BaseAttackMoveId;
+      selectedMove = moveSel.value as StrikeMoveId;
       refreshAllSliders();
     });
     moveWrap.appendChild(moveLab);
@@ -314,7 +319,7 @@ export function attachGameplayTuningOverlay(
     body.appendChild(moveWrap);
 
     function row(): BaseStrikeTuningRow {
-      return tuning.baseStrikes[selectedMove];
+      return tuning.strikes[selectedMove];
     }
 
     syncExtras.push(() => {
@@ -430,8 +435,116 @@ export function attachGameplayTuningOverlay(
       ),
     );
 
-    resetRow(body, "Reset base strikes (table defaults)", () => {
-      tuning.resetBaseStrikes();
+    resetRow(body, "Reset strikes (table defaults)", () => {
+      tuning.resetStrikes();
+      refreshAllSliders();
+    });
+  }
+
+  function wireCombatStamina(): void {
+    body.appendChild(sectionTitle("Stamina & strike lunge (GP §2.2.2)"));
+    const note = document.createElement("p");
+    note.style.cssText =
+      "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
+    note.textContent =
+      "Stamina bar — cost per strike start; regen only after you stop attacking (delay after each strike start). Lunge = forward nudge on strike begin.";
+    body.appendChild(note);
+
+    const st = tuning.combatStamina;
+
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "st_max",
+          label: "Max stamina (bar = current / this)",
+          min: 0.25,
+          max: 2,
+          step: 0.05,
+          format: (v) => v.toFixed(2),
+        },
+        () => st.maxStamina,
+        (v) => {
+          st.maxStamina = Math.max(0.1, v);
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "st_cost",
+          label: "Stamina cost per strike",
+          min: 0.05,
+          max: 0.55,
+          step: 0.01,
+          format: (v) => v.toFixed(2),
+        },
+        () => st.staminaCostPerStrike,
+        (v) => {
+          st.staminaCostPerStrike = Math.max(0.01, v);
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "st_regen",
+          label: "Stamina regen / sec",
+          min: 0.5,
+          max: 12,
+          step: 0.25,
+          format: (v) => v.toFixed(2),
+        },
+        () => st.staminaRegenPerSec,
+        (v) => {
+          st.staminaRegenPerSec = Math.max(0.1, v);
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "st_regen_pause",
+          label: "Regen pause after strike (ms)",
+          min: 0,
+          max: 1500,
+          step: 10,
+          format: (v) => `${Math.round(v)} ms`,
+        },
+        () => st.staminaRegenResumeDelayAfterStrikeSec * 1000,
+        (v) => {
+          st.staminaRegenResumeDelayAfterStrikeSec = Math.max(0, v / 1000);
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "st_lunge",
+          label: "Strike lunge (m, forward)",
+          min: 0,
+          max: 0.22,
+          step: 0.005,
+          format: (v) => v.toFixed(3),
+        },
+        () => st.strikeLungeForwardMeters,
+        (v) => {
+          st.strikeLungeForwardMeters = Math.max(0, v);
+        },
+        () => {},
+      ),
+    );
+
+    resetRow(body, "Reset stamina / lunge (defaults)", () => {
+      tuning.resetCombatStamina();
       refreshAllSliders();
     });
   }
@@ -451,6 +564,11 @@ export function attachGameplayTuningOverlay(
       { kind: "right_punch", short: "RP" },
       { kind: "left_kick", short: "LK" },
       { kind: "right_kick", short: "RK" },
+      { kind: "compound_dual_punch", short: "2×P" },
+      { kind: "compound_dual_kick", short: "2×K" },
+      { kind: "compound_mixed", short: "Mix" },
+      { kind: "compound_multi", short: "Multi" },
+      { kind: "sequence_strike", short: "Seq" },
     ];
 
     const selectStyle =
@@ -860,7 +978,8 @@ export function attachGameplayTuningOverlay(
   }
 
   wireJuice();
-  wireBaseStrikes();
+  wireStrikes();
+  wireCombatStamina();
   wireAudio();
   wireHitBurstVfx();
   wireBag();

@@ -178,7 +178,7 @@ flowchart TB
 | WS-072 | 7 | WS-070 | WS-071, WS-073 | `role-audio` | Web Audio buses + 1st SFX GP §8.2.1 |
 | WS-073 | 7 | WS-070 | WS-071, WS-072 | `role-vfx-artist` + `role-graphics-programmer` | Burst / flash GP §6.3.2 |
 | WS-080 | 8 | WS-062 | done | `role-lead-game-designer` + `role-gameplay-programmer` + `role-technical-animator` | 3 limbs + table (+ recovery) GP §2.2.1 |
-| WS-081 | 8 | WS-051, WS-080 | — | `role-lead-game-designer` + `role-technical-animator` + `role-gameplay-programmer` | Compounds + hit profile + recovery GP §2.2.1–2.2.3 |
+| WS-081 | 8 | WS-051, WS-080 | done | `role-lead-game-designer` + `role-technical-animator` + `role-gameplay-programmer` | Compounds + hit profile + recovery GP §2.2.1–2.2.3 |
 | WS-090 | 9 | WS-062 | — | `role-gameplay-programmer` | Dummy + states GP §2.1.2 |
 | WS-091 | 9 | WS-090, WS-011 | — | `role-physics-programmer` + `role-technical-animator` | Ragdoll + get-up GP §6.1 |
 | WS-092 | 9 | WS-091 | — | `role-lead-game-designer` + `role-physics-programmer` | Threshold tuning GP §6.1.2 |
@@ -334,7 +334,7 @@ flowchart TB
   - **GP** §2.2.1  
   - **Build:** move table includes **recovery / input cooldown** (or equivalent): a **repo default**, **per-row overrides** by move type (punch vs kick, etc.), and hooks so gameplay can gate new strikes from **sim time + last `MoveId` / state** (see WS-051 deferral).  
 
-- [ ] **WS-081** — Compound chord moves + animations + hit profiles.  
+- [x] **WS-081** — Compound chord moves + animations + hit profiles.  
   - **Depends:** WS-051, WS-080  
   - **@** `role-lead-game-designer` · `role-gameplay-programmer` · `role-technical-animator`  
   - **GP** §2.2.1–2.2.3  

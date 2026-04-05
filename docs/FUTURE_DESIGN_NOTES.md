@@ -40,6 +40,16 @@
 
 ---
 
+## Combat: strike lunge & momentum (v2 polish)
+
+**What shipped (2026):** A small **forward lunge** along facing on strike start (one kinematic step), driven by `gameplayTuning.combatStamina.strikeLungeForwardMeters` — **same scalar for all moves**; grounded vs air not differentiated.
+
+**Future idea:** **Per-`MoveId` lunge** (punch vs kick vs compound), **blend with current planar velocity**, **airborne** rules (reduce, zero, or aim-only), interaction with **hit-stop**, and optional **connection recoil** or **bag-side** momentum trade so hits feel less “ice-skate in place.”
+
+**Related:** `stepPlayerCapsule` `StepPlayerCapsuleOpts`, `combatStamina.ts`, GP §2.2.1.
+
+---
+
 ## Character: airborne / in-air animation clip (deferred)
 
 **Context (2026-04):** Locomotion uses **Idle** + **Walk** only; when the capsule is **not** grounded, the mixer stays on **Idle** so there is no dedicated jump / fall / aerial combat pose yet.

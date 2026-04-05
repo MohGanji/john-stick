@@ -11,7 +11,8 @@
 /** Resolver `MoveId` subset — single-limb attacks only (WS-080). */
 export type BaseAttackMoveId = "atk_lp" | "atk_rp" | "atk_lk" | "atk_rk";
 
-export type MoveKind = "punch" | "kick";
+/** `compound` — default cooldown family for chords / multi-limb rows (WS-081). */
+export type MoveKind = "punch" | "kick" | "compound";
 
 /** Sphere sweep probe vs training hurt sensor (WS-060 pattern, parameterized per row). */
 export type SphereStrikeProfile = {
@@ -43,6 +44,7 @@ export const REPO_DEFAULT_STRIKE_INPUT_COOLDOWN_SEC = 0.25;
 export const DEFAULT_STRIKE_INPUT_COOLDOWN_BY_KIND: Record<MoveKind, number> = {
   punch: 0.22,
   kick: 0.34,
+  compound: 0.42,
 };
 
 const LP: SphereStrikeProfile = {

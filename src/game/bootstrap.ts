@@ -10,17 +10,27 @@ import {
   createCombatIntentState,
   resolveCombatIntent,
   type ResolvedCombatIntent,
+  type StrikeMoveId,
 } from "./input/combatIntent";
+import { strikePressIntent } from "./input/strikePressIntent";
 import { attachKeyboardLocomotion } from "./input/keyboardLocomotion";
 import { createCombatHitDebugDraw } from "./combat/combatHitDebugDraw";
 import { applyTrainingBagHitFromPunch } from "./combat/applyTrainingBagHit";
 import {
-  combatHitAttackKindForBaseMove,
+  combatHitAttackKindForStrike,
   createCombatEventBus,
   type CombatEventBus,
   type CombatHitAttackKind,
 } from "./combat/combatEventBus";
-import type { BaseAttackMoveId } from "./combat/baseMoveTable";
+import { strikeBagChargeTierIndex } from "./combat/compoundMoveTable";
+import {
+  consumeStaminaForStrike,
+  createCombatStaminaState,
+  regenCombatStamina,
+  staminaAllowsStrike,
+  staminaRegenPauseDeadlineAfterStrike,
+  type CombatStaminaState,
+} from "./combat/combatStamina";
 import {
   applyStrikeCooldownAfterWindow,
   createStrikeCooldownGateState,
@@ -32,7 +42,6 @@ import {
   stepSphereStrikeHitFixed,
   type SphereStrikeHitDebugSnapshot,
 } from "./combat/sphereStrikeHit";
-import { baseStrikePressIntent } from "./input/baseStrikeInput";
 import { FIXED_DT } from "./gameLoop";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import { createPunchingBagHangerVisual } from "./level/punchingBagHangerVisual";
@@ -56,6 +65,7 @@ import { attachCombatHitAudio } from "./audio/attachCombatHitAudio";
 import { createAudioMixer } from "./audio/audioMixer";
 import { playTrainingBagImpact } from "./audio/playTrainingBagImpact";
 import { attachCombatHitBurstVfx } from "./vfx/attachCombatHitBurstVfx";
+import { attachStaminaHud } from "./ui/attachStaminaHud";
 
 export type MountGameResult = {
   /** WS-070 / GP §4.3.3 — subscribe for hit-stop, SFX, VFX (WS-071+). */
@@ -117,9 +127,20 @@ export async function mountGame(
   let combatSimTimeSec = 0;
   let strikeCooldownGate: StrikeCooldownGateState = createStrikeCooldownGateState();
   /** Queued on a clean base-attack press in `update`; consumed in `fixedStep` when allowed. */
-  let strikeQueuedMoveId: BaseAttackMoveId | null = null;
+  let strikeQueuedMoveId: StrikeMoveId | null = null;
   /** Move id for the in-flight window (active or just-queued pending start). */
-  let activeStrikeMoveId: BaseAttackMoveId | null = null;
+  let activeStrikeMoveId: StrikeMoveId | null = null;
+  /** Strike stamina — depletes on strike start, refills quickly (GP §2.2.2 HUD). */
+  const staminaState: CombatStaminaState = createCombatStaminaState(
+    gameplayTuning.combatStamina.maxStamina,
+  );
+  /** Stamina regen is off while `combatSimTimeSec < this` (extended on every strike start). */
+  let staminaRegenPausedUntilSimSec = 0;
+  /**
+   * Lunge from a strike that **started** after `stepPlayerCapsule` this step (applied next fixed step).
+   */
+  let pendingStrikeLungeForwardMeters = 0;
+  const staminaHud = attachStaminaHud(root);
   /** WS-062 — abstract lab damage on the bag (no UI yet; tunable via `bagHitTuning`). */
   let punchingBagLabDamageTotal = 0;
   /** WS-070 / GP §4.3.3 — `CombatHit` → audio / VFX / hit-stop (WS-071+). */
@@ -231,19 +252,22 @@ export async function mountGame(
         performance.now() * 0.001,
       );
       combatIntentState = intentOut.nextState;
+      const prevResolvedIntent = combatIntent;
       combatIntent = intentOut.resolved;
       strikeQueuedMoveId = null;
       const strikeBusy =
         sphereStrike.activeFramesRemaining > 0 || sphereStrike.pendingStart;
-      const press = baseStrikePressIntent(
+      const press = strikePressIntent(
         prevAction,
         actionSample,
         combatIntent,
+        prevResolvedIntent,
       );
       if (
         press !== null &&
         !strikeBusy &&
-        strikeCooldownAllowsStart(strikeCooldownGate, combatSimTimeSec)
+        strikeCooldownAllowsStart(strikeCooldownGate, combatSimTimeSec) &&
+        staminaAllowsStrike(staminaState, gameplayTuning.combatStamina)
       ) {
         strikeQueuedMoveId = press;
       }
@@ -261,6 +285,42 @@ export async function mountGame(
       }
     },
     fixedStep(_fixedDtSeconds) {
+      combatSimTimeSec += FIXED_DT;
+
+      let lungeThisStep = pendingStrikeLungeForwardMeters;
+      pendingStrikeLungeForwardMeters = 0;
+
+      function tryConsumeStrikeQueue(lungeMode: "this" | "defer"): boolean {
+        if (strikeQueuedMoveId === null) return false;
+        const busy =
+          sphereStrike.activeFramesRemaining > 0 || sphereStrike.pendingStart;
+        if (busy) return false;
+        if (!strikeCooldownAllowsStart(strikeCooldownGate, combatSimTimeSec)) {
+          return false;
+        }
+        if (!staminaAllowsStrike(staminaState, gameplayTuning.combatStamina)) {
+          return false;
+        }
+        activeStrikeMoveId = strikeQueuedMoveId;
+        sphereStrike.pendingStart = true;
+        strikeQueuedMoveId = null;
+        consumeStaminaForStrike(staminaState, gameplayTuning.combatStamina);
+        staminaRegenPausedUntilSimSec = staminaRegenPauseDeadlineAfterStrike(
+          combatSimTimeSec,
+          gameplayTuning.combatStamina,
+        );
+        playerCharacter.beginStrikePresentation(activeStrikeMoveId);
+        const d = gameplayTuning.combatStamina.strikeLungeForwardMeters;
+        if (lungeMode === "this") {
+          lungeThisStep += d;
+        } else {
+          pendingStrikeLungeForwardMeters = d;
+        }
+        return true;
+      }
+
+      tryConsumeStrikeQueue("this");
+
       const { forward, strafe } = actionSample.interactModeOpen
         ? { forward: 0, strafe: 0 }
         : keyboardLocomotion.moveAxes();
@@ -272,6 +332,7 @@ export async function mountGame(
         strafe,
         jumpLatch,
         gameplayTuning.player,
+        { strikeLungeForwardMeters: lungeThisStep },
       );
       stepPhysicsWorld(physics.world);
       readRigidBodyTransform(
@@ -280,29 +341,12 @@ export async function mountGame(
         scratchQuat,
       );
 
-      combatSimTimeSec += FIXED_DT;
-
-      function tryConsumeStrikeQueue(): void {
-        if (strikeQueuedMoveId === null) return;
-        const busy =
-          sphereStrike.activeFramesRemaining > 0 || sphereStrike.pendingStart;
-        if (busy) return;
-        if (!strikeCooldownAllowsStart(strikeCooldownGate, combatSimTimeSec)) {
-          return;
-        }
-        activeStrikeMoveId = strikeQueuedMoveId;
-        sphereStrike.pendingStart = true;
-        strikeQueuedMoveId = null;
-      }
-
-      tryConsumeStrikeQueue();
-
       const hadActiveStrikeWindow = sphereStrike.activeFramesRemaining > 0;
-      const profileMoveId: BaseAttackMoveId = activeStrikeMoveId ?? "atk_lp";
+      const profileMoveId: StrikeMoveId = activeStrikeMoveId ?? "atk_lp";
       const strikeHit = stepSphereStrikeHitFixed(
         physics,
         sphereStrike,
-        gameplayTuning.baseStrikes[profileMoveId].profile,
+        gameplayTuning.strikes[profileMoveId].profile,
         scratchPos,
         scratchQuat,
       );
@@ -312,14 +356,14 @@ export async function mountGame(
 
       if (strikeHit.hitPunchingBag && moveIdForBagHit !== null) {
         const moveId = moveIdForBagHit;
+        const tier = strikeBagChargeTierIndex(moveId);
         const { damageDealt, impulseWorld } = applyTrainingBagHitFromPunch(
           physics,
           {
             fistWorld: strikeHit.debug.contactWorld,
             playerPos: scratchPos,
             playerFacingYawRad: facingYawRad,
-            /** GP §6.2.2 — higher tiers when hold/charge or compound rows wire in (WS-081+). */
-            chargeTierIndex: 0,
+            chargeTierIndex: tier,
           },
           gameplayTuning.bag,
         );
@@ -327,12 +371,12 @@ export async function mountGame(
         combatEvents.emit({
           type: "combat_hit",
           hit: {
-            attackKind: combatHitAttackKindForBaseMove(moveId),
+            attackKind: combatHitAttackKindForStrike(moveId),
             targetKind: "training_bag",
             damageDealt,
             impulseWorld,
             contactWorld: strikeHit.debug.contactWorld,
-            chargeTierIndex: 0,
+            chargeTierIndex: tier,
           },
         });
         if (import.meta.env.DEV) {
@@ -355,13 +399,23 @@ export async function mountGame(
           strikeCooldownGate,
           combatSimTimeSec,
           activeStrikeMoveId,
-          gameplayTuning.baseStrikes[activeStrikeMoveId]
+          gameplayTuning.strikes[activeStrikeMoveId]
             .inputCooldownAfterStrikeSec,
         );
         activeStrikeMoveId = null;
       }
 
-      tryConsumeStrikeQueue();
+      tryConsumeStrikeQueue("defer");
+
+      regenCombatStamina(
+        staminaState,
+        gameplayTuning.combatStamina,
+        FIXED_DT,
+        {
+          simTimeSec: combatSimTimeSec,
+          pausedUntilSimSec: staminaRegenPausedUntilSimSec,
+        },
+      );
     },
     /**
      * GP §4.2.3 — `runGameLoop` exposes `beforeFixedSteps` + `fixedStepAlpha` for dual-buffer rendering.
@@ -440,6 +494,10 @@ export async function mountGame(
         qz: bagScratchQuat.z,
         qw: bagScratchQuat.w,
       });
+      staminaHud.setFillRatio(
+        staminaState.current /
+          Math.max(1e-6, gameplayTuning.combatStamina.maxStamina),
+      );
       actionMapDebugHud?.refresh();
       combatJuice.endFrame(dtSeconds);
     },

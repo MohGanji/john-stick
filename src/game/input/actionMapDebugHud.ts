@@ -1,9 +1,12 @@
 import type { ActionMapSnapshot } from "./actionMap";
 import type { ResolvedCombatIntent } from "./combatIntent";
 
+const INPUT_DEBUG_TOGGLE_CODE = "Comma";
+
 /**
  * Dev-only overlay: proves **U I J K** + Shift + Enter are sampled (WS-050)
  * and shows WS-051 resolved combat intent (priority + move id).
+ * Hidden until **Comma** (same toggle pattern as gameplay tuning on **Period**).
  * Stripped in production builds (`import.meta.env.PROD`).
  */
 export function attachActionMapDebugHud(
@@ -15,6 +18,7 @@ export function attachActionMapDebugHud(
 ): { refresh: () => void; dispose: () => void } {
   const el = document.createElement("pre");
   el.setAttribute("aria-hidden", "true");
+  let visible = false;
   el.style.cssText = [
     "position:fixed",
     "bottom:10px",
@@ -27,10 +31,35 @@ export function attachActionMapDebugHud(
     "border:1px solid rgba(120,140,200,0.35)",
     "border-radius:6px",
     "pointer-events:none",
-    "z-index:100000",
+    "z-index:20",
     "text-align:left",
     "white-space:pre",
+    "display:none",
   ].join(";");
+
+  function applyVisibility(): void {
+    el.style.display = visible ? "block" : "none";
+  }
+
+  const onKeyDown = (e: KeyboardEvent): void => {
+    if (e.code !== INPUT_DEBUG_TOGGLE_CODE || e.repeat) return;
+    if (
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement ||
+      e.target instanceof HTMLSelectElement
+    ) {
+      return;
+    }
+    e.preventDefault();
+    visible = !visible;
+    applyVisibility();
+    if (visible) {
+      const { snapshot, combat } = getFrame();
+      el.textContent = format(snapshot, combat);
+    }
+  };
+
+  window.addEventListener("keydown", onKeyDown, true);
 
   const dot = (on: boolean): string => (on ? "●" : "·");
 
@@ -38,6 +67,7 @@ export function attachActionMapDebugHud(
     const { limb, shiftHeld } = s;
     return [
       "input debug (dev) — use keyboard, not mouse",
+      ", (comma) — hide/show this panel",
       ". (period) — gameplay tuning panel",
       "U/I punch  J/K kick  Shift+… guard/dock  Enter interact",
       "",
@@ -63,10 +93,12 @@ export function attachActionMapDebugHud(
 
   return {
     refresh(): void {
+      if (!visible) return;
       const { snapshot, combat } = getFrame();
       el.textContent = format(snapshot, combat);
     },
     dispose(): void {
+      window.removeEventListener("keydown", onKeyDown, true);
       el.remove();
     },
   };

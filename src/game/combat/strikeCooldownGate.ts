@@ -1,14 +1,14 @@
 /**
- * WS-080 — gate new **base** strikes from sim time + last completed `BaseAttackMoveId` (WS-051 deferral).
+ * WS-080 / WS-081 — gate new strikes from sim time + last completed `StrikeMoveId` (WS-051 deferral).
  * Cooldown duration is supplied by the caller (live dev HUD / designer table).
  */
-import type { BaseAttackMoveId } from "./baseMoveTable";
+import type { StrikeMoveId } from "../input/combatIntent";
 
 export type StrikeCooldownGateState = {
   /** Next sim time (seconds) at which a new strike may start. */
   blockedUntilSimSec: number;
   /** Last move whose recovery was applied (designer tuning / debug). */
-  lastCompletedStrikeMoveId: BaseAttackMoveId | null;
+  lastCompletedStrikeMoveId: StrikeMoveId | null;
 };
 
 export function createStrikeCooldownGateState(): StrikeCooldownGateState {
@@ -29,7 +29,7 @@ export function strikeCooldownAllowsStart(
 export function applyStrikeCooldownAfterWindow(
   gate: StrikeCooldownGateState,
   simTimeSec: number,
-  completedMoveId: BaseAttackMoveId,
+  completedMoveId: StrikeMoveId,
   cooldownAfterStrikeSec: number,
 ): void {
   gate.blockedUntilSimSec = simTimeSec + cooldownAfterStrikeSec;

@@ -11,14 +11,23 @@ import type { TrainingBagSfxStyleId } from "../audio/trainingBagSfxPresets";
 import type { CombatHitAttackKind } from "../combat/combatEventBus";
 import {
   BASE_MOVE_TABLE,
-  strikeInputCooldownAfterSec,
   type BaseAttackMoveId,
   type SphereStrikeProfile,
 } from "../combat/baseMoveTable";
 import {
+  COMPOUND_MOVE_TABLE,
+  resolveStrikeInputCooldownSec,
+  type CompoundStrikeMoveId,
+} from "../combat/compoundMoveTable";
+import type { StrikeMoveId } from "../input/combatIntent";
+import {
   DEFAULT_HIT_BURST_VFX_STYLE_ID,
   type HitBurstVfxStyleId,
 } from "../vfx/hitBurstVfxPresets";
+import {
+  DEFAULT_COMBAT_STAMINA,
+  type CombatStaminaTuning,
+} from "../combat/combatStamina";
 
 /** Live bag scalars (tier multiplier tables stay on `BAG_HIT_TUNING`). */
 export type BagHitScalars = {
@@ -73,8 +82,12 @@ export type VfxDevScalars = {
 export type GameplayRuntimeTuning = {
   juice: CombatJuiceTuningValues;
   bag: BagHitScalars;
-  /** WS-080 — live hit probes + input cooldown (dev HUD overwrites shipped table defaults). */
-  baseStrikes: Record<BaseAttackMoveId, BaseStrikeTuningRow>;
+  /**
+   * WS-080 + WS-081 — sphere probes + input cooldown (dev HUD overwrites shipped table defaults).
+   */
+  strikes: Record<StrikeMoveId, BaseStrikeTuningRow>;
+  /** GP §2.2.2 — strike stamina pool + regen (HUD bar); also drives strike lunge scalar. */
+  combatStamina: CombatStaminaTuning;
   player: PlayerLocomotionScalars;
   cameraFollow: CameraFollowScalars;
   camera: CameraRenderScalars;
@@ -82,7 +95,8 @@ export type GameplayRuntimeTuning = {
   vfx: VfxDevScalars;
   resetJuice(): void;
   resetBag(): void;
-  resetBaseStrikes(): void;
+  resetStrikes(): void;
+  resetCombatStamina(): void;
   resetPlayer(): void;
   resetCameraFollow(): void;
   resetCamera(): void;
@@ -132,6 +146,11 @@ function defaultTrainingBagSfxByAttackKind(): TrainingBagSfxByAttackKind {
     right_punch: "arcade_bright",
     left_kick: "springy_rubber",
     right_kick: "gritty_thump",
+    compound_dual_punch: "exaggerated_slam",
+    compound_dual_kick: "cinematic_heavy",
+    compound_mixed: "anime_whip_crack",
+    compound_multi: "cinematic_heavy",
+    sequence_strike: "dojo_martial",
   };
 }
 
@@ -141,24 +160,30 @@ function defaultAudio(): AudioDevScalars {
   };
 }
 
-function defaultBaseStrikes(): Record<BaseAttackMoveId, BaseStrikeTuningRow> {
-  const ids = Object.keys(BASE_MOVE_TABLE) as BaseAttackMoveId[];
-  const out = {} as Record<BaseAttackMoveId, BaseStrikeTuningRow>;
-  for (const id of ids) {
+function defaultStrikes(): Record<StrikeMoveId, BaseStrikeTuningRow> {
+  const out = {} as Record<StrikeMoveId, BaseStrikeTuningRow>;
+  for (const id of Object.keys(BASE_MOVE_TABLE) as BaseAttackMoveId[]) {
     const row = BASE_MOVE_TABLE[id];
     out[id] = {
       profile: { ...row.profile },
-      inputCooldownAfterStrikeSec: strikeInputCooldownAfterSec(id),
+      inputCooldownAfterStrikeSec: resolveStrikeInputCooldownSec(id),
+    };
+  }
+  for (const id of Object.keys(COMPOUND_MOVE_TABLE) as CompoundStrikeMoveId[]) {
+    const row = COMPOUND_MOVE_TABLE[id];
+    out[id] = {
+      profile: { ...row.profile },
+      inputCooldownAfterStrikeSec: resolveStrikeInputCooldownSec(id),
     };
   }
   return out;
 }
 
-function applyDefaultBaseStrikesInPlace(
-  dst: Record<BaseAttackMoveId, BaseStrikeTuningRow>,
+function applyDefaultStrikesInPlace(
+  dst: Record<StrikeMoveId, BaseStrikeTuningRow>,
 ): void {
-  const next = defaultBaseStrikes();
-  for (const id of Object.keys(next) as BaseAttackMoveId[]) {
+  const next = defaultStrikes();
+  for (const id of Object.keys(next) as StrikeMoveId[]) {
     const row = next[id]!;
     dst[id].profile = { ...row.profile };
     dst[id].inputCooldownAfterStrikeSec = row.inputCooldownAfterStrikeSec;
@@ -169,6 +194,10 @@ function defaultVfx(): VfxDevScalars {
   return { hitBurstStyle: DEFAULT_HIT_BURST_VFX_STYLE_ID };
 }
 
+function defaultCombatStamina(): CombatStaminaTuning {
+  return { ...DEFAULT_COMBAT_STAMINA };
+}
+
 /**
  * Mutable gameplay scalars for dev tuning overlay and future settings.
  * Initialized from the same sources as module constants (`PLAYER_CAPSULE`, etc.).
@@ -176,17 +205,19 @@ function defaultVfx(): VfxDevScalars {
 export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
   const juice = defaultJuice();
   const bag = defaultBag();
-  const baseStrikes = defaultBaseStrikes();
+  const strikes = defaultStrikes();
   const player = defaultPlayer();
   const cameraFollow = defaultCameraFollow();
   const camera = defaultCamera();
   const audio = defaultAudio();
   const vfx = defaultVfx();
+  const combatStamina = defaultCombatStamina();
 
   return {
     juice,
     bag,
-    baseStrikes,
+    strikes,
+    combatStamina,
     player,
     cameraFollow,
     camera,
@@ -198,8 +229,11 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     resetBag() {
       Object.assign(bag, defaultBag());
     },
-    resetBaseStrikes() {
-      applyDefaultBaseStrikesInPlace(baseStrikes);
+    resetStrikes() {
+      applyDefaultStrikesInPlace(strikes);
+    },
+    resetCombatStamina() {
+      Object.assign(combatStamina, defaultCombatStamina());
     },
     resetPlayer() {
       Object.assign(player, defaultPlayer());
@@ -224,7 +258,8 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
       Object.assign(camera, defaultCamera());
       Object.assign(audio, defaultAudio());
       Object.assign(vfx, defaultVfx());
-      applyDefaultBaseStrikesInPlace(baseStrikes);
+      applyDefaultStrikesInPlace(strikes);
+      Object.assign(combatStamina, defaultCombatStamina());
     },
   };
 }

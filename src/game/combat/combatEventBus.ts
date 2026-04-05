@@ -4,20 +4,26 @@
  * Listeners run in the same stack as `emit` (typically `fixedStep` after hit resolution). Keep work
  * O(1); defer rendering or Web Audio graph changes to `lateUpdate` / `update` if needed.
  */
-import type { BaseAttackMoveId } from "./baseMoveTable";
+import type { StrikeMoveId } from "../input/combatIntent";
 
 export type CombatHitTargetKind = "training_bag";
 
-/** Base limb strikes (WS-080); compounds add more ids with WS-081. */
+/**
+ * Audio / VFX buckets — base limbs (WS-080) plus compound families (WS-081).
+ * Finer per-`MoveId` mapping can replace these buckets when assets need it.
+ */
 export type CombatHitAttackKind =
   | "left_punch"
   | "right_punch"
   | "left_kick"
-  | "right_kick";
+  | "right_kick"
+  | "compound_dual_punch"
+  | "compound_dual_kick"
+  | "compound_mixed"
+  | "compound_multi"
+  | "sequence_strike";
 
-export function combatHitAttackKindForBaseMove(
-  moveId: BaseAttackMoveId,
-): CombatHitAttackKind {
+export function combatHitAttackKindForStrike(moveId: StrikeMoveId): CombatHitAttackKind {
   switch (moveId) {
     case "atk_lp":
       return "left_punch";
@@ -27,6 +33,31 @@ export function combatHitAttackKindForBaseMove(
       return "left_kick";
     case "atk_rk":
       return "right_kick";
+    case "chord_dual_punch":
+      return "compound_dual_punch";
+    case "chord_dual_kick":
+      return "compound_dual_kick";
+    case "chord_mixed_pi_lk":
+    case "chord_mixed_pi_rk":
+    case "chord_mixed_pu_lk":
+    case "chord_mixed_pu_rk":
+      return "compound_mixed";
+    case "chord_triple":
+    case "chord_quad":
+      return "compound_multi";
+    case "seq_lp_rp":
+    case "seq_rp_lp":
+    case "seq_lk_rk":
+    case "seq_rk_lk":
+    case "seq_lp_lk":
+    case "seq_lp_rk":
+    case "seq_rp_lk":
+    case "seq_rp_rk":
+    case "seq_lk_lp":
+    case "seq_lk_rp":
+    case "seq_rk_lp":
+    case "seq_rk_rp":
+      return "sequence_strike";
     default: {
       const _exhaustive: never = moveId;
       return _exhaustive;

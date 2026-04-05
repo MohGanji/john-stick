@@ -42,6 +42,9 @@ export type MoveId =
   | "seq_rk_lp"
   | "seq_rk_rp";
 
+/** Any strike that can run the sphere sweep + cooldown row (`none` excluded). WS-080 + WS-081. */
+export type StrikeMoveId = Exclude<MoveId, "none">;
+
 export type CombatIntentPriority =
   | "interact"
   | "defensive"

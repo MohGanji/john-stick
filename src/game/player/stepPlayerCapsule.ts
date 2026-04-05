@@ -6,7 +6,10 @@ import {
   type JohnStickPhysics,
 } from "../physics/rapierWorld";
 import { clampVerticalVelocityWhenGrounded } from "./groundedMotion";
-import { facingRelativePlanarVelocityXZ } from "./moveFromFacing";
+import {
+  facingRelativeMoveXZ,
+  facingRelativePlanarVelocityXZ,
+} from "./moveFromFacing";
 import { PLAYER_CAPSULE } from "./playerCapsuleConfig";
 import type { PlayerLocomotionScalars } from "../tuning/gameplayRuntimeTuning";
 
@@ -25,6 +28,11 @@ export function createPlayerLocomotionState(): PlayerLocomotionState {
 
 export type JumpLatch = { latched: boolean };
 
+export type StepPlayerCapsuleOpts = {
+  /** Facing-relative forward nudge (meters) this step — e.g. strike start lunge. */
+  strikeLungeForwardMeters?: number;
+};
+
 /**
  * WS-040 — Rapier **kinematic** capsule + `KinematicCharacterController` for one fixed step.
  * Call **before** `world.step()`. Consumes at most one jump per frame via `jumpLatch`.
@@ -38,6 +46,7 @@ export function stepPlayerCapsule(
   jumpLatch: JumpLatch,
   /** When set, overrides move/jump/gravity scalars from `PLAYER_CAPSULE`. */
   locomotionScalars?: PlayerLocomotionScalars,
+  opts?: StepPlayerCapsuleOpts,
 ): void {
   const { playerRigidBody, playerCollider, characterController } = physics;
   const dt = FIXED_DT;
@@ -75,6 +84,13 @@ export function stepPlayerCapsule(
     y: vy * dt,
     z: vz * dt,
   };
+
+  const lunge = opts?.strikeLungeForwardMeters ?? 0;
+  if (lunge !== 0) {
+    const fwd = facingRelativeMoveXZ(facingYawRad, 1, 0);
+    desiredTranslation.x += fwd.wx * lunge;
+    desiredTranslation.z += fwd.wz * lunge;
+  }
 
   characterController.computeColliderMovement(
     playerCollider,
