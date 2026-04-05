@@ -81,7 +81,7 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     .setSolverGroups(staticGroups);
   world.createCollider(floorCollider, floorBody);
 
-  /** GP §7.2.1 — perimeter solids; spans extend past corners so there is no crack. +Z open (see dojoBlockout). */
+  /** GP §7.2.1 — perimeter solids; spans extend past corners so there is no crack (closed dojo). */
   const wallHalfY = wallHeight / 2;
   const wallY = wallHalfY;
   const zReach = floorHalfDepth + wallHalfThickness * 2;
@@ -128,6 +128,14 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     0,
     wallY,
     -(floorHalfDepth + wallHalfThickness),
+  );
+  addWallCollider(
+    xReach,
+    wallHalfY,
+    wallHalfThickness,
+    0,
+    wallY,
+    floorHalfDepth + wallHalfThickness,
   );
 
   /** WS-040 — kinematic capsule + KCC; yaw-only facing (WS-032, KeyA and KeyD). */

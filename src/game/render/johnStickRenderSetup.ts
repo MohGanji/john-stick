@@ -6,8 +6,8 @@ import * as THREE from "three";
  *
  * | Preset | shadow_map | post | max_lights | notes |
  * |--------|------------|------|------------|-------|
- * | High (default) | 2048 | off | 1 dir + hemi | PCF soft shadow; no post in v1 |
- * | Low (future) | 512–1024 | off | 1 dir + ambient | reduce shadow casters, cap DPR |
+ * | High (default) | 2048 | off | 1 dir + hemi + pendant points in level | traditional dojo interior |
+ * | Low (future) | 512–1024 | off | 1 dir + hemi | reduce shadow casters, cap DPR |
  */
 export const GRAPHICS_PRESET_DEFAULT = {
   shadowMapSize: 2048,
@@ -47,8 +47,8 @@ export function createJohnStickRenderSetup(
   root: HTMLElement,
 ): JohnStickRenderSetup {
   const scene = new THREE.Scene();
-  /** Cool lifted gray — readable with default sun; darker than walls so depth still reads. */
-  scene.background = new THREE.Color(0x262a38);
+  /** Warm dark interior void (enclosed hall). */
+  scene.background = new THREE.Color(0x2a2622);
 
   const camera = new THREE.PerspectiveCamera(
     DEFAULT_PERSPECTIVE_FOV_DEG,
@@ -67,7 +67,7 @@ export function createJohnStickRenderSetup(
   });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.14;
+  renderer.toneMappingExposure = 1.48;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -79,13 +79,16 @@ export function createJohnStickRenderSetup(
   );
   root.appendChild(renderer.domElement);
 
-  /** Stronger fill + lighter ground bounce so shadowed sides of walls/actors aren’t mud. */
-  const hemi = new THREE.HemisphereLight(0xcad6f0, 0x4a4640, 0.58);
+  /** Bright airy bounce — pale ceiling + warm floor (shōji + pendants do most of the mood in-level). */
+  const hemi = new THREE.HemisphereLight(0xfaf6f0, 0x8c7a68, 0.78);
   scene.add(hemi);
 
-  /** Primary shadow caster — higher intensity keeps shade gradients visible on mid tones. */
-  const sunLight = new THREE.DirectionalLight(0xfff8ef, 1.52);
-  sunLight.position.set(8, 18, 6);
+  /**
+   * Single shadow caster — soft skylight / high window wash; pendants in `dojoTraditionalDressing`
+   * add warm pools on the floor (no extra shadow maps).
+   */
+  const sunLight = new THREE.DirectionalLight(0xfffaef, 0.82);
+  sunLight.position.set(2.8, 16.2, 1.2);
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.set(
     GRAPHICS_PRESET_DEFAULT.shadowMapSize,
@@ -99,8 +102,8 @@ export function createJohnStickRenderSetup(
   sunLight.shadow.camera.top = orthoExtent;
   sunLight.shadow.camera.bottom = -orthoExtent;
   sunLight.shadow.bias = -0.00025;
-  sunLight.shadow.normalBias = 0.028;
-  sunLight.target.position.set(0, 0.25, 0);
+  sunLight.shadow.normalBias = 0.034;
+  sunLight.target.position.set(0, 0.35, 0);
   scene.add(sunLight);
   scene.add(sunLight.target);
 

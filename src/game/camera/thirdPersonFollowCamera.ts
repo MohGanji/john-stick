@@ -145,7 +145,7 @@ export function updateThirdPersonFollowCamera(
     playerBodyPos.z,
   );
 
-  // Yaw 0 → camera on −Z of pivot (dojo +Z open); raised by fixed pitch.
+  // Yaw 0 → camera on −Z of pivot; spherecast pull-in handles closed dojo walls.
   const idealCamX = pivot.x - sy * h;
   const idealCamY = pivot.y + v;
   const idealCamZ = pivot.z - cy * h;

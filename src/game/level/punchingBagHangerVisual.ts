@@ -26,10 +26,11 @@ export function createPunchingBagHangerVisual(): PunchingBagHangerVisual {
     1,
     8,
   );
+  /** WS-100 — cable trim reads with cool walls; slight metal for ring light. */
   const mat = new THREE.MeshStandardMaterial({
-    color: 0x5c5e72,
-    roughness: 0.76,
-    metalness: 0.22,
+    color: 0x4f5565,
+    roughness: 0.72,
+    metalness: 0.26,
   });
   const mesh = new THREE.Mesh(geom, mat);
   mesh.castShadow = true;

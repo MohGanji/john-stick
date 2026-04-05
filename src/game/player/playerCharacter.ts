@@ -91,6 +91,12 @@ export async function loadPlayerCharacter(
     tintSparringPartnerMaterials(gltf.scene);
   }
 
+  gltf.scene.traverse((obj) => {
+    if (obj instanceof THREE.Mesh) {
+      obj.castShadow = true;
+    }
+  });
+
   const mixer = new THREE.AnimationMixer(gltf.scene);
   const idleClip = findClip(gltf, PLAYER_ANIM_IDLE);
   const walkClip = findClip(gltf, PLAYER_ANIM_WALK);

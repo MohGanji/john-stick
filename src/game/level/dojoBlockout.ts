@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
-import { PUNCHING_BAG } from "./punchingBagConfig";
+import { createDojoEnvironmentMaterials } from "./dojoEnvironmentMaterials";
+import { createDojoTraditionalDressing } from "./dojoTraditionalDressing";
 
 /**
  * GP §7.1.1 — training floor scale (role-level-designer default: 24m × 18m).
@@ -15,23 +16,9 @@ export const DOJO_BLOCKOUT = {
   wallHalfThickness: 0.2,
 } as const;
 
-/** Lifted mid tones — still reads as interior mat, not black hole corners. */
-const WALL_MATERIAL = new THREE.MeshStandardMaterial({
-  color: 0x6e7190,
-  roughness: 0.8,
-  metalness: 0.05,
-});
-
-const FLOOR_MATERIAL = new THREE.MeshStandardMaterial({
-  color: 0x3e4254,
-  roughness: 0.9,
-  metalness: 0.04,
-});
-
 /**
- * WS-021 — placeholder dojo shell: floor mat + perimeter walls (diegetic-ish trim).
- * +Z wall omitted for now so the default static camera (sitting on +Z) is not blocked;
- * restore when WS-030 follow-cam owns framing.
+ * WS-021 — closed traditional dojo shell: floor, walls (cream shōmen on −Z), wood-tone ceiling,
+ * beams / pendants / shōji + scroll dressing (`dojoTraditionalDressing`).
  */
 export function createDojoPlaceholderLevel(): THREE.Group {
   const g = new THREE.Group();
@@ -40,13 +27,15 @@ export function createDojoPlaceholderLevel(): THREE.Group {
   const { floorHalfWidth, floorHalfDepth, floorThickness, wallHeight, wallHalfThickness } =
     DOJO_BLOCKOUT;
 
+  const env = createDojoEnvironmentMaterials(floorHalfWidth, floorHalfDepth);
+
   const floor = new THREE.Mesh(
     new THREE.BoxGeometry(
       floorHalfWidth * 2,
       floorThickness,
       floorHalfDepth * 2,
     ),
-    FLOOR_MATERIAL,
+    env.floor,
   );
   floor.position.set(0, -floorThickness / 2, 0);
   floor.receiveShadow = true;
@@ -67,49 +56,52 @@ export function createDojoPlaceholderLevel(): THREE.Group {
     wallHalfThickness * 2,
   );
 
-  const east = new THREE.Mesh(eastWestGeom, WALL_MATERIAL);
+  const east = new THREE.Mesh(eastWestGeom, env.sideWall);
   east.position.set(floorHalfWidth + wallHalfThickness, wallY, 0);
   east.castShadow = true;
   east.receiveShadow = true;
   g.add(east);
 
-  const west = new THREE.Mesh(eastWestGeom, WALL_MATERIAL);
+  const west = new THREE.Mesh(eastWestGeom, env.sideWall);
   west.position.set(-(floorHalfWidth + wallHalfThickness), wallY, 0);
   west.castShadow = true;
   west.receiveShadow = true;
   g.add(west);
 
-  const south = new THREE.Mesh(northSouthGeom, WALL_MATERIAL);
+  const south = new THREE.Mesh(northSouthGeom, env.shomenWall);
   south.position.set(0, wallY, -(floorHalfDepth + wallHalfThickness));
   south.castShadow = true;
   south.receiveShadow = true;
   g.add(south);
 
-  /**
-   * WS-061 / GP §7.1.2 — ceiling patch over the bag. Cord visual is **dynamic** (`punchingBagHangerVisual`)
-   * so it tilts with swings instead of a rigid vertical rod.
-   */
-  const ceilingUndersideY = wallHeight;
-  const ceilingSlabThickness = 0.14;
-  const mountHalfExtent = 1.35;
+  const north = new THREE.Mesh(northSouthGeom, env.sideWall);
+  north.position.set(0, wallY, floorHalfDepth + wallHalfThickness);
+  north.castShadow = true;
+  north.receiveShadow = true;
+  g.add(north);
 
-  const ceilingPatch = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      mountHalfExtent * 2,
-      ceilingSlabThickness,
-      mountHalfExtent * 2,
-    ),
-    WALL_MATERIAL,
+  /** Full ceiling slab; underside at `wallHeight` so `punchingBagHangerVisual` still meets the room shell. */
+  const ceilingSlabThickness = 0.14;
+  const ceilingGeom = new THREE.BoxGeometry(
+    xSpan,
+    ceilingSlabThickness,
+    zSpan,
   );
-  ceilingPatch.position.set(
-    PUNCHING_BAG.centerX,
-    ceilingUndersideY + ceilingSlabThickness / 2,
-    PUNCHING_BAG.centerZ,
+  const ceiling = new THREE.Mesh(ceilingGeom, env.ceilingWood);
+  ceiling.position.set(0, wallHeight + ceilingSlabThickness / 2, 0);
+  ceiling.castShadow = true;
+  ceiling.receiveShadow = true;
+  ceiling.name = "dojo_ceiling_slab";
+  g.add(ceiling);
+
+  g.add(
+    createDojoTraditionalDressing(env, {
+      floorHalfWidth,
+      floorHalfDepth,
+      wallHeight,
+      wallHalfThickness,
+    }),
   );
-  ceilingPatch.castShadow = true;
-  ceilingPatch.receiveShadow = true;
-  ceilingPatch.name = "punching_bag_ceiling_patch";
-  g.add(ceilingPatch);
 
   return g;
 }

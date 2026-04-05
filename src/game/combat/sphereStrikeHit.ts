@@ -48,6 +48,16 @@ function yawFromPlayerRotation(q: { x: number; y: number; z: number; w: number }
   return 2 * Math.atan2(q.y, q.w);
 }
 
+function distSqToPoint(
+  a: { x: number; y: number; z: number },
+  b: { x: number; y: number; z: number },
+): number {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  const dz = a.z - b.z;
+  return dx * dx + dy * dy + dz * dz;
+}
+
 function contactWorldFromPose(
   pos: { x: number; y: number; z: number },
   yawRad: number,
@@ -180,7 +190,6 @@ export function stepSphereStrikeHitFixed(
       );
     const sparringTouch =
       !bagTouch &&
-      !dummyTouch &&
       probeHitSensor(
         physics.world,
         physics,
@@ -189,14 +198,26 @@ export function stepSphereStrikeHitFixed(
         contact,
         strike.lastContact,
       );
-    const touch = bagTouch || dummyTouch || sparringTouch;
+    /**
+     * WS-093 — dummy was probed before sparring, so overlapping lab targets always credited the dummy.
+     * Pick **whichever rigid body is closer to the fist contact** so the moving partner can take damage.
+     */
+    let humanoidTarget: StrikeHitTargetKind = "none";
+    if (dummyTouch && sparringTouch) {
+      const d = physics.trainingDummyRigidBody.translation();
+      const s = physics.sparringNpcRigidBody.translation();
+      const dd = distSqToPoint(contact, { x: d.x, y: d.y, z: d.z });
+      const ds = distSqToPoint(contact, { x: s.x, y: s.y, z: s.z });
+      humanoidTarget = dd <= ds ? "training_dummy" : "sparring_npc";
+    } else if (dummyTouch) {
+      humanoidTarget = "training_dummy";
+    } else if (sparringTouch) {
+      humanoidTarget = "sparring_npc";
+    }
+    const touch = bagTouch || humanoidTarget !== "none";
     if (touch && !strike.hitConsumed) {
       strike.hitConsumed = true;
-      hitTarget = bagTouch
-        ? "training_bag"
-        : dummyTouch
-          ? "training_dummy"
-          : "sparring_npc";
+      hitTarget = bagTouch ? "training_bag" : humanoidTarget;
       if (import.meta.env.DEV) {
         console.debug(
           "[combat] sphere strike →",
