@@ -11,6 +11,13 @@ import {
   type ResolvedCombatIntent,
 } from "./input/combatIntent";
 import { attachKeyboardLocomotion } from "./input/keyboardLocomotion";
+import { createCombatHitDebugDraw } from "./combat/combatHitDebugDraw";
+import {
+  createLeftPunchStrikeState,
+  stepLeftPunchHitFixed,
+  type LeftPunchHitDebugSnapshot,
+} from "./combat/leftPunchHit";
+import { leftPunchAttackPressEdge } from "./combat/hitInputEdges";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import {
   createJohnStickPhysics,
@@ -61,6 +68,18 @@ export async function mountGame(root: HTMLElement): Promise<void> {
   /** WS-051 — priority + chord/sequence resolution (GP §3.2.3–3.2.4). */
   let combatIntent: ResolvedCombatIntent = initIntent.resolved;
 
+  /** WS-060 — left punch active frames + Rapier probe (after physics step). */
+  let leftPunchStrike = createLeftPunchStrikeState();
+  let leftPunchHitDebug: LeftPunchHitDebugSnapshot = {
+    active: false,
+    fistWorld: { x: 0, y: 0, z: 0 },
+    radius: 0.12,
+  };
+
+  const combatHitDebugDraw = import.meta.env.DEV
+    ? createCombatHitDebugDraw(scene)
+    : null;
+
   const actionMapDebugHud = import.meta.env.DEV
     ? attachActionMapDebugHud(root, () => ({
         snapshot: actionSample,
@@ -80,6 +99,9 @@ export async function mountGame(root: HTMLElement): Promise<void> {
       );
       combatIntentState = intentOut.nextState;
       combatIntent = intentOut.resolved;
+      if (leftPunchAttackPressEdge(prevAction, actionSample)) {
+        leftPunchStrike.pendingStart = true;
+      }
       if (!actionSample.interactModeOpen) {
         facingYawRad += keyboardLocomotion.facingYawDeltaRad(dtSeconds);
       }
@@ -106,6 +128,17 @@ export async function mountGame(root: HTMLElement): Promise<void> {
         jumpLatch,
       );
       stepPhysicsWorld(physics.world);
+      readRigidBodyTransform(
+        physics.playerRigidBody,
+        scratchPos,
+        scratchQuat,
+      );
+      leftPunchHitDebug = stepLeftPunchHitFixed(
+        physics,
+        leftPunchStrike,
+        scratchPos,
+        scratchQuat,
+      ).debug;
     },
     /**
      * GP §4.2.3 — `runGameLoop` exposes `beforeFixedSteps` + `fixedStepAlpha` for dual-buffer rendering.
@@ -143,6 +176,7 @@ export async function mountGame(root: HTMLElement): Promise<void> {
           excludeRigidBody: physics.playerRigidBody,
         },
       );
+      combatHitDebugDraw?.sync(leftPunchHitDebug);
       actionMapDebugHud?.refresh();
     },
     render() {

@@ -8,12 +8,15 @@ import {
   PhysicsFilter,
   PhysicsMembership,
 } from "./collisionLayers";
+import { TRAINING_HURT_VOLUME } from "../combat/combatHitConstants";
 
 export type JohnStickPhysics = {
   world: RAPIER.World;
   playerRigidBody: RAPIER.RigidBody;
   playerCollider: RAPIER.Collider;
   characterController: RAPIER.KinematicCharacterController;
+  /** WS-060 — sensor hurt volume for left-punch hit tests (GP §6.2.1). */
+  trainingHurtCollider: RAPIER.Collider;
 };
 
 /**
@@ -132,7 +135,37 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
   characterController.enableSnapToGround(0.38);
   characterController.disableAutostep();
 
-  return { world, playerRigidBody, playerCollider, characterController };
+  /** WS-060 — fixed sensor aligned with `TRAINING_HURT_VOLUME` (trigger layer: no solid vs player). */
+  const trainingHurtBody = world.createRigidBody(
+    RAPIER.RigidBodyDesc.fixed().setTranslation(
+      TRAINING_HURT_VOLUME.center.x,
+      TRAINING_HURT_VOLUME.center.y,
+      TRAINING_HURT_VOLUME.center.z,
+    ),
+  );
+  const hurtGroups = collisionGroups(
+    PhysicsMembership.trigger,
+    PhysicsMembership.player | PhysicsMembership.enemy,
+  );
+  const trainingHurtCollider = world.createCollider(
+    RAPIER.ColliderDesc.cuboid(
+      TRAINING_HURT_VOLUME.halfExtents.x,
+      TRAINING_HURT_VOLUME.halfExtents.y,
+      TRAINING_HURT_VOLUME.halfExtents.z,
+    )
+      .setSensor(true)
+      .setCollisionGroups(hurtGroups)
+      .setSolverGroups(hurtGroups),
+    trainingHurtBody,
+  );
+
+  return {
+    world,
+    playerRigidBody,
+    playerCollider,
+    characterController,
+    trainingHurtCollider,
+  };
 }
 
 export function stepPhysicsWorld(world: RAPIER.World): void {

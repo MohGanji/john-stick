@@ -284,7 +284,7 @@ flowchart TB
 
 ### Wave 6 — First contact (bag)
 
-- [ ] **WS-060** — Hit detection v1 (one punch): shapes or sweep, **dev debug draw**.  
+- [x] **WS-060** — Hit detection v1 (one punch): shapes or sweep, **dev debug draw**.  
   - **Depends:** WS-050, WS-040  
   - **∥** WS-061  
   - **@** `role-gameplay-programmer`  

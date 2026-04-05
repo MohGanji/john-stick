@@ -7,6 +7,7 @@ export const PhysicsMembership = {
   enemy: 1 << 1,
   prop: 1 << 2,
   ragdollLimb: 1 << 3,
+  /** Overlap volumes (hurtboxes, signs). Not in `allSolid` so the KCC capsule ignores them. */
   trigger: 1 << 4,
   staticWorld: 1 << 5,
 } as const;
