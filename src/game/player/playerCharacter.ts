@@ -12,8 +12,8 @@ export const PLAYER_ANIM_IDLE = "Idle";
 export const PLAYER_ANIM_WALK = "Walk";
 
 export type LoadPlayerCharacterOptions = {
-  /** `training_dummy` tints materials so the dojo partner reads distinct from the hero. */
-  appearance?: "player" | "training_dummy";
+  /** `training_dummy` / `sparring_partner` tint the glTF so lab targets read distinct from the hero. */
+  appearance?: "player" | "training_dummy" | "sparring_partner";
 };
 
 const CROSS_FADE_SEC = 0.14;
@@ -59,6 +59,21 @@ function tintTrainingDummyMaterials(root: THREE.Object3D): void {
   });
 }
 
+function tintSparringPartnerMaterials(root: THREE.Object3D): void {
+  const tint = new THREE.Color(0x7aab8f);
+  root.traverse((obj) => {
+    if (!(obj instanceof THREE.Mesh)) return;
+    const mats = Array.isArray(obj.material)
+      ? obj.material
+      : [obj.material];
+    for (const m of mats) {
+      if (m instanceof THREE.MeshStandardMaterial) {
+        m.color.lerp(tint, 0.26);
+      }
+    }
+  });
+}
+
 /**
  * WS-041 — skinned stick visual: load glTF, drive **Idle** / **Walk** from planar input.
  * Physics capsule remains authoritative; `root` follows rigid-body transform.
@@ -71,6 +86,9 @@ export async function loadPlayerCharacter(
 
   if (options?.appearance === "training_dummy") {
     tintTrainingDummyMaterials(gltf.scene);
+  }
+  if (options?.appearance === "sparring_partner") {
+    tintSparringPartnerMaterials(gltf.scene);
   }
 
   const mixer = new THREE.AnimationMixer(gltf.scene);

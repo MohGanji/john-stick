@@ -6,7 +6,10 @@
  */
 import type { StrikeMoveId } from "../input/combatIntent";
 
-export type CombatHitTargetKind = "training_bag" | "training_dummy";
+export type CombatHitTargetKind =
+  | "training_bag"
+  | "training_dummy"
+  | "sparring_npc";
 
 /**
  * Audio / VFX buckets — base limbs (WS-080) plus compound families (WS-081).

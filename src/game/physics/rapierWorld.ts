@@ -15,6 +15,7 @@ import {
 } from "./collisionLayers";
 import { TRAINING_DUMMY_HURT_VOLUME, TRAINING_HURT_VOLUME } from "../combat/combatHitConstants";
 import { TRAINING_DUMMY_PHYSICS } from "../level/trainingDummyConfig";
+import { SPARRING_NPC_PHYSICS } from "../level/sparringNpcConfig";
 
 export type JohnStickPhysics = {
   world: RAPIER.World;
@@ -32,6 +33,10 @@ export type JohnStickPhysics = {
   /** WS-094 — monolithic capsule (removed while articulated ragdoll is active). */
   trainingDummySolidCollider: RAPIER.Collider;
   trainingDummyHurtCollider: RAPIER.Collider;
+  /** WS-093 — moving lab partner; same capsule + hurt pattern as the static dummy. */
+  sparringNpcRigidBody: RAPIER.RigidBody;
+  sparringNpcSolidCollider: RAPIER.Collider;
+  sparringNpcHurtCollider: RAPIER.Collider;
   /** WS-094 — same membership as bag/dummy solids for spawned limb colliders. */
   propCollisionGroups: number;
   propSolverGroups: number;
@@ -250,6 +255,34 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     trainingDummyRigidBody,
   );
 
+  const sn = SPARRING_NPC_PHYSICS;
+  const sparringNpcRigidBody = world.createRigidBody(
+    RAPIER.RigidBodyDesc.dynamic()
+      .setTranslation(sn.centerX, sn.centerY, sn.centerZ)
+      .setLinearDamping(sn.linearDamping)
+      .setAngularDamping(sn.angularDamping),
+  );
+  const sparringNpcSolid = RAPIER.ColliderDesc.capsule(
+    sn.capsuleHalfHeight,
+    sn.capsuleRadius,
+  )
+    .setFriction(sn.friction)
+    .setRestitution(sn.restitution)
+    .setMass(sn.colliderMassKg)
+    .setCollisionGroups(propGroups)
+    .setSolverGroups(propGroups);
+  const sparringNpcSolidCollider = world.createCollider(
+    sparringNpcSolid,
+    sparringNpcRigidBody,
+  );
+  const sparringNpcHurtCollider = world.createCollider(
+    RAPIER.ColliderDesc.cuboid(dhe.x, dhe.y, dhe.z)
+      .setSensor(true)
+      .setCollisionGroups(hurtGroups)
+      .setSolverGroups(hurtGroups),
+    sparringNpcRigidBody,
+  );
+
   return {
     world,
     playerRigidBody,
@@ -261,6 +294,9 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     trainingDummyRigidBody,
     trainingDummySolidCollider,
     trainingDummyHurtCollider,
+    sparringNpcRigidBody,
+    sparringNpcSolidCollider,
+    sparringNpcHurtCollider,
     propCollisionGroups: propGroups,
     propSolverGroups: propGroups,
   };

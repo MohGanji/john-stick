@@ -64,21 +64,40 @@ export type ArmTrainingDummyRecoverContext = {
   recoverTos: ArticulatedBodyTransform[];
 };
 
+/** Ragdoll recover blend target: dummy snaps to fixed spawn; sparring partner stays upright in place (WS-093). */
+export type TrainingDummyRagdollRecoverAnchor =
+  | { mode: "dummy_spawn" }
+  | { mode: "in_place_standing"; standingY: number };
+
 export function armTrainingDummyRecover(
   body: RAPIER.RigidBody,
   fsm: TrainingDummyFsm,
   ctx?: ArmTrainingDummyRecoverContext,
+  anchor: TrainingDummyRagdollRecoverAnchor = { mode: "dummy_spawn" },
 ): void {
   copyFromRigidBody(body, fsm);
 
-  const s = TRAINING_DUMMY_SPAWN_TRANSFORM;
-  fsm.recoverTargetPos.x = s.x;
-  fsm.recoverTargetPos.y = s.y;
-  fsm.recoverTargetPos.z = s.z;
-  fsm.recoverTargetQuat.x = s.qx;
-  fsm.recoverTargetQuat.y = s.qy;
-  fsm.recoverTargetQuat.z = s.qz;
-  fsm.recoverTargetQuat.w = s.qw;
+  if (anchor.mode === "dummy_spawn") {
+    const s = TRAINING_DUMMY_SPAWN_TRANSFORM;
+    fsm.recoverTargetPos.x = s.x;
+    fsm.recoverTargetPos.y = s.y;
+    fsm.recoverTargetPos.z = s.z;
+    fsm.recoverTargetQuat.x = s.qx;
+    fsm.recoverTargetQuat.y = s.qy;
+    fsm.recoverTargetQuat.z = s.qz;
+    fsm.recoverTargetQuat.w = s.qw;
+  } else {
+    const t = body.translation();
+    const r = body.rotation();
+    const up = uprightWorldYawQuat(r);
+    fsm.recoverTargetPos.x = t.x;
+    fsm.recoverTargetPos.y = anchor.standingY;
+    fsm.recoverTargetPos.z = t.z;
+    fsm.recoverTargetQuat.x = up.x;
+    fsm.recoverTargetQuat.y = up.y;
+    fsm.recoverTargetQuat.z = up.z;
+    fsm.recoverTargetQuat.w = up.w;
+  }
 
   if (ctx?.articulated.active && ctx.recoverTos.length === ctx.articulated.bodies.length) {
     const n = ctx.articulated.bodies.length;
@@ -126,13 +145,14 @@ export function armTrainingDummyRecover(
 export function armTrainingDummyStandUp(
   body: RAPIER.RigidBody,
   fsm: TrainingDummyFsm,
+  floorStandingY: number = TRAINING_DUMMY_SPAWN_TRANSFORM.y,
 ): void {
   copyFromRigidBody(body, fsm);
 
   const t = body.translation();
   const r = body.rotation();
   const up = uprightWorldYawQuat(r);
-  const sy = TRAINING_DUMMY_SPAWN_TRANSFORM.y;
+  const sy = floorStandingY;
 
   fsm.recoverTargetPos.x = t.x;
   fsm.recoverTargetPos.y = sy;
@@ -205,7 +225,7 @@ function finishStandUpToDynamicIdle(
   fsm.timeInPhaseSec = 0;
 }
 
-function finishRagdollRecoverAtSpawn(
+function finishRagdollRecoverAfterBlend(
   body: RAPIER.RigidBody,
   fsm: TrainingDummyFsm,
   physics: JohnStickPhysics | undefined,
@@ -214,10 +234,11 @@ function finishRagdollRecoverAtSpawn(
   if (physics && articulated?.active) {
     endTrainingDummyArticulatedRagdoll(physics, articulated);
   }
-  const s = TRAINING_DUMMY_SPAWN_TRANSFORM;
+  const p = fsm.recoverTargetPos;
+  const q = fsm.recoverTargetQuat;
   body.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
-  body.setTranslation({ x: s.x, y: s.y, z: s.z }, true);
-  body.setRotation({ x: s.qx, y: s.qy, z: s.qz, w: s.qw }, true);
+  body.setTranslation({ x: p.x, y: p.y, z: p.z }, true);
+  body.setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }, true);
   body.setLinvel({ x: 0, y: 0, z: 0 }, true);
   body.setAngvel({ x: 0, y: 0, z: 0 }, true);
   fsm.phase = "idle";
@@ -299,7 +320,7 @@ export function prePhysicsTrainingDummy(
     if (t < 1) {
       return { resetLabDamageAfterRagdollRecover: false };
     }
-    finishRagdollRecoverAtSpawn(body, fsm, opts?.physics, opts?.articulated);
+    finishRagdollRecoverAfterBlend(body, fsm, opts?.physics, opts?.articulated);
     return { resetLabDamageAfterRagdollRecover: true };
   }
 

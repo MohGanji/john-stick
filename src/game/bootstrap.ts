@@ -82,6 +82,15 @@ import { createCombatJuiceController } from "./combat/combatJuiceController";
 import { createJohnStickRenderSetup } from "./render";
 import { createGameplayRuntimeTuning } from "./tuning/gameplayRuntimeTuning";
 import { TRAINING_DUMMY_SPAWN_TRANSFORM } from "./level/trainingDummyConfig";
+import {
+  SPARRING_NPC_PHYSICS,
+  SPARRING_NPC_SPAWN_TRANSFORM,
+  SPARRING_NPC_WANDER_SPEED,
+} from "./level/sparringNpcConfig";
+import {
+  createSparringNpcWanderState,
+  stepSparringNpcWanderFixed,
+} from "./npc/sparringNpcWander";
 import { attachCombatHitAudio } from "./audio/attachCombatHitAudio";
 import { createAudioMixer } from "./audio/audioMixer";
 import { playTrainingBagImpact } from "./audio/playTrainingBagImpact";
@@ -108,17 +117,29 @@ export async function mountGame(
   const punchingBagVisual = createPunchingBagSwingMesh();
   scene.add(punchingBagVisual);
 
-  const [playerCharacter, trainingDummyCharacter] = await Promise.all([
-    loadPlayerCharacter(),
-    loadPlayerCharacter({ appearance: "training_dummy" }),
-  ]);
+  const [playerCharacter, trainingDummyCharacter, sparringNpcCharacter] =
+    await Promise.all([
+      loadPlayerCharacter(),
+      loadPlayerCharacter({ appearance: "training_dummy" }),
+      loadPlayerCharacter({ appearance: "sparring_partner" }),
+    ]);
   scene.add(playerCharacter.root);
   scene.add(trainingDummyCharacter.root);
+  scene.add(sparringNpcCharacter.root);
 
   const s0 = TRAINING_DUMMY_SPAWN_TRANSFORM;
   trainingDummyCharacter.root.position.set(s0.x, s0.y, s0.z);
   trainingDummyCharacter.root.quaternion.set(s0.qx, s0.qy, s0.qz, s0.qw);
   trainingDummyCharacter.root.updateMatrixWorld(true);
+  const sNpc = SPARRING_NPC_SPAWN_TRANSFORM;
+  sparringNpcCharacter.root.position.set(sNpc.x, sNpc.y, sNpc.z);
+  sparringNpcCharacter.root.quaternion.set(
+    sNpc.qx,
+    sNpc.qy,
+    sNpc.qz,
+    sNpc.qw,
+  );
+  sparringNpcCharacter.root.updateMatrixWorld(true);
   const trainingDummyArticulatedRecoverTos: ArticulatedBodyTransform[] =
     computeArticulatedBindWorldTransforms(trainingDummyCharacter.root);
   const trainingDummyArticulated = createTrainingDummyArticulatedRagdollShell();
@@ -129,6 +150,8 @@ export async function mountGame(
   const bagScratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const dummyScratchPos = { x: 0, y: 0, z: 0 };
   const dummyScratchQuat = { x: 0, y: 0, z: 0, w: 1 };
+  const sparringScratchPos = { x: 0, y: 0, z: 0 };
+  const sparringScratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const followCamScratch = createThirdPersonFollowScratch();
   const gameplayTuning = createGameplayRuntimeTuning();
   const keyboardLocomotion = attachKeyboardLocomotion(window, {
@@ -181,6 +204,10 @@ export async function mountGame(
   /** WS-090 — lab damage on the fixed dummy (same idea as bag total). */
   let trainingDummyLabDamageTotal = 0;
   const trainingDummyFsm = createTrainingDummyFsm();
+  /** WS-093 — same lab knockdown rules on the wandering partner. */
+  let sparringNpcLabDamageTotal = 0;
+  const sparringNpcFsm = createTrainingDummyFsm();
+  const sparringNpcWander = createSparringNpcWanderState();
   /** WS-070 / GP §4.3.3 — `CombatHit` → audio / VFX / hit-stop (WS-071+). */
   const combatEvents = createCombatEventBus();
   /** WS-071 / GP §6.3.1 — hit-stop (accumulator scale) + subtle FOV punch; see `getCombatJuiceAccess`. */
@@ -341,6 +368,18 @@ export async function mountGame(
         findFirstSkinnedMesh(trainingDummyCharacter.root)?.skeleton?.pose();
       }
 
+      const sparringPrePhys = prePhysicsTrainingDummy(
+        physics.sparringNpcRigidBody,
+        sparringNpcFsm,
+        FIXED_DT,
+        dummyFsmTiming.recoverBlendSec,
+        dummyFsmTiming.standUpBlendSec,
+      );
+      if (sparringPrePhys.resetLabDamageAfterRagdollRecover) {
+        sparringNpcLabDamageTotal = 0;
+        findFirstSkinnedMesh(sparringNpcCharacter.root)?.skeleton?.pose();
+      }
+
       if (
         trainingDummyFsm.phase === "ragdoll" &&
         !trainingDummyArticulated.active
@@ -355,6 +394,12 @@ export async function mountGame(
       const dummyBody = physics.trainingDummyRigidBody;
       dummyBody.setLinearDamping(dummyFeel.linearDamping);
       dummyBody.setAngularDamping(
+        trainingDummyAngularDampingFromSpin(dummyFeel.spinAmount),
+      );
+
+      const sparringBody = physics.sparringNpcRigidBody;
+      sparringBody.setLinearDamping(dummyFeel.linearDamping);
+      sparringBody.setAngularDamping(
         trainingDummyAngularDampingFromSpin(dummyFeel.spinAmount),
       );
 
@@ -405,6 +450,12 @@ export async function mountGame(
         gameplayTuning.player,
         { strikeLungeForwardMeters: lungeThisStep },
       );
+      stepSparringNpcWanderFixed(
+        physics.sparringNpcRigidBody,
+        sparringNpcFsm,
+        sparringNpcWander,
+        FIXED_DT,
+      );
       stepPhysicsWorld(physics.world);
       readRigidBodyTransform(
         physics.playerRigidBody,
@@ -425,6 +476,11 @@ export async function mountGame(
 
       const moveIdForBagHit = activeStrikeMoveId;
       let dummyHitImpulseForFsm: {
+        x: number;
+        y: number;
+        z: number;
+      } | null = null;
+      let sparringHitImpulseForFsm: {
         x: number;
         y: number;
         z: number;
@@ -509,6 +565,51 @@ export async function mountGame(
             ")",
           );
         }
+      } else if (
+        strikeHit.hitTarget === "sparring_npc" &&
+        moveIdForBagHit !== null &&
+        sparringNpcFsm.phase !== "recover" &&
+        sparringNpcFsm.phase !== "stand_up"
+      ) {
+        const moveId = moveIdForBagHit;
+        const tier = strikeBagChargeTierIndex(moveId);
+        const { damageDealt, impulseWorld } = applyTrainingDummyHitFromStrike(
+          physics,
+          {
+            fistWorld: strikeHit.debug.contactWorld,
+            playerPos: scratchPos,
+            playerFacingYawRad: facingYawRad,
+            chargeTierIndex: tier,
+          },
+          gameplayTuning.bag,
+          gameplayTuning.combatBasics.basePunchDamage,
+          gameplayTuning.trainingDummyFeel,
+          physics.sparringNpcRigidBody,
+        );
+        sparringHitImpulseForFsm = impulseWorld;
+        sparringNpcLabDamageTotal += damageDealt;
+        combatEvents.emit({
+          type: "combat_hit",
+          hit: {
+            attackKind: combatHitAttackKindForStrike(moveId),
+            targetKind: "sparring_npc",
+            damageDealt,
+            impulseWorld,
+            contactWorld: strikeHit.debug.contactWorld,
+            chargeTierIndex: tier,
+          },
+        });
+        if (import.meta.env.DEV) {
+          console.debug(
+            "[combat] sparring NPC hit — damage total",
+            sparringNpcLabDamageTotal,
+            "/",
+            gameplayTuning.combatBasics.baseEnemyHealth,
+            "(+",
+            damageDealt,
+            ")",
+          );
+        }
       }
 
       const dummyMotion = rigidBodyPlanarSpeedLinAng(
@@ -541,6 +642,41 @@ export async function mountGame(
       }
       if (dummyFsmStep.armStandUp) {
         armTrainingDummyStandUp(physics.trainingDummyRigidBody, trainingDummyFsm);
+      }
+
+      const sparringMotion = rigidBodyPlanarSpeedLinAng(
+        physics.sparringNpcRigidBody,
+      );
+      const sparringFsmStep = stepTrainingDummyFsm(
+        sparringNpcFsm,
+        FIXED_DT,
+        sparringHitImpulseForFsm !== null,
+        sparringHitImpulseForFsm,
+        {
+          labDamageTotal: sparringNpcLabDamageTotal,
+          ragdollLinPlanarSpeed: sparringMotion.linPlanar,
+          ragdollAngSpeed: sparringMotion.ang,
+          basicEnemyMaxHealth: gameplayTuning.combatBasics.baseEnemyHealth,
+        },
+        dummyFsmTiming,
+      );
+      if (sparringFsmStep.armRecover) {
+        armTrainingDummyRecover(
+          physics.sparringNpcRigidBody,
+          sparringNpcFsm,
+          undefined,
+          {
+            mode: "in_place_standing",
+            standingY: SPARRING_NPC_PHYSICS.centerY,
+          },
+        );
+      }
+      if (sparringFsmStep.armStandUp) {
+        armTrainingDummyStandUp(
+          physics.sparringNpcRigidBody,
+          sparringNpcFsm,
+          SPARRING_NPC_PHYSICS.centerY,
+        );
       }
 
       if (
@@ -635,6 +771,37 @@ export async function mountGame(
           trainingDummyFsm.phase === "ragdoll" ||
           trainingDummyFsm.phase === "stand_up" ||
           trainingDummyFsm.phase === "recover",
+      });
+
+      readRigidBodyTransform(
+        physics.sparringNpcRigidBody,
+        sparringScratchPos,
+        sparringScratchQuat,
+      );
+      sparringNpcCharacter.root.position.set(
+        sparringScratchPos.x,
+        sparringScratchPos.y,
+        sparringScratchPos.z,
+      );
+      sparringNpcCharacter.root.quaternion.set(
+        sparringScratchQuat.x,
+        sparringScratchQuat.y,
+        sparringScratchQuat.z,
+        sparringScratchQuat.w,
+      );
+      const spVel = physics.sparringNpcRigidBody.linvel();
+      const spPlanarSpeed = Math.hypot(spVel.x, spVel.z);
+      const sparringLocomotionFreeze =
+        sparringNpcFsm.phase === "ragdoll" ||
+        sparringNpcFsm.phase === "stand_up" ||
+        sparringNpcFsm.phase === "recover";
+      const sparringWalkBlend = sparringLocomotionFreeze
+        ? 0
+        : Math.min(1, spPlanarSpeed / SPARRING_NPC_WANDER_SPEED);
+      sparringNpcCharacter.updateLocomotionAnim(dtSeconds, {
+        planarInput: sparringWalkBlend,
+        grounded: true,
+        freezePose: sparringLocomotionFreeze,
       });
 
       const { forward, strafe } = actionSample.interactModeOpen

@@ -23,7 +23,8 @@ export function attachCombatHitAudio(input: {
     if (ev.type !== "combat_hit") return;
     if (
       ev.hit.targetKind !== "training_bag" &&
-      ev.hit.targetKind !== "training_dummy"
+      ev.hit.targetKind !== "training_dummy" &&
+      ev.hit.targetKind !== "sparring_npc"
     ) {
       return;
     }

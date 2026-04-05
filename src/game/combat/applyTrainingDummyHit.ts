@@ -1,6 +1,9 @@
 /**
  * WS-090 / GP §2.4.1 — lab damage + Rapier impulse (split COM vs fist via `trainingDummyFeel`).
+ * WS-093 — optional `targetBody` for the harmless sparring partner (same math as the dummy).
  */
+import type RAPIER from "@dimforge/rapier3d-compat";
+
 import type { JohnStickPhysics } from "../physics/rapierWorld";
 import { facingRelativeMoveXZ } from "../player/moveFromFacing";
 import {
@@ -48,8 +51,9 @@ export function applyTrainingDummyHitFromStrike(
   bagScalars?: BagHitScalars,
   basePunchDamage: number = BAG_HIT_TUNING.baseDamage,
   feel: TrainingDummyFeelScalars = defaultTrainingDummyFeel(),
+  targetBody: RAPIER.RigidBody = physics.trainingDummyRigidBody,
 ): TrainingDummyHitOutcome {
-  const dummyT = physics.trainingDummyRigidBody.translation();
+  const dummyT = targetBody.translation();
   const fwd = facingRelativeMoveXZ(ctx.playerFacingYawRad, 1, 0);
   const planar = planarDirPlayerToTarget(
     { x: ctx.playerPos.x, z: ctx.playerPos.z },
@@ -79,7 +83,7 @@ export function applyTrainingDummyHitFromStrike(
   const { com: comShare, point: pointShare } =
     trainingDummyImpulseShares(feel.spinAmount);
 
-  const body = physics.trainingDummyRigidBody;
+  const body = targetBody;
   body.applyImpulse(
     {
       x: impulseWorld.x * comShare,

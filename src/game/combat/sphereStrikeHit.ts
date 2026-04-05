@@ -123,7 +123,11 @@ function probeHitSensor(
   );
 }
 
-export type StrikeHitTargetKind = "none" | "training_bag" | "training_dummy";
+export type StrikeHitTargetKind =
+  | "none"
+  | "training_bag"
+  | "training_dummy"
+  | "sparring_npc";
 
 export type SphereStrikeFixedStepResult = {
   /** WS-090 — which training target registered the strike this substep (bag checked before dummy). */
@@ -174,10 +178,25 @@ export function stepSphereStrikeHitFixed(
         contact,
         strike.lastContact,
       );
-    const touch = bagTouch || dummyTouch;
+    const sparringTouch =
+      !bagTouch &&
+      !dummyTouch &&
+      probeHitSensor(
+        physics.world,
+        physics,
+        physics.sparringNpcHurtCollider,
+        profile.radius,
+        contact,
+        strike.lastContact,
+      );
+    const touch = bagTouch || dummyTouch || sparringTouch;
     if (touch && !strike.hitConsumed) {
       strike.hitConsumed = true;
-      hitTarget = bagTouch ? "training_bag" : "training_dummy";
+      hitTarget = bagTouch
+        ? "training_bag"
+        : dummyTouch
+          ? "training_dummy"
+          : "sparring_npc";
       if (import.meta.env.DEV) {
         console.debug(
           "[combat] sphere strike →",
