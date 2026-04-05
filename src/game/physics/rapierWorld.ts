@@ -102,8 +102,11 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     -(floorHalfDepth + wallHalfThickness),
   );
 
+  /** Yaw-only spin: pitch/roll locked so Q/E facing + camera stay aligned (WS-032). */
   const demoRigidBody = world.createRigidBody(
-    RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 1.75, 0),
+    RAPIER.RigidBodyDesc.dynamic()
+      .setTranslation(0, 1.75, 0)
+      .enabledRotations(false, true, false),
   );
   const demoCollider = RAPIER.ColliderDesc.cuboid(0.22, 0.22, 0.22)
     .setDensity(2.2)
@@ -134,4 +137,19 @@ export function readRigidBodyTransform(
   outQuat.y = r.y;
   outQuat.z = r.z;
   outQuat.w = r.w;
+}
+
+/**
+ * WS-032 — world-space yaw (radians, about +Y) matches keyboard facing + third-person camera orbit.
+ * Call **before** `world.step()` so contacts use the current facing; clears angular velocity so
+ * collisions do not add pitch/roll or spin on Y.
+ */
+export function syncRigidBodyYawFromFacing(
+  body: RAPIER.RigidBody,
+  yawRad: number,
+  wakeUp = true,
+): void {
+  const half = yawRad * 0.5;
+  body.setRotation({ x: 0, y: Math.sin(half), z: 0, w: Math.cos(half) }, wakeUp);
+  body.setAngvel({ x: 0, y: 0, z: 0 }, wakeUp);
 }

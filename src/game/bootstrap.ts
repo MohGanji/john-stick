@@ -5,11 +5,13 @@ import {
   updateThirdPersonFollowCamera,
 } from "./camera";
 import { runGameLoop } from "./gameLoop";
+import { attachKeyboardYaw } from "./input/keyboardYaw";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import {
   createJohnStickPhysics,
   readRigidBodyTransform,
   stepPhysicsWorld,
+  syncRigidBodyYawFromFacing,
 } from "./physics/rapierWorld";
 import { createJohnStickRenderSetup } from "./render";
 
@@ -35,14 +37,19 @@ export async function mountGame(root: HTMLElement): Promise<void> {
   const scratchPos = { x: 0, y: 0, z: 0 };
   const scratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const followCamScratch = createThirdPersonFollowScratch();
-  /** WS-032: drive with Q/E (keyboard yaw). */
-  let cameraYawRad = 0;
+  const keyboardYaw = attachKeyboardYaw(window);
+  /**
+   * WS-032 — shared **facing** yaw (radians, +Y): demo body + follow camera use the same angle
+   * so the camera stays behind the player’s forward (+Z mesh axis at yaw 0).
+   */
+  let facingYawRad = 0;
 
   runGameLoop({
-    update(_dtSeconds) {
-      // Input sampling (WS-050+). No physics.
+    update(dtSeconds) {
+      facingYawRad += keyboardYaw.consumeYawDeltaRad(dtSeconds);
     },
     fixedStep(_fixedDtSeconds) {
+      syncRigidBodyYawFromFacing(physics.demoRigidBody, facingYawRad);
       stepPhysicsWorld(physics.world);
     },
     /**
@@ -65,7 +72,7 @@ export async function mountGame(root: HTMLElement): Promise<void> {
       updateThirdPersonFollowCamera(
         camera,
         scratchPos,
-        cameraYawRad,
+        facingYawRad,
         dtSeconds,
         followCamScratch,
         {

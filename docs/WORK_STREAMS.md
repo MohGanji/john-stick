@@ -249,7 +249,7 @@ flowchart TB
   - **@** `role-gameplay-programmer`  
   - **GP** §3.1.1  
 
-- [ ] **WS-032** — Keyboard yaw (e.g. **Q/E**); document camera vs character rotation choice.  
+- [x] **WS-032** — Keyboard yaw (e.g. **Q/E**); document camera vs character rotation choice.  
   - **Depends:** WS-030  
   - **∥** WS-031  
   - **@** `role-gameplay-programmer`  

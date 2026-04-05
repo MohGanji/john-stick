@@ -8,6 +8,7 @@ export {
   createJohnStickPhysics,
   readRigidBodyTransform,
   stepPhysicsWorld,
+  syncRigidBodyYawFromFacing,
   type JohnStickPhysics,
 } from "./physics/rapierWorld";
 export {
