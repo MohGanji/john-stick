@@ -29,11 +29,54 @@ import {
   type CombatStaminaTuning,
 } from "../combat/combatStamina";
 
-/** Live bag scalars (tier multiplier tables stay on `BAG_HIT_TUNING`). */
+/** Live bag scalars — impulses only; damage uses `combatBasics.basePunchDamage` × tier table. */
 export type BagHitScalars = {
   basePlanarImpulse: number;
   upwardImpulse: number;
-  baseDamage: number;
+};
+
+/**
+ * Global combat baseline for tuning (dev HUD).
+ * **`baseEnemyHealth`** is authored for the **reference enemy** (training dummy today); other enemies multiply from these (×N later).
+ * @see `docs/FUTURE_DESIGN_NOTES.md` — “Enemies: training dummy as canonical feel + size scaling”
+ */
+export type CombatBasicsScalars = {
+  /** Tier-0 punch damage before `bagDamageTierMultiplier` (GP §6.2.2). */
+  basePunchDamage: number;
+  /** Max “lab HP” for a basic target (training dummy ragdoll when cumulative damage ≥ this). */
+  baseEnemyHealth: number;
+};
+
+/**
+ * **Canonical enemy hit-receive feel** (dev HUD): kickback, spin, reaction timing, ragdoll get-up.
+ * The training dummy is the first instance; future enemies should reuse these curves/scalars before adding per-archetype overrides.
+ * **Size scaling** (mass/height vs reference) is deferred — see `docs/FUTURE_DESIGN_NOTES.md`.
+ */
+export type TrainingDummyFeelScalars = {
+  /** Multiplier on planar + upward strike impulse vs bag-tuned base. */
+  kickbackScale: number;
+  /**
+   * 0 = mostly center-of-mass push, high angular damping; 1 = more fist impulse + spinier.
+   */
+  spinAmount: number;
+  /** Rapier linear damping while dynamic (slide distance after shove). */
+  linearDamping: number;
+  /** Pre-ragdoll hit flash length. */
+  hitReactSec: number;
+  /** Pre-ragdoll stagger before stand-up or ragdoll threshold exit. */
+  staggerHoldSec: number;
+  /** Ragdoll: minimum time down before recover can start (if settled). */
+  ragdollDownBeforeRecoverSec: number;
+  /** Ragdoll: kinematic blend duration back to spawn (longer = slower stand-up). */
+  ragdollStandUpBlendSec: number;
+  /** Ragdoll: force recover after this long if still down. */
+  ragdollDownMaxSec: number;
+  /** Below knockdown: in-place stand blend after stagger. */
+  lightHitStandBlendSec: number;
+  /** Ragdoll exit: max planar speed to count as “settled”. */
+  ragdollSettlePlanarSpeed: number;
+  /** Ragdoll exit: max angular speed to count as “settled”. */
+  ragdollSettleAngSpeed: number;
 };
 
 export type PlayerLocomotionScalars = {
@@ -82,6 +125,8 @@ export type VfxDevScalars = {
 export type GameplayRuntimeTuning = {
   juice: CombatJuiceTuningValues;
   bag: BagHitScalars;
+  combatBasics: CombatBasicsScalars;
+  trainingDummyFeel: TrainingDummyFeelScalars;
   /**
    * WS-080 + WS-081 — sphere probes + input cooldown (dev HUD overwrites shipped table defaults).
    */
@@ -95,6 +140,8 @@ export type GameplayRuntimeTuning = {
   vfx: VfxDevScalars;
   resetJuice(): void;
   resetBag(): void;
+  resetCombatBasics(): void;
+  resetTrainingDummyFeel(): void;
   resetStrikes(): void;
   resetCombatStamina(): void;
   resetPlayer(): void;
@@ -113,7 +160,29 @@ function defaultBag(): BagHitScalars {
   return {
     basePlanarImpulse: BAG_HIT_TUNING.basePlanarImpulse,
     upwardImpulse: BAG_HIT_TUNING.upwardImpulse,
-    baseDamage: BAG_HIT_TUNING.baseDamage,
+  };
+}
+
+function defaultCombatBasics(): CombatBasicsScalars {
+  return {
+    basePunchDamage: BAG_HIT_TUNING.baseDamage,
+    baseEnemyHealth: 100,
+  };
+}
+
+export function defaultTrainingDummyFeel(): TrainingDummyFeelScalars {
+  return {
+    kickbackScale: 2,
+    spinAmount: 0.22,
+    linearDamping: 0.95,
+    hitReactSec: 0.09,
+    staggerHoldSec: 0.52,
+    ragdollDownBeforeRecoverSec: 0.82,
+    ragdollStandUpBlendSec: 0.55,
+    ragdollDownMaxSec: 4.6,
+    lightHitStandBlendSec: 0.38,
+    ragdollSettlePlanarSpeed: 0.42,
+    ragdollSettleAngSpeed: 0.62,
   };
 }
 
@@ -205,6 +274,8 @@ function defaultCombatStamina(): CombatStaminaTuning {
 export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
   const juice = defaultJuice();
   const bag = defaultBag();
+  const combatBasics = defaultCombatBasics();
+  const trainingDummyFeel = defaultTrainingDummyFeel();
   const strikes = defaultStrikes();
   const player = defaultPlayer();
   const cameraFollow = defaultCameraFollow();
@@ -216,6 +287,8 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
   return {
     juice,
     bag,
+    combatBasics,
+    trainingDummyFeel,
     strikes,
     combatStamina,
     player,
@@ -228,6 +301,12 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     },
     resetBag() {
       Object.assign(bag, defaultBag());
+    },
+    resetCombatBasics() {
+      Object.assign(combatBasics, defaultCombatBasics());
+    },
+    resetTrainingDummyFeel() {
+      Object.assign(trainingDummyFeel, defaultTrainingDummyFeel());
     },
     resetStrikes() {
       applyDefaultStrikesInPlace(strikes);
@@ -253,6 +332,8 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     resetAll() {
       Object.assign(juice, defaultJuice());
       Object.assign(bag, defaultBag());
+      Object.assign(combatBasics, defaultCombatBasics());
+      Object.assign(trainingDummyFeel, defaultTrainingDummyFeel());
       Object.assign(player, defaultPlayer());
       Object.assign(cameraFollow, defaultCameraFollow());
       Object.assign(camera, defaultCamera());

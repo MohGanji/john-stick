@@ -1,5 +1,5 @@
 /**
- * WS-090 / GP §2.4.1 — lab damage + Rapier impulse at the fist (dynamic dummy recoils / tips like the bag).
+ * WS-090 / GP §2.4.1 — lab damage + Rapier impulse (split COM vs fist via `trainingDummyFeel`).
  */
 import type { JohnStickPhysics } from "../physics/rapierWorld";
 import { facingRelativeMoveXZ } from "../player/moveFromFacing";
@@ -8,8 +8,13 @@ import {
   bagDamageTierMultiplier,
   bagImpulseDamageTierMultiplier,
 } from "./bagHitTuning";
-import type { BagHitScalars } from "../tuning/gameplayRuntimeTuning";
+import {
+  defaultTrainingDummyFeel,
+  type BagHitScalars,
+  type TrainingDummyFeelScalars,
+} from "../tuning/gameplayRuntimeTuning";
 import type { TrainingBagHitContext } from "./applyTrainingBagHit";
+import { trainingDummyImpulseShares } from "./trainingDummyFeel";
 
 export type TrainingDummyHitOutcome = {
   damageDealt: number;
@@ -41,6 +46,8 @@ export function applyTrainingDummyHitFromStrike(
   physics: JohnStickPhysics,
   ctx: TrainingBagHitContext,
   bagScalars?: BagHitScalars,
+  basePunchDamage: number = BAG_HIT_TUNING.baseDamage,
+  feel: TrainingDummyFeelScalars = defaultTrainingDummyFeel(),
 ): TrainingDummyHitOutcome {
   const dummyT = physics.trainingDummyRigidBody.translation();
   const fwd = facingRelativeMoveXZ(ctx.playerFacingYawRad, 1, 0);
@@ -53,13 +60,13 @@ export function applyTrainingDummyHitFromStrike(
   const bases = bagScalars ?? {
     basePlanarImpulse: BAG_HIT_TUNING.basePlanarImpulse,
     upwardImpulse: BAG_HIT_TUNING.upwardImpulse,
-    baseDamage: BAG_HIT_TUNING.baseDamage,
   };
   const impMul = bagImpulseDamageTierMultiplier(ctx.chargeTierIndex);
   const dmgMul = bagDamageTierMultiplier(ctx.chargeTierIndex);
+  const kick = feel.kickbackScale;
   const planarMag =
-    bases.basePlanarImpulse * impMul * IMPULSE_SCALE_VS_BAG;
-  const iy = bases.upwardImpulse * impMul * IMPULSE_SCALE_VS_BAG;
+    bases.basePlanarImpulse * impMul * IMPULSE_SCALE_VS_BAG * kick;
+  const iy = bases.upwardImpulse * impMul * IMPULSE_SCALE_VS_BAG * kick;
 
   const impulseWorld = {
     x: planar.x * planarMag,
@@ -67,10 +74,26 @@ export function applyTrainingDummyHitFromStrike(
     z: planar.z * planarMag,
   };
 
-  const damageDealt = bases.baseDamage * dmgMul;
+  const damageDealt = basePunchDamage * dmgMul;
 
-  physics.trainingDummyRigidBody.applyImpulseAtPoint(
-    impulseWorld,
+  const { com: comShare, point: pointShare } =
+    trainingDummyImpulseShares(feel.spinAmount);
+
+  const body = physics.trainingDummyRigidBody;
+  body.applyImpulse(
+    {
+      x: impulseWorld.x * comShare,
+      y: impulseWorld.y * comShare,
+      z: impulseWorld.z * comShare,
+    },
+    true,
+  );
+  body.applyImpulseAtPoint(
+    {
+      x: impulseWorld.x * pointShare,
+      y: impulseWorld.y * pointShare,
+      z: impulseWorld.z * pointShare,
+    },
     ctx.fistWorld,
     true,
   );

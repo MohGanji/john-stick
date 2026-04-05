@@ -44,10 +44,20 @@ import {
   type SphereStrikeHitDebugSnapshot,
 } from "./combat/sphereStrikeHit";
 import { createTrainingDummyFsm, stepTrainingDummyFsm } from "./combat/trainingDummyFsm";
+import {
+  trainingDummyAngularDampingFromSpin,
+  trainingDummyFsmTimingFromFeel,
+} from "./combat/trainingDummyFeel";
 import { FIXED_DT } from "./gameLoop";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import { createPunchingBagHangerVisual } from "./level/punchingBagHangerVisual";
 import { createPunchingBagSwingMesh } from "./level/punchingBagPlaceholder";
+import {
+  armTrainingDummyRecover,
+  armTrainingDummyStandUp,
+  prePhysicsTrainingDummy,
+  rigidBodyPlanarSpeedLinAng,
+} from "./physics/trainingDummyAuthority";
 import {
   createJohnStickPhysics,
   readRigidBodyTransform,
@@ -298,6 +308,26 @@ export async function mountGame(
     fixedStep(_fixedDtSeconds) {
       combatSimTimeSec += FIXED_DT;
 
+      const dummyFeel = gameplayTuning.trainingDummyFeel;
+      const dummyFsmTiming = trainingDummyFsmTimingFromFeel(dummyFeel);
+
+      const dummyPrePhys = prePhysicsTrainingDummy(
+        physics.trainingDummyRigidBody,
+        trainingDummyFsm,
+        FIXED_DT,
+        dummyFsmTiming.recoverBlendSec,
+        dummyFsmTiming.standUpBlendSec,
+      );
+      if (dummyPrePhys.resetLabDamageAfterRagdollRecover) {
+        trainingDummyLabDamageTotal = 0;
+      }
+
+      const dummyBody = physics.trainingDummyRigidBody;
+      dummyBody.setLinearDamping(dummyFeel.linearDamping);
+      dummyBody.setAngularDamping(
+        trainingDummyAngularDampingFromSpin(dummyFeel.spinAmount),
+      );
+
       let lungeThisStep = pendingStrikeLungeForwardMeters;
       pendingStrikeLungeForwardMeters = 0;
 
@@ -382,6 +412,7 @@ export async function mountGame(
             chargeTierIndex: tier,
           },
           gameplayTuning.bag,
+          gameplayTuning.combatBasics.basePunchDamage,
         );
         punchingBagLabDamageTotal += damageDealt;
         combatEvents.emit({
@@ -406,7 +437,9 @@ export async function mountGame(
         }
       } else if (
         strikeHit.hitTarget === "training_dummy" &&
-        moveIdForBagHit !== null
+        moveIdForBagHit !== null &&
+        trainingDummyFsm.phase !== "recover" &&
+        trainingDummyFsm.phase !== "stand_up"
       ) {
         const moveId = moveIdForBagHit;
         const tier = strikeBagChargeTierIndex(moveId);
@@ -419,6 +452,8 @@ export async function mountGame(
             chargeTierIndex: tier,
           },
           gameplayTuning.bag,
+          gameplayTuning.combatBasics.basePunchDamage,
+          gameplayTuning.trainingDummyFeel,
         );
         dummyHitImpulseForFsm = impulseWorld;
         trainingDummyLabDamageTotal += damageDealt;
@@ -435,8 +470,10 @@ export async function mountGame(
         });
         if (import.meta.env.DEV) {
           console.debug(
-            "[combat] dummy hit — lab damage total",
+            "[combat] dummy hit — damage total",
             trainingDummyLabDamageTotal,
+            "/",
+            gameplayTuning.combatBasics.baseEnemyHealth,
             "(+",
             damageDealt,
             ")",
@@ -444,12 +481,28 @@ export async function mountGame(
         }
       }
 
-      stepTrainingDummyFsm(
+      const dummyMotion = rigidBodyPlanarSpeedLinAng(
+        physics.trainingDummyRigidBody,
+      );
+      const dummyFsmStep = stepTrainingDummyFsm(
         trainingDummyFsm,
         FIXED_DT,
         dummyHitImpulseForFsm !== null,
         dummyHitImpulseForFsm,
+        {
+          labDamageTotal: trainingDummyLabDamageTotal,
+          ragdollLinPlanarSpeed: dummyMotion.linPlanar,
+          ragdollAngSpeed: dummyMotion.ang,
+          basicEnemyMaxHealth: gameplayTuning.combatBasics.baseEnemyHealth,
+        },
+        dummyFsmTiming,
       );
+      if (dummyFsmStep.armRecover) {
+        armTrainingDummyRecover(physics.trainingDummyRigidBody, trainingDummyFsm);
+      }
+      if (dummyFsmStep.armStandUp) {
+        armTrainingDummyStandUp(physics.trainingDummyRigidBody, trainingDummyFsm);
+      }
 
       if (
         hadActiveStrikeWindow &&
@@ -535,6 +588,9 @@ export async function mountGame(
       trainingDummyCharacter.updateLocomotionAnim(dtSeconds, {
         planarInput: 0,
         grounded: true,
+        freezePose:
+          trainingDummyFsm.phase === "ragdoll" ||
+          trainingDummyFsm.phase === "stand_up",
       });
 
       const { forward, strafe } = actionSample.interactModeOpen

@@ -24,7 +24,7 @@ export type PlayerCharacter = {
   readonly root: THREE.Object3D;
   updateLocomotionAnim(
     dtSeconds: number,
-    opts: { planarInput: number; grounded: boolean },
+    opts: { planarInput: number; grounded: boolean; freezePose?: boolean },
   ): void;
   /**
    * WS-081 — if `strikePresentationClipName(moveId)` exists in the glb, briefly cross-fade to it
@@ -123,7 +123,8 @@ export async function loadPlayerCharacter(
 
   return {
     root: gltf.scene,
-    updateLocomotionAnim(dtSeconds, { planarInput, grounded }) {
+    updateLocomotionAnim(dtSeconds, { planarInput, grounded, freezePose }) {
+      const dtAnim = freezePose ? 0 : dtSeconds;
       if (!strikePresentationBusy) {
         const moving = grounded && planarInput > WALK_BLEND_THRESHOLD;
         if (moving && mode === "idle") {
@@ -144,7 +145,7 @@ export async function loadPlayerCharacter(
         }
       }
 
-      mixer.update(dtSeconds);
+      mixer.update(dtAnim);
     },
     beginStrikePresentation(moveId: StrikeMoveId) {
       const clipName = strikePresentationClipName(moveId);

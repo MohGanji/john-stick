@@ -109,3 +109,15 @@
 **Future idea:** When compound / sequence `MoveId`s drive hits (WS-081+), map **`attackKind` or `MoveId` → preset** (or small preset **pool**) so **each combo has its own sonic identity**, with optional **deterministic seed** from combo id + hit index in a chain for reproducible takes, plus **authoritative Ogg** stems when assets land.
 
 **Related:** `attachCombatHitAudio.ts`, `trainingBagSfxPresets.ts`, `GameplayRuntimeTuning.audio.trainingBagSfxByAttackKind`, GP §8, WS-081.
+
+---
+
+## Enemies: training dummy as canonical feel + size scaling (future)
+
+**Intent (2026-04):** The **training dummy** is not a one-off prop — it is the **reference implementation** for how **every enemy** should look and move under hits: same **FSM shape** (hit / stagger / stand-up / ragdoll / recover), same **impulse split** (COM vs fist), **damping**, **timing**, and **dev-tuned scalars** in `GameplayRuntimeTuning.trainingDummyFeel` and `combatBasics`. New enemies should **reuse** this pipeline first, then vary **data** (HP multiplier, move set, AI), not reinvent hit physics.
+
+**Future idea — proportional scaling by enemy size / mass:** When enemies have **different scale** (e.g. giant vs mook), **derive** effective impulses, damping, and possibly timing from a **reference height/mass** (today’s dummy) × a **per-enemy scale factor**. Heavier / larger bodies should **accelerate less** from the same strike impulse (and may need **collider + mass** scaled with volume so Rapier already does part of the job). Explicit **gameplay multipliers** can still sit on top (boss armor, etc.), but the **default** should be: *same tuning sheet, scaled dimensions → naturally weaker relative kickback on huge targets* without hand-authoring every giant’s “kickback slider.”
+
+**Implementation sketch (later):** `enemyScale` or `massRatio` vs dummy reference; multiply **incoming strike impulse** by `1 / massRatio` (or similar), scale **linear/angular damping** and **settle thresholds** if needed so ragdoll exit still feels fair; keep **FSM timings** in sim seconds or optionally stretch slightly with scale for readability.
+
+**Related:** `src/game/tuning/gameplayRuntimeTuning.ts` (`TrainingDummyFeelScalars`, `CombatBasicsScalars`), `src/game/combat/trainingDummyFeel.ts`, `applyTrainingDummyHitFromStrike.ts`, `trainingDummyFsm.ts`, `trainingDummyAuthority.ts`, GP §6.1, WS-093+ harmless NPCs.

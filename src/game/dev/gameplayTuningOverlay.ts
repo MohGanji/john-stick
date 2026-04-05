@@ -701,8 +701,240 @@ export function attachGameplayTuningOverlay(
     });
   }
 
+  function wireTrainingDummyFeel(): void {
+    body.appendChild(sectionTitle("Training dummy — kickback / spin / get-up"));
+    const note = document.createElement("p");
+    note.style.cssText =
+      "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
+    note.textContent =
+      "Kickback scales strike impulse on the dummy only. Spin: low = shove, high = more fist torque + spin persists. Ragdoll get-up = wait on floor before blend + how long the blend to spawn takes. Light stagger = pre-KD hit react + in-place stand.";
+    body.appendChild(note);
+
+    const d = tuning.trainingDummyFeel;
+
+    const sliders: {
+      key: string;
+      label: string;
+      min: number;
+      max: number;
+      step: number;
+      format: (v: number) => string;
+      read: () => number;
+      write: (v: number) => void;
+    }[] = [
+      {
+        key: "td_kick",
+        label: "Kickback scale",
+        min: 0.35,
+        max: 10,
+        step: 0.05,
+        format: (v) => v.toFixed(2),
+        read: () => d.kickbackScale,
+        write: (v) => {
+          d.kickbackScale = Math.max(0.1, v);
+        },
+      },
+      {
+        key: "td_spin",
+        label: "Spin / tumble (0–1)",
+        min: 0,
+        max: 1,
+        step: 0.05,
+        format: (v) => v.toFixed(2),
+        read: () => d.spinAmount,
+        write: (v) => {
+          d.spinAmount = Math.min(1, Math.max(0, v));
+        },
+      },
+      {
+        key: "td_ld",
+        label: "Slide drag (linear damping)",
+        min: 0.25,
+        max: 2.2,
+        step: 0.05,
+        format: (v) => v.toFixed(2),
+        read: () => d.linearDamping,
+        write: (v) => {
+          d.linearDamping = Math.max(0.05, v);
+        },
+      },
+      {
+        key: "td_hit",
+        label: "Light hit — react flash (s)",
+        min: 0.02,
+        max: 0.4,
+        step: 0.01,
+        format: (v) => v.toFixed(2),
+        read: () => d.hitReactSec,
+        write: (v) => {
+          d.hitReactSec = Math.max(0.01, v);
+        },
+      },
+      {
+        key: "td_stag",
+        label: "Light hit — stagger hold (s)",
+        min: 0.08,
+        max: 1.6,
+        step: 0.02,
+        format: (v) => v.toFixed(2),
+        read: () => d.staggerHoldSec,
+        write: (v) => {
+          d.staggerHoldSec = Math.max(0.03, v);
+        },
+      },
+      {
+        key: "td_lsb",
+        label: "Light hit — stand-up blend (s)",
+        min: 0.12,
+        max: 1.4,
+        step: 0.02,
+        format: (v) => v.toFixed(2),
+        read: () => d.lightHitStandBlendSec,
+        write: (v) => {
+          d.lightHitStandBlendSec = Math.max(0.05, v);
+        },
+      },
+      {
+        key: "td_rdwn",
+        label: "Ragdoll — min down before get-up (s)",
+        min: 0.15,
+        max: 4,
+        step: 0.05,
+        format: (v) => v.toFixed(2),
+        read: () => d.ragdollDownBeforeRecoverSec,
+        write: (v) => {
+          d.ragdollDownBeforeRecoverSec = Math.max(0.05, v);
+        },
+      },
+      {
+        key: "td_rblend",
+        label: "Ragdoll — get-up blend to spawn (s)",
+        min: 0.15,
+        max: 2.2,
+        step: 0.05,
+        format: (v) => v.toFixed(2),
+        read: () => d.ragdollStandUpBlendSec,
+        write: (v) => {
+          d.ragdollStandUpBlendSec = Math.max(0.08, v);
+        },
+      },
+      {
+        key: "td_rmax",
+        label: "Ragdoll — max down (timeout, s)",
+        min: 1,
+        max: 14,
+        step: 0.2,
+        format: (v) => v.toFixed(1),
+        read: () => d.ragdollDownMaxSec,
+        write: (v) => {
+          d.ragdollDownMaxSec = Math.max(0.5, v);
+        },
+      },
+      {
+        key: "td_slin",
+        label: "Ragdoll — settle planar speed max",
+        min: 0.08,
+        max: 1.4,
+        step: 0.02,
+        format: (v) => v.toFixed(2),
+        read: () => d.ragdollSettlePlanarSpeed,
+        write: (v) => {
+          d.ragdollSettlePlanarSpeed = Math.max(0.02, v);
+        },
+      },
+      {
+        key: "td_sang",
+        label: "Ragdoll — settle spin speed max",
+        min: 0.15,
+        max: 2.2,
+        step: 0.05,
+        format: (v) => v.toFixed(2),
+        read: () => d.ragdollSettleAngSpeed,
+        write: (v) => {
+          d.ragdollSettleAngSpeed = Math.max(0.05, v);
+        },
+      },
+    ];
+
+    for (const s of sliders) {
+      syncSliders.push(
+        bindSlider(
+          body,
+          {
+            key: s.key,
+            label: s.label,
+            min: s.min,
+            max: s.max,
+            step: s.step,
+            format: s.format,
+          },
+          s.read,
+          s.write,
+          () => {},
+        ),
+      );
+    }
+
+    resetRow(body, "Reset training dummy feel", () => {
+      tuning.resetTrainingDummyFeel();
+      refreshAllSliders();
+    });
+  }
+
+  function wireCombatBasics(): void {
+    body.appendChild(sectionTitle("Combat baseline (×N later)"));
+    const note = document.createElement("p");
+    note.style.cssText =
+      "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
+    note.textContent =
+      "Base punch damage × charge tier table applies to bag + dummy hits. Base enemy health = training dummy knockdown threshold (cumulative lab damage). Future: multiply these for other enemies / moves.";
+    body.appendChild(note);
+
+    const c = tuning.combatBasics;
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "cb_dmg",
+          label: "Base punch damage (tier 0)",
+          min: 1,
+          max: 80,
+          step: 1,
+          format: (v) => String(Math.round(v)),
+        },
+        () => c.basePunchDamage,
+        (v) => {
+          c.basePunchDamage = Math.max(1, v);
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "cb_hp",
+          label: "Base enemy health (dummy KD)",
+          min: 20,
+          max: 400,
+          step: 5,
+          format: (v) => String(Math.round(v)),
+        },
+        () => c.baseEnemyHealth,
+        (v) => {
+          c.baseEnemyHealth = Math.max(1, v);
+        },
+        () => {},
+      ),
+    );
+    resetRow(body, "Reset combat baseline", () => {
+      tuning.resetCombatBasics();
+      refreshAllSliders();
+    });
+  }
+
   function wireBag(): void {
-    body.appendChild(sectionTitle("Bag hit (lab)"));
+    body.appendChild(sectionTitle("Bag hit (lab) — impulses"));
     const b = tuning.bag;
     syncSliders.push(
       bindSlider(
@@ -740,25 +972,7 @@ export function attachGameplayTuningOverlay(
         () => {},
       ),
     );
-    syncSliders.push(
-      bindSlider(
-        body,
-        {
-          key: "d",
-          label: "Base damage",
-          min: 1,
-          max: 40,
-          step: 1,
-          format: (v) => String(Math.round(v)),
-        },
-        () => b.baseDamage,
-        (v) => {
-          b.baseDamage = v;
-        },
-        () => {},
-      ),
-    );
-    resetRow(body, "Reset bag", () => {
+    resetRow(body, "Reset bag impulses", () => {
       tuning.resetBag();
       refreshAllSliders();
     });
@@ -982,6 +1196,8 @@ export function attachGameplayTuningOverlay(
   wireCombatStamina();
   wireAudio();
   wireHitBurstVfx();
+  wireCombatBasics();
+  wireTrainingDummyFeel();
   wireBag();
   wirePlayer();
   wireCameraFollow();

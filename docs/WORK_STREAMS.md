@@ -77,6 +77,8 @@ flowchart TB
     WS090[WS-090 Dummy + AI FSM]
     WS091[WS-091 Ragdoll + recover]
     WS092[WS-092 Stagger tuning]
+    WS093[WS-093 Dojo harmless NPC]
+    WS094[WS-094 Limb ragdoll]
   end
 
   subgraph W10["Wave 10 — Dojo UX"]
@@ -134,6 +136,9 @@ flowchart TB
   WS062 --> WS090
   WS090 --> WS091
   WS091 --> WS092
+  WS091 --> WS093
+  WS091 --> WS094
+  WS041 --> WS094
 
   WS021 --> WS100
   WS050 --> WS101
@@ -182,6 +187,8 @@ flowchart TB
 | WS-090 | 9 | WS-062 | done | `role-gameplay-programmer` | Dummy + states GP §2.1.2 |
 | WS-091 | 9 | WS-090, WS-011 | — | `role-physics-programmer` + `role-technical-animator` | Ragdoll + get-up GP §6.1 |
 | WS-092 | 9 | WS-091 | — | `role-lead-game-designer` + `role-physics-programmer` | Threshold tuning GP §6.1.2 |
+| WS-093 | 9 | WS-091, WS-040, WS-041 | WS-092 | `role-gameplay-programmer` + `role-lead-game-designer` | Harmless dojo NPC wander + hits; juice QA GP §2.3.2 |
+| WS-094 | 9 | WS-091, WS-041 | WS-092 | `role-physics-programmer` + `role-technical-animator` | **Articulated** ragdoll (multi-body + joints) GP §5.2.1, §6.1, §6.4 |
 | WS-100 | 10 | WS-021 | WS-101 | `role-environment-artist` + `role-art-director` | Replace placeholder geo GP §7.1 |
 | WS-101 | 10 | WS-050, WS-030 | WS-100 | `role-level-designer` + `role-narrative-designer` | Signs + interact GP §2.4.2 |
 | WS-102 | 10 | WS-101 | — | `role-ux-ui-designer` | Context prompts GP §9.1.2 |
@@ -347,15 +354,29 @@ flowchart TB
   - **@** `role-gameplay-programmer`  
   - **GP** §2.1.2  
 
-- [ ] **WS-091** — Ragdoll activation + recovery / blend to stance.  
+- [x] **WS-091** — Ragdoll activation + recovery / blend to stance.  
   - **Depends:** WS-090, WS-011  
   - **@** `role-physics-programmer` · `role-technical-animator`  
   - **GP** §6.1  
+  - **Build (shipped):** One **dynamic capsule** per dummy — knockdown uses **full body rotation**, recover blends to spawn / stand-up. **Not** per-limb Rapier bodies; that scope is **WS-094** (GP §5.2.1). Stiff stick mesh is still **demo / skinned follow** until articulated ragdoll + final character art land.
+
+- [ ] **WS-094** — **Articulated ragdoll** — Rapier **multi-body** chain (or equivalent) mapped from `docs/CHARACTER_RIG_MAP.md`, joint limits, skinned mesh driven by physics poses; reuse dummy FSM + `trainingDummyFeel` as baseline. Respect **perf cap** (GP §6.4.2).  
+  - **Depends:** WS-091, WS-041  
+  - **∥** WS-092  
+  - **@** `role-physics-programmer` · `role-technical-animator`  
+  - **GP** §5.2.1, §6.1.1, §6.4.1–§6.4.2  
 
 - [ ] **WS-092** — Tune stagger → ragdoll thresholds with bag + dummy.  
   - **Depends:** WS-091  
   - **@** `role-lead-game-designer` · `role-physics-programmer`  
   - **GP** §6.1.2  
+
+- [ ] **WS-093** — Dojo **harmless sparring NPC**: walks / wanders in the training hall, takes punches and kicks (same combat resolution as the dummy target), **does not damage or attack** the player; after ragdoll + **get-up** (WS-091), returns to wander so you can repeatedly test **VFX, SFX, hit-stop, and physics** on a **moving** opponent.  
+  - **Depends:** WS-091, WS-040, WS-041  
+  - **∥** WS-092  
+  - **@** `role-gameplay-programmer` · `role-lead-game-designer`  
+  - **GP** §2.3.2, §2.1.2, §6.3.x, §8.x  
+  - **Note:** Ships in dojo only as a **lab / QA** character unless promoted later; not a blocker for WS-120 unless playtest asks for it.  
 
 ### Wave 10 — Dojo presentation
 
