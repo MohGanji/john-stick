@@ -67,3 +67,15 @@
 **Future idea:** Insert a **`Neck`** bone: `Chest` → `Neck` → `Head`. Optionally a **short neck cylinder** (or invisible segment) skinned 100% to `Neck`; retarget **Idle/Walk** head motion onto `Neck` ± `Head`; update `CHARACTER_RIG_MAP.md` and any WS-091 bone ↔ collider tables. Coordinate with clip re-export so `PLAYER_ANIM_*` contracts stay stable.
 
 **Related:** `docs/CHARACTER_RIG_MAP.md` (visual vs physics, hinge table), `scripts/export-stick-character.mjs`, WS-091 ragdoll mapping.
+
+---
+
+## Audio: reference clip URL (optional sound-design shortcut)
+
+**What it is:** An **optional** workflow aid, not a requirement. Someone pastes a link to a **short clip** (gameplay capture, trailer moment, longplay timestamp, etc.) whose **punch / bag / impact** feel should be the north star.
+
+**Why it helps:** It gives a **shared target** (“snappier than Street Fighter, drier than Mortal Kombat”) so procedural presets, authored **Ogg** stems, or mix tweaks can be tuned **toward** that vibe instead of iterating only on adjectives.
+
+**How it could show up later:** A line in a sound brief, a pinned note in `docs/` or issue, or a field in a tooling checklist — **not** something the runtime or repo needs to fetch automatically.
+
+**Related:** `.cursor/rules/role-audio.mdc`, `src/game/audio/trainingBagSfxPresets.ts` (dev preset spectrum until real SFX), GP §8.

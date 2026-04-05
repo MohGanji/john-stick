@@ -45,6 +45,7 @@ import { createGameplayRuntimeTuning } from "./tuning/gameplayRuntimeTuning";
 import { attachCombatHitAudio } from "./audio/attachCombatHitAudio";
 import { createAudioMixer } from "./audio/audioMixer";
 import { playTrainingBagImpact } from "./audio/playTrainingBagImpact";
+import { attachCombatHitBurstVfx } from "./vfx/attachCombatHitBurstVfx";
 
 export type MountGameResult = {
   /** WS-070 / GP §4.3.3 — subscribe for hit-stop, SFX, VFX (WS-071+). */
@@ -119,6 +120,13 @@ export async function mountGame(
     getCamera: () => camera,
     getTrainingBagSfxStyle: () => gameplayTuning.audio.trainingBagSfxStyle,
   });
+  /** WS-073 / GP §6.3.2 — burst particles on `combat_hit` (queue + integrate in `lateUpdate`). */
+  const combatHitBurstVfx = attachCombatHitBurstVfx({
+    scene,
+    combatEvents,
+    getJuiceAccess: () => getCombatJuiceAccess(window),
+    getHitBurstStyle: () => gameplayTuning.vfx.hitBurstStyle,
+  });
   let leftPunchHitDebug: LeftPunchHitDebugSnapshot = {
     active: false,
     fistWorld: { x: 0, y: 0, z: 0 },
@@ -164,6 +172,30 @@ export async function mountGame(
             },
             gameplayTuning.audio.trainingBagSfxStyle,
           );
+        },
+        previewHitBurstVfx() {
+          const camPos = new THREE.Vector3();
+          camera.getWorldPosition(camPos);
+          const fwd = new THREE.Vector3();
+          camera.getWorldDirection(fwd);
+          const contact = camPos.clone().addScaledVector(fwd, 2.5);
+          combatHitBurstVfx.enqueuePreviewHit({
+            attackKind: "left_punch",
+            targetKind: "training_bag",
+            damageDealt: 1,
+            impulseWorld: {
+              x: fwd.x * 4,
+              y: fwd.y * 4,
+              z: fwd.z * 4,
+            },
+            contactWorld: {
+              x: contact.x,
+              y: contact.y,
+              z: contact.z,
+            },
+            chargeTierIndex: 0,
+          });
+          combatHitBurstVfx.flushQueuedSpawns();
         },
       });
     });
@@ -265,6 +297,8 @@ export async function mountGame(
      */
     lateUpdate(dtSeconds, _fixedStepAlpha) {
       combatHitAudio.flushQueuedCombatSounds();
+      combatHitBurstVfx.flushQueuedSpawns();
+      combatHitBurstVfx.update(dtSeconds);
       readRigidBodyTransform(
         physics.playerRigidBody,
         scratchPos,

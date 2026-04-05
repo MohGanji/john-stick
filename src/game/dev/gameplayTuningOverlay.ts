@@ -4,6 +4,11 @@ import {
   TRAINING_BAG_SFX_STYLE_ORDER,
   type TrainingBagSfxStyleId,
 } from "../audio/trainingBagSfxPresets";
+import {
+  HIT_BURST_VFX_PRESETS,
+  HIT_BURST_VFX_STYLE_ORDER,
+  type HitBurstVfxStyleId,
+} from "../vfx/hitBurstVfxPresets";
 
 const TOGGLE_CODE = "Period";
 
@@ -90,6 +95,8 @@ function resetRow(
 export type GameplayTuningOverlayOptions = {
   /** Plays the current training-bag preset once (needs user gesture + running AudioContext). */
   previewTrainingBagSfx?: () => void;
+  /** Spawns one hit burst with the current VFX preset (ignores reduced-motion VFX gate). */
+  previewHitBurstVfx?: () => void;
 };
 
 export function attachGameplayTuningOverlay(
@@ -325,6 +332,77 @@ export function attachGameplayTuningOverlay(
 
     resetRow(body, "Reset audio (preset)", () => {
       tuning.resetAudio();
+      refreshAllSliders();
+    });
+  }
+
+  function wireHitBurstVfx(): void {
+    body.appendChild(sectionTitle("Hit burst VFX (dev)"));
+    const note = document.createElement("p");
+    note.style.cssText =
+      "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
+    note.textContent =
+      "WS-073 additive particles on bag hit. Preset drives count, life, speed, color. Preview spawns in front of the camera (no SFX).";
+    body.appendChild(note);
+
+    const v = tuning.vfx;
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "margin:8px 0;";
+
+    const lab = document.createElement("label");
+    lab.style.cssText =
+      "display:block;color:#dbe7ff;opacity:0.92;font-size:12px;margin-bottom:4px;";
+    lab.textContent = "Hit burst preset";
+    lab.setAttribute("for", "js-vfx-hit-burst-style");
+
+    const sel = document.createElement("select");
+    sel.id = "js-vfx-hit-burst-style";
+    sel.style.cssText =
+      "width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1px solid rgba(120,140,200,0.45);background:rgba(28,36,60,0.95);color:#e8eefc;font:12px ui-sans-serif,system-ui,sans-serif;";
+
+    for (const id of HIT_BURST_VFX_STYLE_ORDER) {
+      const p = HIT_BURST_VFX_PRESETS[id];
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = p.title;
+      sel.appendChild(opt);
+    }
+
+    const blurb = document.createElement("p");
+    blurb.style.cssText =
+      "margin:8px 0 0 0;font-size:11px;line-height:1.35;opacity:0.82;color:#a8b8d8;";
+    function syncBlurb(): void {
+      blurb.textContent = HIT_BURST_VFX_PRESETS[v.hitBurstStyle].tagline;
+    }
+
+    function syncSelect(): void {
+      sel.value = v.hitBurstStyle;
+      syncBlurb();
+    }
+
+    syncSelect();
+
+    sel.addEventListener("change", () => {
+      v.hitBurstStyle = sel.value as HitBurstVfxStyleId;
+      syncBlurb();
+    });
+
+    wrap.appendChild(lab);
+    wrap.appendChild(sel);
+    wrap.appendChild(blurb);
+    body.appendChild(wrap);
+
+    syncExtras.push(syncSelect);
+
+    if (options?.previewHitBurstVfx) {
+      const preview = options.previewHitBurstVfx;
+      resetRow(body, "Preview hit burst", () => {
+        preview();
+      });
+    }
+
+    resetRow(body, "Reset hit burst (preset)", () => {
+      tuning.resetVfx();
       refreshAllSliders();
     });
   }
@@ -607,6 +685,7 @@ export function attachGameplayTuningOverlay(
 
   wireJuice();
   wireAudio();
+  wireHitBurstVfx();
   wireBag();
   wirePlayer();
   wireCameraFollow();

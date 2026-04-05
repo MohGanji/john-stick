@@ -320,7 +320,7 @@ flowchart TB
   - **@** `role-audio`  
   - **GP** §8.2.1  
 
-- [ ] **WS-073** — Hit VFX burst (particles or sprite) on event.  
+- [x] **WS-073** — Hit VFX burst (particles or sprite) on event.  
   - **Depends:** WS-070  
   - **∥** WS-071, WS-072  
   - **@** `role-vfx-artist` · `role-graphics-programmer`  

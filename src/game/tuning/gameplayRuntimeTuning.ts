@@ -11,6 +11,10 @@ import {
   DEFAULT_TRAINING_BAG_SFX_STYLE_ID,
   type TrainingBagSfxStyleId,
 } from "../audio/trainingBagSfxPresets";
+import {
+  DEFAULT_HIT_BURST_VFX_STYLE_ID,
+  type HitBurstVfxStyleId,
+} from "../vfx/hitBurstVfxPresets";
 
 /** Live bag scalars (tier multiplier tables stay on `BAG_HIT_TUNING`). */
 export type BagHitScalars = {
@@ -47,6 +51,11 @@ export type AudioDevScalars = {
   trainingBagSfxStyle: TrainingBagSfxStyleId;
 };
 
+export type VfxDevScalars = {
+  /** Hit burst preset (dev HUD); WS-073 `Points` burst on `combat_hit`. */
+  hitBurstStyle: HitBurstVfxStyleId;
+};
+
 export type GameplayRuntimeTuning = {
   juice: CombatJuiceTuningValues;
   bag: BagHitScalars;
@@ -54,12 +63,14 @@ export type GameplayRuntimeTuning = {
   cameraFollow: CameraFollowScalars;
   camera: CameraRenderScalars;
   audio: AudioDevScalars;
+  vfx: VfxDevScalars;
   resetJuice(): void;
   resetBag(): void;
   resetPlayer(): void;
   resetCameraFollow(): void;
   resetCamera(): void;
   resetAudio(): void;
+  resetVfx(): void;
   resetAll(): void;
 };
 
@@ -102,6 +113,10 @@ function defaultAudio(): AudioDevScalars {
   return { trainingBagSfxStyle: DEFAULT_TRAINING_BAG_SFX_STYLE_ID };
 }
 
+function defaultVfx(): VfxDevScalars {
+  return { hitBurstStyle: DEFAULT_HIT_BURST_VFX_STYLE_ID };
+}
+
 /**
  * Mutable gameplay scalars for dev tuning overlay and future settings.
  * Initialized from the same sources as module constants (`PLAYER_CAPSULE`, etc.).
@@ -113,6 +128,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
   const cameraFollow = defaultCameraFollow();
   const camera = defaultCamera();
   const audio = defaultAudio();
+  const vfx = defaultVfx();
 
   return {
     juice,
@@ -121,6 +137,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     cameraFollow,
     camera,
     audio,
+    vfx,
     resetJuice() {
       Object.assign(juice, defaultJuice());
     },
@@ -139,6 +156,9 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     resetAudio() {
       Object.assign(audio, defaultAudio());
     },
+    resetVfx() {
+      Object.assign(vfx, defaultVfx());
+    },
     resetAll() {
       Object.assign(juice, defaultJuice());
       Object.assign(bag, defaultBag());
@@ -146,6 +166,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
       Object.assign(cameraFollow, defaultCameraFollow());
       Object.assign(camera, defaultCamera());
       Object.assign(audio, defaultAudio());
+      Object.assign(vfx, defaultVfx());
     },
   };
 }
