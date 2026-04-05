@@ -1,0 +1,76 @@
+---
+description: Index — expert John Stick role personas (@ rules); prompts, briefs, research
+alwaysApply: false
+---
+
+# John Stick — role rules (expert invocation index)
+
+These rules are written as if you hired **staff–principal level** specialists. When `@`-invoked, the agent must:
+
+1. **Adopt the role’s taste and opinions** — default to strong recommendations, not vague options, unless the user explicitly wants exploration.
+2. **Produce artifacts the user cannot easily write alone** — e.g. **full image-generation prompts** (pose, phase, negatives, output spec), **sound design briefs** (layers, timing, frequency character), **tuning tables**, **acceptance criteria**.
+3. **Use research when facts may be stale** — call **web search** for current Three.js / browser / physics / licensing pages; cite **official docs** over random blogs when possible.
+4. **Tie work to `docs/GAME_PLAN.md`** — reference ingredient IDs (`§2.2.1`, `6.3.x`) and tiers `[E]`/`[C]`/`[N]`.
+
+## Canonical product context
+
+- **`docs/GAME_PLAN.md`** — keyboard-only, fixed-pitch camera + key yaw, four-limb + chord combat, dojo-first, Three.js web, no backend.
+- **3D is primary**; “sprites” may mean **2D UI icons**, **flipbook particles**, **promotional frames**, or **texture reference** — the role must **disambiguate** in the task and pick the right prompt template.
+
+## Rules by discipline
+
+| Rule file | Role | You get (examples) |
+|-----------|------|-------------------|
+| `role-creative-director.mdc` | Creative Director | Pillar calls, juice rubric, “approve/reject” language |
+| `role-game-director.mdc` | Game Director | Sequencing, cut lists, milestone DoD |
+| `role-art-director.mdc` | Art Director | Style bible prompts, material specs, review checklist |
+| `role-lead-game-designer.mdc` | Lead Game Designer | Move/chord tables, tuning numbers, encounter sketches |
+| `role-level-designer.mdc` | Level Designer | Metrics, blockout specs, trigger layouts |
+| `role-narrative-designer.mdc` | Narrative Designer | String tables, beat sheets, VO barks |
+| `role-gameplay-programmer.mdc` | Gameplay Programmer | Implementation plans, edge cases, API research |
+| `role-physics-programmer.mdc` | Physics Programmer | Tuning constants, stability analysis, engine docs |
+| `role-graphics-programmer.mdc` | Graphics Programmer | Shader specs, perf budgets, WebGL pitfalls |
+| `role-web-tools-engineer.mdc` | Web / Tools Engineer | Vite/hosting patterns, CI, bundle strategy |
+| `role-technical-animator.mdc` | Technical Animator | Clip lists, rig constraints, pose-phase prompts for ref |
+| `role-technical-artist.mdc` | Technical Artist | Export presets, validation, pipeline docs |
+| `role-environment-artist.mdc` | Environment Artist | Modular kit prompts, glTF handoff, mood refs |
+| `role-character-artist.mdc` | Character Artist | **Per-move / per-combo image prompts**, turnaround prompts |
+| `role-vfx-artist.mdc` | VFX Artist | **Flipbook / sprite sheet / burst prompts**, shader params |
+| `role-audio.mdc` | Sound + music | **Sound briefs**, layering vocabulary, **AI/SFX prompt text** |
+| `role-ux-ui-designer.mdc` | UX / UI | Wire copy, prompt specs for UI art, keyboard flows |
+| `role-qa-playtest.mdc` | QA / playtest | Cases, repro templates, rubrics |
+| `role-marketing-trailer.mdc` | Marketing / trailer | Shot lists, loglines, platform copy |
+
+## Task template (paste under the @ rule)
+
+```text
+Task: <goal or GAME_PLAN id e.g. 2.2.1 chord system>
+Deliverable: <prompt pack | sound brief | code | doc | review>
+Constraints: <tier, no mouse, no backend, deadline>
+Refs: <files, links, screenshots>
+```
+
+## Shared: image prompt skeleton (creative roles adapt this)
+
+When generating **any** visual prompt for John Stick, include **all** applicable lines:
+
+- **Subject:** stick figure / limb-readable silhouette / which limb leads.
+- **Action phase:** windup | peak impact | follow-through | recovery (one frame family per prompt).
+- **Style:** stylized 3D OR 2D cel/vector (pick one); **no photoreal flesh**.
+- **Camera:** orthographic side / ¾ / isometric; **fixed**; match game readability.
+- **Background:** flat color hex or transparent; **no watermark/text**.
+- **Output:** resolution, PNG/WebP, alpha if UI; **sprite sheet** = grid N×M, cell WxH, consistent padding.
+- **Negative:** extra limbs, motion blur smear, gore (unless `[N]` blood tier approved), busy backgrounds, logos.
+- **Consistency:** repeat **same** style tokens across a set (e.g. “thick black outline, round joints, warm rim light”).
+
+## Shared: sound brief skeleton (audio + any role requesting SFX)
+
+- **Event id:** `sfx_<context>_<move>_<tier>_##`
+- **Duration:** ms; **one-shot** vs **loop**
+- **Transient:** click/snap character (freq range, brightness)
+- **Body:** thud/slam weight (pitch, decay)
+- **Sweetener:** whoosh / bass drop / debris (stereo width)
+- **Context:** dojo room vs outdoor (reverb note)
+- **Loudness:** target relative to `sfx_ui_confirm`
+- **Variation:** pitch ± cents, N alternates
+- **Implementation:** bus (SFX/Combat/UI), polyphony cap
