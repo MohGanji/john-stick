@@ -40,7 +40,7 @@
 | §1.2.2 multi-level | WS-112 stub + **WS-201** | Objectives / director in WS-201 |
 | §1.3.3 perf + §11.1.x | **WS-135** (new) | Min-spec + stress + cold-start |
 | §1.3.2 combat readability | WS-060, WS-030 | **Telegraph + timing taste WS-151** |
-| §2.1.2 target states (feel) | WS-090, WS-091, WS-094 | **Feel matrix + USER tuning WS-155** |
+| §2.1.2 target states (feel) | WS-090, WS-091, WS-094 | **WS-095** (enemy stance / receive); **Feel matrix + USER tuning WS-155** |
 | §2.3.2 training / enemy tiers (feel) | WS-062, WS-092 | **WS-155** (bag / dummy / NPC read) |
 | §2.1.1 strike loop (moment feel) | WS-080, WS-081 | **WS-151** (poke / launcher / sweep read) |
 | §1.3.1 “fun in 60s” + §1.1.3 density | WS-101, juice | **WS-150** pillars + **WS-157** loops |
@@ -51,10 +51,10 @@
 | §8.x mix / loudness taste | WS-072, WS-140 | **WS-153** A/B + USER ladder |
 | §12.1 creative leadership | Roles | **WS-150** documented pillars + juice rubric |
 | §11.2 cuts / scope | WS-120 | **WS-156** explicit taste-based cut list **feeds** WS-120 |
-| §2.1.1 strike loop roles + moment feel | **WS-138** + WS-080/081 | **WS-151** telegraph/timing taste |
+| §2.1.1 strike loop roles + moment feel | **WS-138** + **WS-095** + WS-080/081 | **WS-151** telegraph/timing taste |
 | §2.1.3 risk/reward | **WS-201** + **WS-138** | Dojo-light until extra levels |
 | §2.2.2 cancels / caps | **WS-138** (new) | Explicit designer rules |
-| §2.2.3 hit-type data | Partial in compounds | **WS-138** audit vs table |
+| §2.2.3 hit-type data | Partial in compounds | **WS-138** audit vs table; **WS-095** enemy receive tiers |
 | §2.3.3 pacing | **WS-201** | Per-level curves |
 | §2.4.3 micro-challenges | **WS-210** deferred | |
 | §2.5.2 load/restart | WS-112 | Optional persist → **WS-218** |
@@ -187,6 +187,7 @@ flowchart TB
     WS136[WS-136 Cross-browser matrix]
     WS137[WS-137 Slopes + root-motion policy]
     WS138[WS-138 Combo caps + hit-type audit]
+    WS095[WS-095 Enemy stance + receive]
     WS139[WS-139 Strike blend + hit flash rules]
     WS140[WS-140 Audio depth + music]
     WS141[WS-141 Bag juice + art lock]
@@ -272,6 +273,8 @@ flowchart TB
   WS040 --> WS137
   WS021 --> WS137
   WS081 --> WS138
+  WS092 --> WS095
+  WS081 --> WS095
   WS081 --> WS139
   WS041 --> WS139
   WS072 --> WS140
@@ -288,6 +291,7 @@ flowchart TB
   WS081 --> WS151
   WS071 --> WS151
   WS138 --> WS151
+  WS095 --> WS151
   WS030 --> WS152
   WS031 --> WS152
   WS071 --> WS152
@@ -297,6 +301,7 @@ flowchart TB
   WS061 --> WS155
   WS094 --> WS155
   WS093 --> WS155
+  WS095 -.-> WS155
   WS150 -.-> WS120
   WS151 -.-> WS120
   WS152 -.-> WS120
@@ -340,6 +345,7 @@ flowchart TB
 | WS-092 | 9 | WS-091 | — | `role-lead-game-designer` + `role-physics-programmer` | Threshold tuning GP §6.1.2 |
 | WS-093 | 9 | WS-091, WS-040, WS-041 | WS-092 | `role-gameplay-programmer` + `role-lead-game-designer` | Harmless dojo NPC wander + hits; juice QA GP §2.3.2 |
 | WS-094 | 9 | WS-091, WS-041 | WS-092 | `role-physics-programmer` + `role-technical-animator` | **Articulated** ragdoll (multi-body + joints) GP §5.2.1, §6.1, §6.4 |
+| WS-095 | 14 | WS-092, WS-081 | WS-138, WS-139 | `role-lead-game-designer` + `role-gameplay-programmer` + `role-physics-programmer` | Enemy stance + receive: light hits stay up; KD from buildup or tiers GP §2.2.3, §6.1.2 |
 | WS-100 | 10 | WS-021 | WS-101 | `role-environment-artist` + `role-art-director` | Replace placeholder geo GP §7.1 |
 | WS-101 | 10 | WS-050, WS-030 | WS-100 | `role-level-designer` + `role-narrative-designer` | Signs + interact GP §2.4.2 |
 | WS-102 | 10 | WS-101 | — | `role-ux-ui-designer` | Context prompts GP §9.1.2 |
@@ -361,7 +367,7 @@ flowchart TB
 | WS-140 | 14 | WS-072 | WS-133 | `role-audio` + `role-creative-director` | Impact library + music + mix GP §8.1 §8.2 |
 | WS-141 | 14 | WS-061, WS-070 | WS-100 | `role-vfx-artist` + `role-graphics-programmer` + `role-art-director` | Bag swing/spring/displace + §4.1.2 lock |
 | WS-150 | 15 | — | WS-151–WS-155 | `role-creative-director` + **USER** | Pillars + rubric incl. **flowy / not pipe-stiff** body read; gates cuts + playtests |
-| WS-151 | 15 | WS-081, WS-071, WS-138 | WS-152, WS-155 | `role-lead-game-designer` + `role-gameplay-programmer` + **USER** | Timing + reads + **anti-stiff** windup/recovery; tuning tickets |
+| WS-151 | 15 | WS-081, WS-071, WS-138, WS-095 | WS-152, WS-155 | `role-lead-game-designer` + `role-gameplay-programmer` + **USER** | Timing + reads + **anti-stiff** windup/recovery; tuning tickets |
 | WS-152 | 15 | WS-030, WS-031, WS-071 | WS-153 | `role-gameplay-programmer` + `role-creative-director` + **USER** | Camera comfort session → delta list (cam + juice) |
 | WS-153 | 15 | WS-140 | WS-154 | `role-audio` + `role-creative-director` + **USER** | Mix A/B, loudness ladder, duck/sidechain taste |
 | WS-154 | 15 | WS-132, WS-133 | WS-155 | `role-art-director` + `role-character-artist` + **USER** | Prompt packs; ≥2 options/class; USER pick + revision log |
@@ -538,10 +544,12 @@ flowchart TB
   - **@** `role-physics-programmer` · `role-technical-animator`  
   - **GP** §5.2.1, §6.1.1, §6.4.1–§6.4.2  
 
-- [ ] **WS-092** — Tune stagger → ragdoll thresholds with bag + dummy.  
+- [x] **WS-092** — Tune stagger → ragdoll thresholds with bag + dummy.  
   - **Depends:** WS-091  
   - **@** `role-lead-game-designer` · `role-physics-programmer`  
   - **GP** §6.1.2  
+  - **Build:** Shipped defaults — `baseEnemyHealth` **80** vs `basePunchDamage` **10** (8 tier-0 jabs to KD; charged tiers use same table as bag). Stagger hold **0.48s** (`trainingDummyFeel.staggerHoldSec` / FSM `staggerPhaseSec`). Dev HUD “Combat baseline” + dummy feel sliders remain the data path.  
+  - **Note:** “Light hits stagger then stand up; ragdoll only after cumulative lab damage crosses threshold” is **implemented** on the training dummy here. **WS-095** (Wave 14) promotes the same philosophy into **designer-authored per-move / reaction-tier data** for all future enemies (and pairs with WS-138).
 
 - [ ] **WS-093** — Dojo **harmless sparring NPC**: walks / wanders in the training hall, takes punches and kicks (same combat resolution as the dummy target), **does not damage or attack** the player; after ragdoll + **get-up** (WS-091), returns to wander so you can repeatedly test **VFX, SFX, hit-stop, and physics** on a **moving** opponent.  
   - **Depends:** WS-091, WS-040, WS-041  
@@ -668,12 +676,20 @@ Closes **essential / core** ingredients that were implied by earlier waves but l
 
 - [ ] **WS-138** — **Combat systems completeness** — designer-tunable **combo caps / anti-infinite**; audit **move / chord table** vs GP §2.2.3 (reaction tiers, impulse templates); align **strike roles** (poke, launcher, sweep) with data for future levels (GP §2.2.2, §2.1.1).  
   - **Depends:** WS-081  
-  - **∥** WS-139  
+  - **∥** WS-139, WS-095  
   - **@** `role-lead-game-designer` · `role-gameplay-programmer`  
+  - **Note:** Coordinate **reaction-tier columns** with **WS-095** so one table pass covers both strike identity and **how hard targets get knocked** (avoid duplicate conflicting audits).
+
+- [ ] **WS-095** — **Enemy stance & hit-receive rules** — enemies must **not** ragdoll / full knockdown on **every** light tap; **pokes and simple strikes** = **small reactions** (hit → stagger → stand-up, reduced knockback read) until **cumulative lab-style damage** crosses the knockdown threshold (**WS-092** / `combatBasics`) **and/or** a **heavy / chord / finisher-class** `MoveId` says otherwise (GP §2.2.3, §2.1.2, §6.1.2).  
+  - **Depends:** WS-092, WS-081  
+  - **∥** WS-138, WS-139  
+  - **@** `role-lead-game-designer` · `role-gameplay-programmer` · `role-physics-programmer`  
+  - **GP** §2.2.3, §2.1.2, §6.1.2  
+  - **Build:** **Doc** the target matrix (what a “light” vs “knockdown” hit is). **Data:** extend base + compound move rows (or parallel table) with **receive reaction tier** / **stagger contribution** / **ragdoll eligibility** as needed — wire resolve so **training dummy + future grunts** reuse the same `trainingDummyFsm`-shaped pipeline (`docs/FUTURE_DESIGN_NOTES.md` — dummy as canonical enemy). **Validate** on dummy; **optional** on **WS-093** NPC when it ships. **Player** receive (fall only on combos / power shots) stays in `docs/FUTURE_DESIGN_NOTES.md` until enemy-vs-player hitting exists — align rules conceptually when implementing.
 
 - [ ] **WS-139** — **Strike presentation policy** — document + implement gaps for **keyframed vs procedural** exaggeration on strikes (GP §5.2.2); **hit flash / rim** rules consistent across targets (GP §5.1.3). Include **anti-stiff / flowy** goals: **secondary motion** (follow-through, slight overshoot, eased recovery), optional **soft IK / springy layers / joint bias** where they do not break hitboxes; **limb bend** reads natural at gameplay camera — not “pipe mannequin” unless pillar calls for it.  
   - **Depends:** WS-081, WS-041  
-  - **∥** WS-133  
+  - **∥** WS-133, WS-095  
   - **@** `role-technical-animator` · `role-art-director` · `role-graphics-programmer`  
 
 - [ ] **WS-140** — **Audio depth** — expand **impact library** beyond first SFX; **music** stinger/loop philosophy and at least one loop or stinger integrated (GP §8.1.1, §8.1.3); optional **dynamic mix** (e.g. low-pass under hit chaos) (GP §8.2.3).  
@@ -699,9 +715,9 @@ Closes **essential / core** ingredients that were implied by earlier waves but l
   - **GP** §12.1.x, §1.3.1, §6.3.x  
 
 - [ ] **WS-151** — **Combat timing + enemy read pass** —  
-  - **Depends:** WS-081, WS-071, WS-138  
+  - **Depends:** WS-081, WS-071, WS-138, WS-095  
   - **∥** WS-152, WS-155  
-  - **Build:** **Timing tables** (startup / active / recovery) vs move data; **telegraph** audit on **bag, dummy, NPC**; list **misreads** → gameplay tuning tickets. Align with strike roles (poke / launcher / sweep) from WS-138. Add a **stiffness pass:** windups/recoveries should feel **organic** (easing, overlap, small anticipation) — file tickets against **WS-139** (presentation code), **WS-133** (poses / rig / clips), or juice (**WS-071**) where the fix belongs; the **player capsule** is not the art target.  
+  - **Build:** **Timing tables** (startup / active / recovery) vs move data; **telegraph** audit on **bag, dummy, NPC**; list **misreads** → gameplay tuning tickets. Align with strike roles (poke / launcher / sweep) from WS-138 and **when targets stay up vs ragdoll** from WS-095. Add a **stiffness pass:** windups/recoveries should feel **organic** (easing, overlap, small anticipation) — file tickets against **WS-139** (presentation code), **WS-133** (poses / rig / clips), or juice (**WS-071**) where the fix belongs; the **player capsule** is not the art target.  
   - **Round:** ≥2 **USER** review cycles with playable build; document deltas per round.  
   - **@** `role-lead-game-designer` · `role-gameplay-programmer` · **USER**  
   - **GP** §1.3.2, §2.1.1–2.1.2, §2.2.x  

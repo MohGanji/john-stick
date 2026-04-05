@@ -43,7 +43,11 @@ export type BagHitScalars = {
 export type CombatBasicsScalars = {
   /** Tier-0 punch damage before `bagDamageTierMultiplier` (GP §6.2.2). */
   basePunchDamage: number;
-  /** Max “lab HP” for a basic target (training dummy ragdoll when cumulative damage ≥ this). */
+  /**
+   * Max “lab HP” for a basic target (training dummy ragdoll when cumulative damage ≥ this).
+   * WS-092 / GP §6.1.2 — same `basePunchDamage` × tier table as the bag; tune both together so
+   * bag totals and dummy KD stay honest (tier-0 budget ≈ `ceil(baseEnemyHealth / basePunchDamage)` jabs).
+   */
   baseEnemyHealth: number;
 };
 
@@ -63,7 +67,7 @@ export type TrainingDummyFeelScalars = {
   linearDamping: number;
   /** Pre-ragdoll hit flash length. */
   hitReactSec: number;
-  /** Pre-ragdoll stagger before stand-up or ragdoll threshold exit. */
+  /** Pre-ragdoll stagger before stand-up or ragdoll threshold exit (WS-092 — tune vs strike cadence). */
   staggerHoldSec: number;
   /** Ragdoll: minimum time down before recover can start (if settled). */
   ragdollDownBeforeRecoverSec: number;
@@ -166,7 +170,8 @@ function defaultBag(): BagHitScalars {
 function defaultCombatBasics(): CombatBasicsScalars {
   return {
     basePunchDamage: BAG_HIT_TUNING.baseDamage,
-    baseEnemyHealth: 100,
+    /** 8× tier-0 connects at dmg 10; charged tiers KD sooner (same table as bag lab damage). */
+    baseEnemyHealth: 80,
   };
 }
 
@@ -176,7 +181,7 @@ export function defaultTrainingDummyFeel(): TrainingDummyFeelScalars {
     spinAmount: 0.22,
     linearDamping: 0.95,
     hitReactSec: 0.09,
-    staggerHoldSec: 0.52,
+    staggerHoldSec: 0.48,
     ragdollDownBeforeRecoverSec: 0.82,
     ragdollStandUpBlendSec: 0.55,
     ragdollDownMaxSec: 4.6,

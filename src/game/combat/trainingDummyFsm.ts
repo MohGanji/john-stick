@@ -42,7 +42,8 @@ export type TrainingDummyFsmTiming = {
 
 export const TRAINING_DUMMY_FSM_DEFAULTS: TrainingDummyFsmTiming = {
   hitPhaseSec: 0.09,
-  staggerPhaseSec: 0.52,
+  /** Keep in sync with `defaultTrainingDummyFeel().staggerHoldSec` (WS-092). */
+  staggerPhaseSec: 0.48,
   ragdollMinSecBeforeRecover: 0.82,
   ragdollMaxSec: 4.6,
   ragdollLinSpeedThreshold: 0.42,
