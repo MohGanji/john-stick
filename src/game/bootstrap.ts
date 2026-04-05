@@ -1,5 +1,9 @@
 import * as THREE from "three";
 
+import {
+  createThirdPersonFollowScratch,
+  updateThirdPersonFollowCamera,
+} from "./camera";
 import { runGameLoop } from "./gameLoop";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import {
@@ -30,6 +34,9 @@ export async function mountGame(root: HTMLElement): Promise<void> {
 
   const scratchPos = { x: 0, y: 0, z: 0 };
   const scratchQuat = { x: 0, y: 0, z: 0, w: 1 };
+  const followCamScratch = createThirdPersonFollowScratch();
+  /** WS-032: drive with Q/E (keyboard yaw). */
+  let cameraYawRad = 0;
 
   runGameLoop({
     update(_dtSeconds) {
@@ -42,7 +49,7 @@ export async function mountGame(root: HTMLElement): Promise<void> {
      * GP §4.2.3 — `runGameLoop` exposes `beforeFixedSteps` + `fixedStepAlpha` for dual-buffer rendering.
      * Demo mesh uses the integrated pose directly; per-substep prev/curr buffers belong in WS-040+.
      */
-    lateUpdate(_dtSeconds, _fixedStepAlpha) {
+    lateUpdate(dtSeconds, _fixedStepAlpha) {
       readRigidBodyTransform(
         physics.demoRigidBody,
         scratchPos,
@@ -54,6 +61,13 @@ export async function mountGame(root: HTMLElement): Promise<void> {
         scratchQuat.y,
         scratchQuat.z,
         scratchQuat.w,
+      );
+      updateThirdPersonFollowCamera(
+        camera,
+        scratchPos,
+        cameraYawRad,
+        dtSeconds,
+        followCamScratch,
       );
     },
     render() {

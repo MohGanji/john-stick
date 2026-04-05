@@ -238,7 +238,7 @@ flowchart TB
 
 ### Wave 3 — Camera (keyboard-only)
 
-- [ ] **WS-030** — Third-person follow, **fixed pitch**, targets player.  
+- [x] **WS-030** — Third-person follow, **fixed pitch**, targets player.  
   - **Depends:** WS-020, WS-010  
   - **@** `role-gameplay-programmer`  
   - **GP** §3.1.1  

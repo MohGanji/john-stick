@@ -52,7 +52,7 @@ export function createJohnStickRenderSetup(
     0.1,
     200,
   );
-  /** Default pose frames WS-021 dojo bounds (~24×18 m); closer shots land in WS-030. */
+  /** Default pose matches `createThirdPersonFollowScratch` warm-start; WS-030 drives each frame. */
   camera.position.set(0, 7.0, 21.0);
   camera.lookAt(0, 0.25, 0);
 
