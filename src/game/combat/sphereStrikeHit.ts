@@ -64,16 +64,16 @@ function contactWorldFromPose(
   };
 }
 
-function probeHitTraining(
+function probeHitSensor(
   world: RAPIER.World,
   physics: JohnStickPhysics,
+  hurtCollider: RAPIER.Collider,
   radius: number,
   contact: { x: number; y: number; z: number },
   last: { x: number; y: number; z: number } | null,
 ): boolean {
   const shape = ballShape(radius);
-  const hit = physics.trainingHurtCollider;
-  const pred = (c: RAPIER.Collider) => c === hit;
+  const pred = (c: RAPIER.Collider) => c === hurtCollider;
 
   if (last === null) {
     return (
@@ -123,7 +123,12 @@ function probeHitTraining(
   );
 }
 
+export type StrikeHitTargetKind = "none" | "training_bag" | "training_dummy";
+
 export type SphereStrikeFixedStepResult = {
+  /** WS-090 — which training target registered the strike this substep (bag checked before dummy). */
+  hitTarget: StrikeHitTargetKind;
+  /** @deprecated Use `hitTarget === "training_bag"`. */
   hitPunchingBag: boolean;
   debug: SphereStrikeHitDebugSnapshot;
 };
@@ -148,21 +153,37 @@ export function stepSphereStrikeHitFixed(
   }
 
   const activeThisStep = strike.activeFramesRemaining > 0;
-  let hitPunchingBag = false;
+  let hitTarget: StrikeHitTargetKind = "none";
 
   if (activeThisStep) {
-    const touch = probeHitTraining(
+    const bagTouch = probeHitSensor(
       physics.world,
       physics,
+      physics.trainingHurtCollider,
       profile.radius,
       contact,
       strike.lastContact,
     );
+    const dummyTouch =
+      !bagTouch &&
+      probeHitSensor(
+        physics.world,
+        physics,
+        physics.trainingDummyHurtCollider,
+        profile.radius,
+        contact,
+        strike.lastContact,
+      );
+    const touch = bagTouch || dummyTouch;
     if (touch && !strike.hitConsumed) {
       strike.hitConsumed = true;
-      hitPunchingBag = true;
+      hitTarget = bagTouch ? "training_bag" : "training_dummy";
       if (import.meta.env.DEV) {
-        console.debug("[combat] sphere strike → punching bag hurt volume (WS-060/080)");
+        console.debug(
+          "[combat] sphere strike →",
+          hitTarget,
+          "(WS-060/080/090)",
+        );
       }
     }
     strike.activeFramesRemaining -= 1;
@@ -172,7 +193,8 @@ export function stepSphereStrikeHitFixed(
   }
 
   return {
-    hitPunchingBag,
+    hitTarget,
+    hitPunchingBag: hitTarget === "training_bag",
     debug: {
       active: activeThisStep,
       contactWorld: contact,

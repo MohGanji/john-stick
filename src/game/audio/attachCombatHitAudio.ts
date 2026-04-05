@@ -21,7 +21,12 @@ export function attachCombatHitAudio(input: {
 
   const off = input.combatEvents.subscribe((ev) => {
     if (ev.type !== "combat_hit") return;
-    if (ev.hit.targetKind !== "training_bag") return;
+    if (
+      ev.hit.targetKind !== "training_bag" &&
+      ev.hit.targetKind !== "training_dummy"
+    ) {
+      return;
+    }
     queue.push(ev.hit);
   });
 

@@ -11,6 +11,11 @@ export const PLAYER_GLTF_URL = "/models/char_player_stick_v01.glb";
 export const PLAYER_ANIM_IDLE = "Idle";
 export const PLAYER_ANIM_WALK = "Walk";
 
+export type LoadPlayerCharacterOptions = {
+  /** `training_dummy` tints materials so the dojo partner reads distinct from the hero. */
+  appearance?: "player" | "training_dummy";
+};
+
 const CROSS_FADE_SEC = 0.14;
 const WALK_BLEND_THRESHOLD = 0.06;
 
@@ -39,13 +44,34 @@ function findClip(gltf: GLTF, name: string): THREE.AnimationClip {
   return clip;
 }
 
+function tintTrainingDummyMaterials(root: THREE.Object3D): void {
+  const tint = new THREE.Color(0x8fa3bf);
+  root.traverse((obj) => {
+    if (!(obj instanceof THREE.Mesh)) return;
+    const mats = Array.isArray(obj.material)
+      ? obj.material
+      : [obj.material];
+    for (const m of mats) {
+      if (m instanceof THREE.MeshStandardMaterial) {
+        m.color.lerp(tint, 0.2);
+      }
+    }
+  });
+}
+
 /**
  * WS-041 — skinned stick visual: load glTF, drive **Idle** / **Walk** from planar input.
  * Physics capsule remains authoritative; `root` follows rigid-body transform.
  */
-export async function loadPlayerCharacter(): Promise<PlayerCharacter> {
+export async function loadPlayerCharacter(
+  options?: LoadPlayerCharacterOptions,
+): Promise<PlayerCharacter> {
   const loader = new GLTFLoader();
   const gltf = await loader.loadAsync(PLAYER_GLTF_URL);
+
+  if (options?.appearance === "training_dummy") {
+    tintTrainingDummyMaterials(gltf.scene);
+  }
 
   const mixer = new THREE.AnimationMixer(gltf.scene);
   const idleClip = findClip(gltf, PLAYER_ANIM_IDLE);

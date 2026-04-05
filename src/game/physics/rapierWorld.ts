@@ -13,7 +13,8 @@ import {
   PhysicsFilter,
   PhysicsMembership,
 } from "./collisionLayers";
-import { TRAINING_HURT_VOLUME } from "../combat/combatHitConstants";
+import { TRAINING_DUMMY_HURT_VOLUME, TRAINING_HURT_VOLUME } from "../combat/combatHitConstants";
+import { TRAINING_DUMMY_PHYSICS } from "../level/trainingDummyConfig";
 
 export type JohnStickPhysics = {
   world: RAPIER.World;
@@ -26,6 +27,9 @@ export type JohnStickPhysics = {
   punchingBagRigidBody: RAPIER.RigidBody;
   /** WS-061 — fixed ceiling/chain anchor for the spherical joint. */
   punchingBagPivotBody: RAPIER.RigidBody;
+  /** WS-090 — dynamic dummy (player-scale capsule); hurt sensor moves with the body. */
+  trainingDummyRigidBody: RAPIER.RigidBody;
+  trainingDummyHurtCollider: RAPIER.Collider;
 };
 
 /**
@@ -211,6 +215,33 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     punchingBagRigidBody,
   );
 
+  const d = TRAINING_DUMMY_PHYSICS;
+  const trainingDummyRigidBody = world.createRigidBody(
+    RAPIER.RigidBodyDesc.dynamic()
+      .setTranslation(d.centerX, d.centerY, d.centerZ)
+      .setLinearDamping(d.linearDamping)
+      .setAngularDamping(d.angularDamping),
+  );
+  const dummySolid = RAPIER.ColliderDesc.capsule(
+    d.capsuleHalfHeight,
+    d.capsuleRadius,
+  )
+    .setFriction(d.friction)
+    .setRestitution(d.restitution)
+    .setMass(d.colliderMassKg)
+    .setCollisionGroups(propGroups)
+    .setSolverGroups(propGroups);
+  world.createCollider(dummySolid, trainingDummyRigidBody);
+
+  const dhe = TRAINING_DUMMY_HURT_VOLUME.halfExtents;
+  const trainingDummyHurtCollider = world.createCollider(
+    RAPIER.ColliderDesc.cuboid(dhe.x, dhe.y, dhe.z)
+      .setSensor(true)
+      .setCollisionGroups(hurtGroups)
+      .setSolverGroups(hurtGroups),
+    trainingDummyRigidBody,
+  );
+
   return {
     world,
     playerRigidBody,
@@ -219,6 +250,8 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     trainingHurtCollider,
     punchingBagRigidBody,
     punchingBagPivotBody,
+    trainingDummyRigidBody,
+    trainingDummyHurtCollider,
   };
 }
 

@@ -6,7 +6,7 @@
  */
 import type { StrikeMoveId } from "../input/combatIntent";
 
-export type CombatHitTargetKind = "training_bag";
+export type CombatHitTargetKind = "training_bag" | "training_dummy";
 
 /**
  * Audio / VFX buckets — base limbs (WS-080) plus compound families (WS-081).

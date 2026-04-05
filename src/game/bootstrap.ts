@@ -16,6 +16,7 @@ import { strikePressIntent } from "./input/strikePressIntent";
 import { attachKeyboardLocomotion } from "./input/keyboardLocomotion";
 import { createCombatHitDebugDraw } from "./combat/combatHitDebugDraw";
 import { applyTrainingBagHitFromPunch } from "./combat/applyTrainingBagHit";
+import { applyTrainingDummyHitFromStrike } from "./combat/applyTrainingDummyHit";
 import {
   combatHitAttackKindForStrike,
   createCombatEventBus,
@@ -42,6 +43,7 @@ import {
   stepSphereStrikeHitFixed,
   type SphereStrikeHitDebugSnapshot,
 } from "./combat/sphereStrikeHit";
+import { createTrainingDummyFsm, stepTrainingDummyFsm } from "./combat/trainingDummyFsm";
 import { FIXED_DT } from "./gameLoop";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import { createPunchingBagHangerVisual } from "./level/punchingBagHangerVisual";
@@ -87,13 +89,19 @@ export async function mountGame(
   const punchingBagVisual = createPunchingBagSwingMesh();
   scene.add(punchingBagVisual);
 
-  const playerCharacter = await loadPlayerCharacter();
+  const [playerCharacter, trainingDummyCharacter] = await Promise.all([
+    loadPlayerCharacter(),
+    loadPlayerCharacter({ appearance: "training_dummy" }),
+  ]);
   scene.add(playerCharacter.root);
+  scene.add(trainingDummyCharacter.root);
 
   const scratchPos = { x: 0, y: 0, z: 0 };
   const scratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const bagScratchPos = { x: 0, y: 0, z: 0 };
   const bagScratchQuat = { x: 0, y: 0, z: 0, w: 1 };
+  const dummyScratchPos = { x: 0, y: 0, z: 0 };
+  const dummyScratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const followCamScratch = createThirdPersonFollowScratch();
   const gameplayTuning = createGameplayRuntimeTuning();
   const keyboardLocomotion = attachKeyboardLocomotion(window, {
@@ -143,6 +151,9 @@ export async function mountGame(
   const staminaHud = attachStaminaHud(root);
   /** WS-062 — abstract lab damage on the bag (no UI yet; tunable via `bagHitTuning`). */
   let punchingBagLabDamageTotal = 0;
+  /** WS-090 — lab damage on the fixed dummy (same idea as bag total). */
+  let trainingDummyLabDamageTotal = 0;
+  const trainingDummyFsm = createTrainingDummyFsm();
   /** WS-070 / GP §4.3.3 — `CombatHit` → audio / VFX / hit-stop (WS-071+). */
   const combatEvents = createCombatEventBus();
   /** WS-071 / GP §6.3.1 — hit-stop (accumulator scale) + subtle FOV punch; see `getCombatJuiceAccess`. */
@@ -353,8 +364,13 @@ export async function mountGame(
       strikeHitDebug = strikeHit.debug;
 
       const moveIdForBagHit = activeStrikeMoveId;
+      let dummyHitImpulseForFsm: {
+        x: number;
+        y: number;
+        z: number;
+      } | null = null;
 
-      if (strikeHit.hitPunchingBag && moveIdForBagHit !== null) {
+      if (strikeHit.hitTarget === "training_bag" && moveIdForBagHit !== null) {
         const moveId = moveIdForBagHit;
         const tier = strikeBagChargeTierIndex(moveId);
         const { damageDealt, impulseWorld } = applyTrainingBagHitFromPunch(
@@ -388,7 +404,52 @@ export async function mountGame(
             ")",
           );
         }
+      } else if (
+        strikeHit.hitTarget === "training_dummy" &&
+        moveIdForBagHit !== null
+      ) {
+        const moveId = moveIdForBagHit;
+        const tier = strikeBagChargeTierIndex(moveId);
+        const { damageDealt, impulseWorld } = applyTrainingDummyHitFromStrike(
+          physics,
+          {
+            fistWorld: strikeHit.debug.contactWorld,
+            playerPos: scratchPos,
+            playerFacingYawRad: facingYawRad,
+            chargeTierIndex: tier,
+          },
+          gameplayTuning.bag,
+        );
+        dummyHitImpulseForFsm = impulseWorld;
+        trainingDummyLabDamageTotal += damageDealt;
+        combatEvents.emit({
+          type: "combat_hit",
+          hit: {
+            attackKind: combatHitAttackKindForStrike(moveId),
+            targetKind: "training_dummy",
+            damageDealt,
+            impulseWorld,
+            contactWorld: strikeHit.debug.contactWorld,
+            chargeTierIndex: tier,
+          },
+        });
+        if (import.meta.env.DEV) {
+          console.debug(
+            "[combat] dummy hit — lab damage total",
+            trainingDummyLabDamageTotal,
+            "(+",
+            damageDealt,
+            ")",
+          );
+        }
       }
+
+      stepTrainingDummyFsm(
+        trainingDummyFsm,
+        FIXED_DT,
+        dummyHitImpulseForFsm !== null,
+        dummyHitImpulseForFsm,
+      );
 
       if (
         hadActiveStrikeWindow &&
@@ -454,6 +515,28 @@ export async function mountGame(
         bagScratchQuat.w,
       );
       punchingBagHanger.sync(dtSeconds, bagScratchPos);
+
+      readRigidBodyTransform(
+        physics.trainingDummyRigidBody,
+        dummyScratchPos,
+        dummyScratchQuat,
+      );
+      trainingDummyCharacter.root.position.set(
+        dummyScratchPos.x,
+        dummyScratchPos.y,
+        dummyScratchPos.z,
+      );
+      trainingDummyCharacter.root.quaternion.set(
+        dummyScratchQuat.x,
+        dummyScratchQuat.y,
+        dummyScratchQuat.z,
+        dummyScratchQuat.w,
+      );
+      trainingDummyCharacter.updateLocomotionAnim(dtSeconds, {
+        planarInput: 0,
+        grounded: true,
+      });
+
       const { forward, strafe } = actionSample.interactModeOpen
         ? { forward: 0, strafe: 0 }
         : keyboardLocomotion.moveAxes();
