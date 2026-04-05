@@ -26,3 +26,12 @@ export const PhysicsFilter = {
 export function collisionGroups(membership: number, filter: number): number {
   return ((membership & 0xffff) << 16) | (filter & 0xffff);
 }
+
+/**
+ * WS-031 / GP §3.1.1 — Rapier query groups for third-person camera spherecasts.
+ * Hits static + props; pair with `filterExcludeRigidBody` for the followed character.
+ */
+export const CAMERA_PROBE_GROUPS = collisionGroups(
+  PhysicsMembership.player,
+  PhysicsFilter.allSolid,
+);

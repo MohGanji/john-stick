@@ -68,6 +68,10 @@ export async function mountGame(root: HTMLElement): Promise<void> {
         cameraYawRad,
         dtSeconds,
         followCamScratch,
+        {
+          world: physics.world,
+          excludeRigidBody: physics.demoRigidBody,
+        },
       );
     },
     render() {

@@ -243,7 +243,7 @@ flowchart TB
   - **@** `role-gameplay-programmer`  
   - **GP** §3.1.1  
 
-- [ ] **WS-031** — Camera collision pull-in so geometry does not swallow view.  
+- [x] **WS-031** — Camera collision pull-in so geometry does not swallow view.  
   - **Depends:** WS-030  
   - **∥** WS-032  
   - **@** `role-gameplay-programmer`  
