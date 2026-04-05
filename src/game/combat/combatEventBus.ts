@@ -4,10 +4,35 @@
  * Listeners run in the same stack as `emit` (typically `fixedStep` after hit resolution). Keep work
  * O(1); defer rendering or Web Audio graph changes to `lateUpdate` / `update` if needed.
  */
+import type { BaseAttackMoveId } from "./baseMoveTable";
+
 export type CombatHitTargetKind = "training_bag";
 
-/** Strike family that connected (expand with `MoveId` / clip ids as attacks grow). */
-export type CombatHitAttackKind = "left_punch";
+/** Base limb strikes (WS-080); compounds add more ids with WS-081. */
+export type CombatHitAttackKind =
+  | "left_punch"
+  | "right_punch"
+  | "left_kick"
+  | "right_kick";
+
+export function combatHitAttackKindForBaseMove(
+  moveId: BaseAttackMoveId,
+): CombatHitAttackKind {
+  switch (moveId) {
+    case "atk_lp":
+      return "left_punch";
+    case "atk_rp":
+      return "right_punch";
+    case "atk_lk":
+      return "left_kick";
+    case "atk_rk":
+      return "right_kick";
+    default: {
+      const _exhaustive: never = moveId;
+      return _exhaustive;
+    }
+  }
+}
 
 /**
  * One successful strike → target resolution (damage + impulse already applied in physics).

@@ -2,8 +2,8 @@
  * WS-062 / GP §2.4.1, §6.2.2 — punching bag as **lab**: impulse + abstract damage, tier multipliers.
  * Lead Game Designer owns the numbers; gameplay applies them on hit.
  *
- * `impulseTierMultipliers[0]` is the default (tap / current left punch). Higher indices are reserved
- * for charged or heavy move rows when WS-080 wires hold time / `MoveId` into the resolver.
+ * `impulseTierMultipliers[0]` is the default (base limb taps). Higher indices are reserved
+ * for charged or heavy compound rows when WS-081 wires hold time / `MoveId` into the resolver.
  */
 export const BAG_HIT_TUNING = {
   /**

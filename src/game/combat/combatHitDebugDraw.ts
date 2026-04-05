@@ -4,7 +4,7 @@
 import * as THREE from "three";
 
 import { TRAINING_HURT_VOLUME } from "./combatHitConstants";
-import type { LeftPunchHitDebugSnapshot } from "./leftPunchHit";
+import type { SphereStrikeHitDebugSnapshot } from "./sphereStrikeHit";
 
 const FIST_COLOR = 0xff8844;
 const HURT_COLOR = 0x44aaff;
@@ -27,7 +27,7 @@ export type TrainingHurtVolumeWorldPose = {
 
 export function createCombatHitDebugDraw(scene: THREE.Scene): {
   sync(
-    snapshot: LeftPunchHitDebugSnapshot,
+    snapshot: SphereStrikeHitDebugSnapshot,
     hurtWorldPose?: TrainingHurtVolumeWorldPose,
   ): void;
   dispose(): void;
@@ -45,7 +45,7 @@ export function createCombatHitDebugDraw(scene: THREE.Scene): {
     depthTest: true,
   });
   const fistMesh = new THREE.Mesh(fistGeom, fistMat);
-  fistMesh.name = "left_punch_hit_sphere";
+  fistMesh.name = "sphere_strike_hit_probe";
   root.add(fistMesh);
 
   const hurtGeom = new THREE.BoxGeometry(
@@ -71,7 +71,7 @@ export function createCombatHitDebugDraw(scene: THREE.Scene): {
 
   return {
     sync(
-      snapshot: LeftPunchHitDebugSnapshot,
+      snapshot: SphereStrikeHitDebugSnapshot,
       hurtWorldPose?: TrainingHurtVolumeWorldPose,
     ): void {
       fistMesh.visible = snapshot.active;
@@ -79,9 +79,9 @@ export function createCombatHitDebugDraw(scene: THREE.Scene): {
         const r = snapshot.radius;
         fistMesh.scale.set(r, r, r);
         fistMesh.position.set(
-          snapshot.fistWorld.x,
-          snapshot.fistWorld.y,
-          snapshot.fistWorld.z,
+          snapshot.contactWorld.x,
+          snapshot.contactWorld.y,
+          snapshot.contactWorld.z,
         );
       }
       hurtMesh.visible = SHOW_TRAINING_HURT_AABB;

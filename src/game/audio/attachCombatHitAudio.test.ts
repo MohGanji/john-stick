@@ -26,7 +26,7 @@ describe("attachCombatHitAudio", () => {
       combatEvents: bus,
       mixer: null,
       getCamera: () => new THREE.PerspectiveCamera(),
-      getTrainingBagSfxStyle: () => "dojo_martial",
+      getTrainingBagSfxStyleForHit: () => "dojo_martial",
     });
     bus.emit({ type: "combat_hit", hit: sampleHit });
     audio.flushQueuedCombatSounds();

@@ -15,15 +15,25 @@ import { attachKeyboardLocomotion } from "./input/keyboardLocomotion";
 import { createCombatHitDebugDraw } from "./combat/combatHitDebugDraw";
 import { applyTrainingBagHitFromPunch } from "./combat/applyTrainingBagHit";
 import {
+  combatHitAttackKindForBaseMove,
   createCombatEventBus,
   type CombatEventBus,
+  type CombatHitAttackKind,
 } from "./combat/combatEventBus";
+import type { BaseAttackMoveId } from "./combat/baseMoveTable";
 import {
-  createLeftPunchStrikeState,
-  stepLeftPunchHitFixed,
-  type LeftPunchHitDebugSnapshot,
-} from "./combat/leftPunchHit";
-import { leftPunchAttackPressEdge } from "./combat/hitInputEdges";
+  applyStrikeCooldownAfterWindow,
+  createStrikeCooldownGateState,
+  strikeCooldownAllowsStart,
+  type StrikeCooldownGateState,
+} from "./combat/strikeCooldownGate";
+import {
+  createSphereStrikeState,
+  stepSphereStrikeHitFixed,
+  type SphereStrikeHitDebugSnapshot,
+} from "./combat/sphereStrikeHit";
+import { baseStrikePressIntent } from "./input/baseStrikeInput";
+import { FIXED_DT } from "./gameLoop";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import { createPunchingBagHangerVisual } from "./level/punchingBagHangerVisual";
 import { createPunchingBagSwingMesh } from "./level/punchingBagPlaceholder";
@@ -101,8 +111,15 @@ export async function mountGame(
   /** WS-051 — priority + chord/sequence resolution (GP §3.2.3–3.2.4). */
   let combatIntent: ResolvedCombatIntent = initIntent.resolved;
 
-  /** WS-060 — left punch active frames + Rapier probe (after physics step). */
-  let leftPunchStrike = createLeftPunchStrikeState();
+  /** WS-060 / WS-080 — one active sphere strike slot + designer table profiles. */
+  let sphereStrike = createSphereStrikeState();
+  /** Sim time (seconds) for strike cooldown gate — advances in `fixedStep` only. */
+  let combatSimTimeSec = 0;
+  let strikeCooldownGate: StrikeCooldownGateState = createStrikeCooldownGateState();
+  /** Queued on a clean base-attack press in `update`; consumed in `fixedStep` when allowed. */
+  let strikeQueuedMoveId: BaseAttackMoveId | null = null;
+  /** Move id for the in-flight window (active or just-queued pending start). */
+  let activeStrikeMoveId: BaseAttackMoveId | null = null;
   /** WS-062 — abstract lab damage on the bag (no UI yet; tunable via `bagHitTuning`). */
   let punchingBagLabDamageTotal = 0;
   /** WS-070 / GP §4.3.3 — `CombatHit` → audio / VFX / hit-stop (WS-071+). */
@@ -118,7 +135,8 @@ export async function mountGame(
     combatEvents,
     mixer: audioMixer,
     getCamera: () => camera,
-    getTrainingBagSfxStyle: () => gameplayTuning.audio.trainingBagSfxStyle,
+    getTrainingBagSfxStyleForHit: (hit) =>
+      gameplayTuning.audio.trainingBagSfxByAttackKind[hit.attackKind],
   });
   /** WS-073 / GP §6.3.2 — burst particles on `combat_hit` (queue + integrate in `lateUpdate`). */
   const combatHitBurstVfx = attachCombatHitBurstVfx({
@@ -127,9 +145,9 @@ export async function mountGame(
     getJuiceAccess: () => getCombatJuiceAccess(window),
     getHitBurstStyle: () => gameplayTuning.vfx.hitBurstStyle,
   });
-  let leftPunchHitDebug: LeftPunchHitDebugSnapshot = {
+  let strikeHitDebug: SphereStrikeHitDebugSnapshot = {
     active: false,
-    fistWorld: { x: 0, y: 0, z: 0 },
+    contactWorld: { x: 0, y: 0, z: 0 },
     radius: 0.12,
   };
 
@@ -147,7 +165,7 @@ export async function mountGame(
   if (import.meta.env.DEV) {
     void import("./dev/gameplayTuningOverlay").then(({ attachGameplayTuningOverlay }) => {
       attachGameplayTuningOverlay(root, gameplayTuning, {
-        previewTrainingBagSfx() {
+        previewTrainingBagSfx(attackKind: CombatHitAttackKind) {
           if (!audioMixer) return;
           void audioMixer.getContext().resume();
           const camPos = new THREE.Vector3();
@@ -159,7 +177,7 @@ export async function mountGame(
             audioMixer,
             camera,
             {
-              attackKind: "left_punch",
+              attackKind,
               targetKind: "training_bag",
               damageDealt: 1,
               impulseWorld: { x: 0, y: 0, z: 0 },
@@ -170,7 +188,7 @@ export async function mountGame(
               },
               chargeTierIndex: 0,
             },
-            gameplayTuning.audio.trainingBagSfxStyle,
+            gameplayTuning.audio.trainingBagSfxByAttackKind[attackKind],
           );
         },
         previewHitBurstVfx() {
@@ -214,8 +232,20 @@ export async function mountGame(
       );
       combatIntentState = intentOut.nextState;
       combatIntent = intentOut.resolved;
-      if (leftPunchAttackPressEdge(prevAction, actionSample)) {
-        leftPunchStrike.pendingStart = true;
+      strikeQueuedMoveId = null;
+      const strikeBusy =
+        sphereStrike.activeFramesRemaining > 0 || sphereStrike.pendingStart;
+      const press = baseStrikePressIntent(
+        prevAction,
+        actionSample,
+        combatIntent,
+      );
+      if (
+        press !== null &&
+        !strikeBusy &&
+        strikeCooldownAllowsStart(strikeCooldownGate, combatSimTimeSec)
+      ) {
+        strikeQueuedMoveId = press;
       }
       if (!actionSample.interactModeOpen) {
         facingYawRad += keyboardLocomotion.facingYawDeltaRad(dtSeconds);
@@ -249,21 +279,46 @@ export async function mountGame(
         scratchPos,
         scratchQuat,
       );
-      const punchHit = stepLeftPunchHitFixed(
+
+      combatSimTimeSec += FIXED_DT;
+
+      function tryConsumeStrikeQueue(): void {
+        if (strikeQueuedMoveId === null) return;
+        const busy =
+          sphereStrike.activeFramesRemaining > 0 || sphereStrike.pendingStart;
+        if (busy) return;
+        if (!strikeCooldownAllowsStart(strikeCooldownGate, combatSimTimeSec)) {
+          return;
+        }
+        activeStrikeMoveId = strikeQueuedMoveId;
+        sphereStrike.pendingStart = true;
+        strikeQueuedMoveId = null;
+      }
+
+      tryConsumeStrikeQueue();
+
+      const hadActiveStrikeWindow = sphereStrike.activeFramesRemaining > 0;
+      const profileMoveId: BaseAttackMoveId = activeStrikeMoveId ?? "atk_lp";
+      const strikeHit = stepSphereStrikeHitFixed(
         physics,
-        leftPunchStrike,
+        sphereStrike,
+        gameplayTuning.baseStrikes[profileMoveId].profile,
         scratchPos,
         scratchQuat,
       );
-      leftPunchHitDebug = punchHit.debug;
-      if (punchHit.hitPunchingBag) {
+      strikeHitDebug = strikeHit.debug;
+
+      const moveIdForBagHit = activeStrikeMoveId;
+
+      if (strikeHit.hitPunchingBag && moveIdForBagHit !== null) {
+        const moveId = moveIdForBagHit;
         const { damageDealt, impulseWorld } = applyTrainingBagHitFromPunch(
           physics,
           {
-            fistWorld: punchHit.debug.fistWorld,
+            fistWorld: strikeHit.debug.contactWorld,
             playerPos: scratchPos,
             playerFacingYawRad: facingYawRad,
-            /** GP §6.2.2 — tier 0 until WS-080 passes hold/charge or `MoveId` multipliers. */
+            /** GP §6.2.2 — higher tiers when hold/charge or compound rows wire in (WS-081+). */
             chargeTierIndex: 0,
           },
           gameplayTuning.bag,
@@ -272,11 +327,11 @@ export async function mountGame(
         combatEvents.emit({
           type: "combat_hit",
           hit: {
-            attackKind: "left_punch",
+            attackKind: combatHitAttackKindForBaseMove(moveId),
             targetKind: "training_bag",
             damageDealt,
             impulseWorld,
-            contactWorld: punchHit.debug.fistWorld,
+            contactWorld: strikeHit.debug.contactWorld,
             chargeTierIndex: 0,
           },
         });
@@ -290,6 +345,23 @@ export async function mountGame(
           );
         }
       }
+
+      if (
+        hadActiveStrikeWindow &&
+        sphereStrike.activeFramesRemaining === 0 &&
+        activeStrikeMoveId !== null
+      ) {
+        applyStrikeCooldownAfterWindow(
+          strikeCooldownGate,
+          combatSimTimeSec,
+          activeStrikeMoveId,
+          gameplayTuning.baseStrikes[activeStrikeMoveId]
+            .inputCooldownAfterStrikeSec,
+        );
+        activeStrikeMoveId = null;
+      }
+
+      tryConsumeStrikeQueue();
     },
     /**
      * GP §4.2.3 — `runGameLoop` exposes `beforeFixedSteps` + `fixedStepAlpha` for dual-buffer rendering.
@@ -359,7 +431,7 @@ export async function mountGame(
         camera,
         gameplayTuning.camera.baseFovDeg,
       );
-      combatHitDebugDraw?.sync(leftPunchHitDebug, {
+      combatHitDebugDraw?.sync(strikeHitDebug, {
         x: bagScratchPos.x,
         y: bagScratchPos.y,
         z: bagScratchPos.z,

@@ -177,7 +177,7 @@ flowchart TB
 | WS-071 | 7 | WS-070 | WS-072, WS-073 | `role-gameplay-programmer` + `role-creative-director` | Hit-stop, FOV punch GP §6.3.1 |
 | WS-072 | 7 | WS-070 | WS-071, WS-073 | `role-audio` | Web Audio buses + 1st SFX GP §8.2.1 |
 | WS-073 | 7 | WS-070 | WS-071, WS-072 | `role-vfx-artist` + `role-graphics-programmer` | Burst / flash GP §6.3.2 |
-| WS-080 | 8 | WS-062 | — | `role-lead-game-designer` + `role-gameplay-programmer` + `role-technical-animator` | 3 limbs + table (+ recovery) GP §2.2.1 |
+| WS-080 | 8 | WS-062 | done | `role-lead-game-designer` + `role-gameplay-programmer` + `role-technical-animator` | 3 limbs + table (+ recovery) GP §2.2.1 |
 | WS-081 | 8 | WS-051, WS-080 | — | `role-lead-game-designer` + `role-technical-animator` + `role-gameplay-programmer` | Compounds + hit profile + recovery GP §2.2.1–2.2.3 |
 | WS-090 | 9 | WS-062 | — | `role-gameplay-programmer` | Dummy + states GP §2.1.2 |
 | WS-091 | 9 | WS-090, WS-011 | — | `role-physics-programmer` + `role-technical-animator` | Ragdoll + get-up GP §6.1 |
@@ -328,7 +328,7 @@ flowchart TB
 
 ### Wave 8 — Full moveset (horizontal)
 
-- [ ] **WS-080** — Implement other three limb base attacks + designer table rows.  
+- [x] **WS-080** — Implement other three limb base attacks + designer table rows.  
   - **Depends:** WS-062  
   - **@** `role-lead-game-designer` · `role-gameplay-programmer` · `role-technical-animator`  
   - **GP** §2.2.1  

@@ -79,3 +79,23 @@
 **How it could show up later:** A line in a sound brief, a pinned note in `docs/` or issue, or a field in a tooling checklist — **not** something the runtime or repo needs to fetch automatically.
 
 **Related:** `.cursor/rules/role-audio.mdc`, `src/game/audio/trainingBagSfxPresets.ts` (dev preset spectrum until real SFX), GP §8.
+
+---
+
+## Combat: strike recovery — whiff vs connect (idea)
+
+**Context (2026-04):** After a base strike’s **active window** ends, input cooldown uses the **same** duration whether the strike **hit** anything or **whiffed**. Simple for the dojo lab and keeps tuning one number per move in the dev HUD.
+
+**Future idea:** Shorter recovery on **whiff**, longer on **connect** (or the inverse for commitment-heavy designs), optionally scaled by target type. Would need hit vs no-hit resolution to feed the cooldown gate (still one global “next strike” clock unless we move to per-limb cooldowns).
+
+**Related:** `strikeCooldownGate.ts`, `baseMoveTable` / dev HUD “Input cooldown after window”, WS-080.
+
+---
+
+## Audio: combo identity + variation (per-move → per-chord)
+
+**Context (2026-04):** Training-bag hits now pick a **procedural preset per limb** (`CombatHitAttackKind`); each `playTrainingBagImpact` call still **randomizes pitch** within the preset’s `pitchCents` list so repeats don’t sound identical.
+
+**Future idea:** When compound / sequence `MoveId`s drive hits (WS-081+), map **`attackKind` or `MoveId` → preset** (or small preset **pool**) so **each combo has its own sonic identity**, with optional **deterministic seed** from combo id + hit index in a chain for reproducible takes, plus **authoritative Ogg** stems when assets land.
+
+**Related:** `attachCombatHitAudio.ts`, `trainingBagSfxPresets.ts`, `GameplayRuntimeTuning.audio.trainingBagSfxByAttackKind`, GP §8, WS-081.

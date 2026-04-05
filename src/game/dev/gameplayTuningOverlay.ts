@@ -1,4 +1,9 @@
-import type { GameplayRuntimeTuning } from "../tuning/gameplayRuntimeTuning";
+import type { CombatHitAttackKind } from "../combat/combatEventBus";
+import type { BaseAttackMoveId } from "../combat/baseMoveTable";
+import type {
+  BaseStrikeTuningRow,
+  GameplayRuntimeTuning,
+} from "../tuning/gameplayRuntimeTuning";
 import {
   TRAINING_BAG_SFX_PRESETS,
   TRAINING_BAG_SFX_STYLE_ORDER,
@@ -93,8 +98,8 @@ function resetRow(
  * Stripped from production (`import.meta.env.PROD` callers should not attach).
  */
 export type GameplayTuningOverlayOptions = {
-  /** Plays the current training-bag preset once (needs user gesture + running AudioContext). */
-  previewTrainingBagSfx?: () => void;
+  /** Plays the limb’s bag preset once (needs user gesture + running AudioContext). */
+  previewTrainingBagSfx?: (attackKind: CombatHitAttackKind) => void;
   /** Spawns one hit burst with the current VFX preset (ignores reduced-motion VFX gate). */
   previewHitBurstVfx?: () => void;
 };
@@ -111,7 +116,7 @@ export function attachGameplayTuningOverlay(
     "position:fixed",
     "top:12px",
     "right:12px",
-    "width:min(216px,calc(100vw - 24px))",
+    "width:min(280px,calc(100vw - 24px))",
     "max-height:min(88vh,calc(100vh - 24px))",
     "overflow:auto",
     "margin:0",
@@ -265,72 +270,243 @@ export function attachGameplayTuningOverlay(
     });
   }
 
+  function wireBaseStrikes(): void {
+    body.appendChild(sectionTitle("Base strikes (WS-080)"));
+    const note = document.createElement("p");
+    note.style.cssText =
+      "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
+    note.textContent =
+      "Sphere hit probe vs bag + input cooldown after the active window. Pick a limb row, tune numbers, Reset restores shipped table defaults.";
+    body.appendChild(note);
+
+    const MOVE_ROWS: { id: BaseAttackMoveId; label: string }[] = [
+      { id: "atk_lp", label: "LP — left punch (U)" },
+      { id: "atk_rp", label: "RP — right punch (I)" },
+      { id: "atk_lk", label: "LK — left kick (J)" },
+      { id: "atk_rk", label: "RK — right kick (K)" },
+    ];
+
+    let selectedMove: BaseAttackMoveId = "atk_lp";
+
+    const moveWrap = document.createElement("div");
+    moveWrap.style.cssText = "margin:8px 0;";
+    const moveLab = document.createElement("label");
+    moveLab.style.cssText =
+      "display:block;color:#dbe7ff;opacity:0.92;font-size:12px;margin-bottom:4px;";
+    moveLab.textContent = "Edit row";
+    moveLab.setAttribute("for", "js-base-strike-move");
+    const moveSel = document.createElement("select");
+    moveSel.id = "js-base-strike-move";
+    moveSel.style.cssText =
+      "width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1px solid rgba(120,140,200,0.45);background:rgba(28,36,60,0.95);color:#e8eefc;font:12px ui-sans-serif,system-ui,sans-serif;";
+    for (const row of MOVE_ROWS) {
+      const opt = document.createElement("option");
+      opt.value = row.id;
+      opt.textContent = row.label;
+      moveSel.appendChild(opt);
+    }
+    moveSel.addEventListener("change", () => {
+      selectedMove = moveSel.value as BaseAttackMoveId;
+      refreshAllSliders();
+    });
+    moveWrap.appendChild(moveLab);
+    moveWrap.appendChild(moveSel);
+    body.appendChild(moveWrap);
+
+    function row(): BaseStrikeTuningRow {
+      return tuning.baseStrikes[selectedMove];
+    }
+
+    syncExtras.push(() => {
+      moveSel.value = selectedMove;
+    });
+
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "bs_r",
+          label: "Probe radius (m)",
+          min: 0.05,
+          max: 0.28,
+          step: 0.005,
+          format: (v) => v.toFixed(3),
+        },
+        () => row().profile.radius,
+        (v) => {
+          row().profile.radius = v;
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "bs_reach",
+          label: "Reach (m)",
+          min: 0.25,
+          max: 0.95,
+          step: 0.01,
+          format: (v) => v.toFixed(2),
+        },
+        () => row().profile.reach,
+        (v) => {
+          row().profile.reach = v;
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "bs_side",
+          label: "Side offset (m, + = char left)",
+          min: -0.45,
+          max: 0.45,
+          step: 0.01,
+          format: (v) => v.toFixed(2),
+        },
+        () => row().profile.sideOffset,
+        (v) => {
+          row().profile.sideOffset = v;
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "bs_h",
+          label: "Height from capsule (m)",
+          min: -0.45,
+          max: 0.45,
+          step: 0.01,
+          format: (v) => v.toFixed(2),
+        },
+        () => row().profile.heightFromCapsuleCenter,
+        (v) => {
+          row().profile.heightFromCapsuleCenter = v;
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "bs_af",
+          label: "Active frames (60 Hz ticks)",
+          min: 1,
+          max: 14,
+          step: 1,
+          format: (v) => String(Math.round(v)),
+        },
+        () => row().profile.activeFrames,
+        (v) => {
+          row().profile.activeFrames = Math.max(1, Math.round(v));
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "bs_cd",
+          label: "Input cooldown after window (ms)",
+          min: 0,
+          max: 1200,
+          step: 5,
+          format: (v) => `${Math.round(v)} ms`,
+        },
+        () => row().inputCooldownAfterStrikeSec * 1000,
+        (v) => {
+          row().inputCooldownAfterStrikeSec = Math.max(0, v / 1000);
+        },
+        () => {},
+      ),
+    );
+
+    resetRow(body, "Reset base strikes (table defaults)", () => {
+      tuning.resetBaseStrikes();
+      refreshAllSliders();
+    });
+  }
+
   function wireAudio(): void {
     body.appendChild(sectionTitle("Combat SFX (dev)"));
     const note = document.createElement("p");
     note.style.cssText =
       "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
     note.textContent =
-      "Procedural training-bag hits: subtle → cartoon → arcade → martial → exaggerated → gritty. Punch the bag or use Preview.";
+      "Per-limb procedural presets on training-bag hits. Each play picks a random pitch from the preset’s cents list; future: combo-specific voices + seeded variation (see FUTURE_DESIGN_NOTES).";
     body.appendChild(note);
 
     const a = tuning.audio;
-    const wrap = document.createElement("div");
-    wrap.style.cssText = "margin:8px 0;";
+    const LIMB_SFX: { kind: CombatHitAttackKind; short: string }[] = [
+      { kind: "left_punch", short: "LP" },
+      { kind: "right_punch", short: "RP" },
+      { kind: "left_kick", short: "LK" },
+      { kind: "right_kick", short: "RK" },
+    ];
 
-    const lab = document.createElement("label");
-    lab.style.cssText =
-      "display:block;color:#dbe7ff;opacity:0.92;font-size:12px;margin-bottom:4px;";
-    lab.textContent = "Bag hit sound preset";
-    lab.setAttribute("for", "js-sfx-bag-style");
+    const selectStyle =
+      "width:100%;box-sizing:border-box;padding:5px 7px;border-radius:6px;border:1px solid rgba(120,140,200,0.45);background:rgba(28,36,60,0.95);color:#e8eefc;font:11px ui-sans-serif,system-ui,sans-serif;";
 
-    const sel = document.createElement("select");
-    sel.id = "js-sfx-bag-style";
-    sel.style.cssText =
-      "width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1px solid rgba(120,140,200,0.45);background:rgba(28,36,60,0.95);color:#e8eefc;font:12px ui-sans-serif,system-ui,sans-serif;";
-
-    for (const id of TRAINING_BAG_SFX_STYLE_ORDER) {
-      const p = TRAINING_BAG_SFX_PRESETS[id];
-      const opt = document.createElement("option");
-      opt.value = id;
-      opt.textContent = p.title;
-      sel.appendChild(opt);
+    for (const { kind, short } of LIMB_SFX) {
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "margin:6px 0;display:grid;grid-template-columns:32px 1fr;gap:6px;align-items:center;";
+      const lab = document.createElement("span");
+      lab.style.cssText = "color:#a8c7ff;font-variant-numeric:tabular-nums;";
+      lab.textContent = short;
+      const sel = document.createElement("select");
+      sel.style.cssText = selectStyle;
+      sel.setAttribute("aria-label", `${short} bag hit preset`);
+      for (const id of TRAINING_BAG_SFX_STYLE_ORDER) {
+        const p = TRAINING_BAG_SFX_PRESETS[id];
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = p.title;
+        sel.appendChild(opt);
+      }
+      function syncThis(): void {
+        sel.value = a.trainingBagSfxByAttackKind[kind];
+      }
+      syncThis();
+      sel.addEventListener("change", () => {
+        a.trainingBagSfxByAttackKind[kind] = sel.value as TrainingBagSfxStyleId;
+      });
+      syncExtras.push(syncThis);
+      wrap.appendChild(lab);
+      wrap.appendChild(sel);
+      body.appendChild(wrap);
     }
-
-    const blurb = document.createElement("p");
-    blurb.style.cssText =
-      "margin:8px 0 0 0;font-size:11px;line-height:1.35;opacity:0.82;color:#a8b8d8;";
-    function syncBlurb(): void {
-      blurb.textContent = TRAINING_BAG_SFX_PRESETS[a.trainingBagSfxStyle].tagline;
-    }
-
-    function syncSelect(): void {
-      sel.value = a.trainingBagSfxStyle;
-      syncBlurb();
-    }
-
-    syncSelect();
-
-    sel.addEventListener("change", () => {
-      a.trainingBagSfxStyle = sel.value as TrainingBagSfxStyleId;
-      syncBlurb();
-    });
-
-    wrap.appendChild(lab);
-    wrap.appendChild(sel);
-    wrap.appendChild(blurb);
-    body.appendChild(wrap);
-
-    syncExtras.push(syncSelect);
 
     if (options?.previewTrainingBagSfx) {
       const preview = options.previewTrainingBagSfx;
-      resetRow(body, "Preview bag SFX", () => {
-        preview();
-      });
+      const prevRow = document.createElement("div");
+      prevRow.style.cssText =
+        "margin:10px 0 4px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center;";
+      const prevLab = document.createElement("span");
+      prevLab.style.cssText = "font-size:11px;color:#8ea3c9;margin-right:4px;";
+      prevLab.textContent = "Preview:";
+      prevRow.appendChild(prevLab);
+      for (const { kind, short } of LIMB_SFX) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = short;
+        b.style.cssText =
+          "cursor:pointer;padding:4px 8px;border-radius:5px;border:1px solid rgba(120,140,200,0.45);background:rgba(30,40,70,0.9);color:#dbe7ff;font:11px/1.2 ui-sans-serif,system-ui,sans-serif;";
+        b.addEventListener("click", () => preview(kind));
+        prevRow.appendChild(b);
+      }
+      body.appendChild(prevRow);
     }
 
-    resetRow(body, "Reset audio (preset)", () => {
+    resetRow(body, "Reset audio (all limbs)", () => {
       tuning.resetAudio();
       refreshAllSliders();
     });
@@ -684,6 +860,7 @@ export function attachGameplayTuningOverlay(
   }
 
   wireJuice();
+  wireBaseStrikes();
   wireAudio();
   wireHitBurstVfx();
   wireBag();

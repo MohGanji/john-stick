@@ -12,7 +12,7 @@ export function attachCombatHitAudio(input: {
   combatEvents: CombatEventBus;
   mixer: JohnStickAudioMixer | null;
   getCamera: () => THREE.PerspectiveCamera;
-  getTrainingBagSfxStyle: () => TrainingBagSfxStyleId;
+  getTrainingBagSfxStyleForHit: (hit: CombatHit) => TrainingBagSfxStyleId;
 }): {
   flushQueuedCombatSounds: () => void;
   dispose: () => void;
@@ -36,7 +36,12 @@ export function attachCombatHitAudio(input: {
       const cam = input.getCamera();
       while (queue.length > 0) {
         const hit = queue.shift()!;
-        playTrainingBagImpact(mixer, cam, hit, input.getTrainingBagSfxStyle());
+        playTrainingBagImpact(
+          mixer,
+          cam,
+          hit,
+          input.getTrainingBagSfxStyleForHit(hit),
+        );
       }
     },
     dispose() {

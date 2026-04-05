@@ -7,10 +7,14 @@ import { THIRD_PERSON_FOLLOW } from "../camera/thirdPersonFollowCamera";
 import { KEYBOARD_LOCOMOTION } from "../input/keyboardLocomotion";
 import { PLAYER_CAPSULE } from "../player/playerCapsuleConfig";
 import { DEFAULT_PERSPECTIVE_FOV_DEG } from "../render/johnStickRenderSetup";
+import type { TrainingBagSfxStyleId } from "../audio/trainingBagSfxPresets";
+import type { CombatHitAttackKind } from "../combat/combatEventBus";
 import {
-  DEFAULT_TRAINING_BAG_SFX_STYLE_ID,
-  type TrainingBagSfxStyleId,
-} from "../audio/trainingBagSfxPresets";
+  BASE_MOVE_TABLE,
+  strikeInputCooldownAfterSec,
+  type BaseAttackMoveId,
+  type SphereStrikeProfile,
+} from "../combat/baseMoveTable";
 import {
   DEFAULT_HIT_BURST_VFX_STYLE_ID,
   type HitBurstVfxStyleId,
@@ -46,9 +50,19 @@ export type CameraRenderScalars = {
   baseFovDeg: number;
 };
 
+/** Per base limb — procedural preset picked on `combat_hit` (WS-072+). */
+export type TrainingBagSfxByAttackKind = Record<
+  CombatHitAttackKind,
+  TrainingBagSfxStyleId
+>;
+
+export type BaseStrikeTuningRow = {
+  profile: SphereStrikeProfile;
+  inputCooldownAfterStrikeSec: number;
+};
+
 export type AudioDevScalars = {
-  /** Procedural training-bag hit voice (dev HUD); maps to future authored variants. */
-  trainingBagSfxStyle: TrainingBagSfxStyleId;
+  trainingBagSfxByAttackKind: TrainingBagSfxByAttackKind;
 };
 
 export type VfxDevScalars = {
@@ -59,6 +73,8 @@ export type VfxDevScalars = {
 export type GameplayRuntimeTuning = {
   juice: CombatJuiceTuningValues;
   bag: BagHitScalars;
+  /** WS-080 — live hit probes + input cooldown (dev HUD overwrites shipped table defaults). */
+  baseStrikes: Record<BaseAttackMoveId, BaseStrikeTuningRow>;
   player: PlayerLocomotionScalars;
   cameraFollow: CameraFollowScalars;
   camera: CameraRenderScalars;
@@ -66,6 +82,7 @@ export type GameplayRuntimeTuning = {
   vfx: VfxDevScalars;
   resetJuice(): void;
   resetBag(): void;
+  resetBaseStrikes(): void;
   resetPlayer(): void;
   resetCameraFollow(): void;
   resetCamera(): void;
@@ -109,8 +126,43 @@ function defaultCamera(): CameraRenderScalars {
   return { baseFovDeg: DEFAULT_PERSPECTIVE_FOV_DEG };
 }
 
+function defaultTrainingBagSfxByAttackKind(): TrainingBagSfxByAttackKind {
+  return {
+    left_punch: "dojo_martial",
+    right_punch: "arcade_bright",
+    left_kick: "springy_rubber",
+    right_kick: "gritty_thump",
+  };
+}
+
 function defaultAudio(): AudioDevScalars {
-  return { trainingBagSfxStyle: DEFAULT_TRAINING_BAG_SFX_STYLE_ID };
+  return {
+    trainingBagSfxByAttackKind: defaultTrainingBagSfxByAttackKind(),
+  };
+}
+
+function defaultBaseStrikes(): Record<BaseAttackMoveId, BaseStrikeTuningRow> {
+  const ids = Object.keys(BASE_MOVE_TABLE) as BaseAttackMoveId[];
+  const out = {} as Record<BaseAttackMoveId, BaseStrikeTuningRow>;
+  for (const id of ids) {
+    const row = BASE_MOVE_TABLE[id];
+    out[id] = {
+      profile: { ...row.profile },
+      inputCooldownAfterStrikeSec: strikeInputCooldownAfterSec(id),
+    };
+  }
+  return out;
+}
+
+function applyDefaultBaseStrikesInPlace(
+  dst: Record<BaseAttackMoveId, BaseStrikeTuningRow>,
+): void {
+  const next = defaultBaseStrikes();
+  for (const id of Object.keys(next) as BaseAttackMoveId[]) {
+    const row = next[id]!;
+    dst[id].profile = { ...row.profile };
+    dst[id].inputCooldownAfterStrikeSec = row.inputCooldownAfterStrikeSec;
+  }
 }
 
 function defaultVfx(): VfxDevScalars {
@@ -124,6 +176,7 @@ function defaultVfx(): VfxDevScalars {
 export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
   const juice = defaultJuice();
   const bag = defaultBag();
+  const baseStrikes = defaultBaseStrikes();
   const player = defaultPlayer();
   const cameraFollow = defaultCameraFollow();
   const camera = defaultCamera();
@@ -133,6 +186,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
   return {
     juice,
     bag,
+    baseStrikes,
     player,
     cameraFollow,
     camera,
@@ -143,6 +197,9 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     },
     resetBag() {
       Object.assign(bag, defaultBag());
+    },
+    resetBaseStrikes() {
+      applyDefaultBaseStrikesInPlace(baseStrikes);
     },
     resetPlayer() {
       Object.assign(player, defaultPlayer());
@@ -167,6 +224,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
       Object.assign(camera, defaultCamera());
       Object.assign(audio, defaultAudio());
       Object.assign(vfx, defaultVfx());
+      applyDefaultBaseStrikesInPlace(baseStrikes);
     },
   };
 }
