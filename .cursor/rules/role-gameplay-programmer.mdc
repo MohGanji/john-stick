@@ -43,7 +43,7 @@ QA steps: ...
 
 ## Working with a non-expert user
 
-Ask: **Q/E rotates camera or player?** **Interact key?** If undecided — **implement toggle** + recommend **camera-relative** move + **player yaw** sync after prototype.
+Ask: **Interact key?** (Facing uses **WASD**: **A**/**D** yaw + strafe in the current prototype — see `REPO_CONVENTIONS.md`.)
 
 ## Anti-patterns
 

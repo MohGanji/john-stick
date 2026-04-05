@@ -2,14 +2,14 @@ import * as THREE from "three";
 
 /**
  * WS-040 / GP §3.2.1 — **keyboard-only** move + jump + facing yaw (`KeyboardEvent.code`).
- * **WASD** (and arrows for move only): **A**/**D** apply **both** lateral strafe and hold-to-yaw at
- * `yawDegPerSec`. **Q**/**E** are not used. Clears held keys on blur / hidden document.
+ * **WASD** only for move + **A** and **D** hold-to-yaw (same keys). **Arrows** and **Q** and **E** are not used.
+ * Clears held keys on blur / hidden document.
  */
 export const KEYBOARD_LOCOMOTION = {
-  forward: ["KeyW", "ArrowUp"] as const,
-  back: ["KeyS", "ArrowDown"] as const,
-  right: ["KeyD", "ArrowRight"] as const,
-  left: ["KeyA", "ArrowLeft"] as const,
+  forward: ["KeyW"] as const,
+  back: ["KeyS"] as const,
+  right: ["KeyD"] as const,
+  left: ["KeyA"] as const,
   jump: "Space" as const,
   /**
    * Hold-to-yaw rate for **KeyA** / **KeyD** (degrees per second).
@@ -22,8 +22,8 @@ export type KeyboardLocomotionInput = {
   /** −1..1 forward (−1 = back), −1..1 strafe (−1 = left); normalized diagonals. */
   moveAxes: () => { forward: number; strafe: number };
   /**
-   * Facing yaw delta from **KeyA** / **KeyD** only (arrows strafe without yaw).
-   * Same sign convention as former Q/E (screen-wise turn with follow cam).
+   * Facing yaw delta from **KeyA** / **KeyD** (same keys as strafe left/right).
+   * Sign matches screen-wise turn with follow cam.
    */
   facingYawDeltaRad: (dtSeconds: number) => number;
   /** Call once per frame from `beforeFixedSteps` — edge-detected Space since last poll. */

@@ -77,11 +77,11 @@ These labels apply to **ingredients** in the index and in the tables below.
 3 CAMERA, CONTROLS & CHARACTER MOTION
 ├── 3.1 Third-person camera (no free look)
 │   ├── [E] 3.1.1 Fixed follow camera: locked pitch, follows character, collision pull-in
-│   ├── [E] 3.1.4 Keyboard yaw / facing (e.g. Q/E — rotate camera rig or player; **model TBD** in prototype)
+│   ├── [E] 3.1.4 Keyboard yaw / facing (**WASD** prototype: **A/D** strafe + hold-to-yaw; camera follows shared facing)
 │   ├── [C] 3.1.2 Combat framing (slight FOV punch; safe defaults for motion comfort)
 │   └── [C] 3.1.3 Accessibility (camera turn speed, reduce shake / flash; invert if optional mouse added)
 ├── 3.2 Input scheme (keyboard-only target)
-│   ├── [E] 3.2.1 Laptop-safe layout: move (WASD and/or arrows), Space jump, Shift modifier, four limb keys (**exact bindings TBD**)
+│   ├── [E] 3.2.1 Laptop-safe layout: move (**WASD**), Space jump, Shift modifier, four limb keys (**exact bindings TBD**)
 │   ├── [E] 3.2.4 Chord / sequence interpreter: limb combos → compound actions + distinct visuals
 │   ├── [C] 3.2.3 Buffering, coyote time, input priority graph
 │   ├── [N] 3.2.2 Optional mouse for **yaw only** (does not gate shipping)
@@ -333,13 +333,13 @@ Ship criteria: the game is **fully playable without a mouse** so laptops (trackp
 
 | Intent | Direction (prototype against this) |
 |--------|----------------------------------|
-| **Move** | **WASD** and/or **arrow keys** (offer both or pick one after playtest). |
+| **Move** | **WASD** (dojo prototype; arrow keys **off** for now). |
 | **Strikes** | **Four keys** — right punch, left punch, right kick, left kick. |
 | **Compound moves** | **Combinations** of those four (same-frame chord and/or short sequence) produce **different** moves, VFX, and hit profiles (designer data table). |
 | **Jump** | **Space** (default candidate). |
 | **Guard / dodge** | **Shift** as modifier; exact behavior (hold + direction vs tap vs + other key) **TBD** — must not require mouse. |
 | **Camera** | **Third-person**, **fixed pitch** (no looking up/down); follows the character; **no** mouse-look orbit for v1 focus. |
-| **Yaw / “where you face”** | **Keyboard-only** candidate: **Q** and **E** to step rotate camera or player facing (pick **camera-relative** vs **character-relative** in code and test). Optional later: mouse **yaw only** as quality-of-life — **`[N]`**, never required. |
+| **Yaw / “where you face”** | **Keyboard-only:** **A**/**D** — **hold-to-yaw** plus lateral strafe on the same keys (with **WASD** move). Optional later: mouse **yaw only** — **`[N]`**, never required. |
 
 **Process:** treat **controls + camera** as their own **iteration component**: build a throwaway or flags-driven binding layer, playtest on a **closed laptop**, then lock defaults and refresh dojo signs (see **3.4**).
 
@@ -348,7 +348,7 @@ Ship criteria: the game is **fully playable without a mouse** so laptops (trackp
 | Tier | ID | Ingredient | What “done” looks like | Best owner |
 |------|-----|------------|------------------------|------------|
 | **E** | **3.1.1** | Fixed follow + collision | Camera maintains a **fixed pitch** (or very narrow clamp), **follows** the player, and **pulls in** through geometry so the character stays readable — **without** mouse look. | Gameplay Programmer |
-| **E** | **3.1.4** | Keyboard yaw / facing | Player can change **horizontal** aim (facing and/or camera orbit) using **keys only** — e.g. **Q/E** step rotate or hold-to-spin at tuned rate; exact scheme **decided in prototype**, signed off when dojo feels fair. | Gameplay Programmer |
+| **E** | **3.1.4** | Keyboard yaw / facing | Player changes **horizontal** facing using **keys only** — prototype: **A**/**D** **hold-to-yaw** combined with strafe on **WASD**; retune strafe vs turn rate with rig/playtests (`FUTURE_DESIGN_NOTES.md`). | Gameplay Programmer |
 | **C** | **3.1.2** | Combat framing | Subtle FOV punch on big hits; comfortable defaults. | Creative Director + Gameplay Programmer |
 | **C** | **3.1.3** | Accessibility | **Keyboard:** camera turn speed, reduce shake/flash. If optional mouse yaw ships: invert X, sensitivity. | UX Designer |
 
@@ -356,7 +356,7 @@ Ship criteria: the game is **fully playable without a mouse** so laptops (trackp
 
 | Tier | ID | Ingredient | What “done” looks like | Best owner |
 |------|-----|------------|------------------------|------------|
-| **E** | **3.2.1** | Keyboard-only playability | **No mouse required:** movement, jump, defensive modifier (**Shift**-class), **interact** (for signs — key TBD), and **four limb attacks** on discrete keys; **WASD vs arrows** policy resolved via **3.4**. | Gameplay Programmer |
+| **E** | **3.2.1** | Keyboard-only playability | **No mouse required:** movement, jump, defensive modifier (**Shift**-class), **interact** (for signs — key TBD), and **four limb attacks** on discrete keys; dojo uses **WASD** move + **A**/**D** yaw/strafe (revisit arrows/accessibility via **3.4** if needed). | Gameplay Programmer |
 | **E** | **3.2.4** | Chord / sequence interpreter | Input system resolves **simultaneous** and/or **ordered** limb inputs into **compound** move IDs; conflicts use a clear priority rule (documented). | Gameplay Programmer |
 | **C** | **3.2.3** | Buffering & priority | Coyote time for jump; small input buffer for chords; conflict matrix (guard vs attack, etc.). | Gameplay Programmer |
 | **N** | **3.2.2** | Optional mouse yaw | Pointer adjusts **horizontal** look only; **off** by default or absent on laptop — shipping build remains complete without it. | Gameplay Programmer |
@@ -374,7 +374,7 @@ Ship criteria: the game is **fully playable without a mouse** so laptops (trackp
 
 | Tier | ID | Ingredient | What “done” looks like | Best owner |
 |------|-----|------------|------------------------|------------|
-| **C** | **3.4.1** | Playtest loop | Regular passes **without mouse** (laptop); short changelog of binding/camera decisions (Q/E speed, Shift behavior, etc.). | Game Director + Gameplay Programmer |
+| **C** | **3.4.1** | Playtest loop | Regular passes **without mouse** (laptop); short changelog of binding/camera decisions (A/D turn rate vs strafe, Shift behavior, etc.). | Game Director + Gameplay Programmer |
 | **C** | **3.4.2** | Docs in sync | Dojo signs, pause help, and README default controls match the build; no orphaned key art. | UX Designer + Gameplay Programmer |
 
 ---
@@ -495,7 +495,7 @@ Ship criteria: the game is **fully playable without a mouse** so laptops (trackp
 
 | Tier | ID | Ingredient | What “done” looks like | Best owner |
 |------|-----|------------|------------------------|------------|
-| **E** | **7.1.1** | Floor scale / sightlines | Space for **keyboard yaw** + follow camera + sprint + bag swings without clipping. | Level Designer |
+| **E** | **7.1.1** | Floor scale / sightlines | Space for **facing yaw / strafe** + follow camera + sprint + bag swings without clipping. | Level Designer |
 | **E** | **7.1.3** | Signs + interaction | Proximity or “use” to read **full** control scheme. | UX + Level Designer |
 | **C** | **7.1.2** | Bag anchor | Physically satisfying swing/recoil when struck. | Level Designer + Physics Programmer |
 
@@ -690,7 +690,7 @@ Ship criteria: the game is **fully playable without a mouse** so laptops (trackp
 **Operational DAG + checkboxes + parallel tags:** `docs/WORK_STREAMS.md` (task IDs **WS-001**…**WS-120**, Mermaid graph, suggested `@` rules per stream).
 
 1. **Static app shell** — Vite + Three.js, **no backend**, one-command deploy to static host.  
-2. **Fixed-pitch follow camera + keyboard yaw prototype** (e.g. Q/E) on a placeholder mesh — **no mouse**.  
+2. **Fixed-pitch follow camera + keyboard facing** (**WASD**, **A/D** yaw + strafe) on a placeholder mesh — **no mouse**.  
 3. **Physics world + player capsule** + dojo floor + boundaries (**4.4.4**, **7.2.1**).  
 4. **Stick rig** locomotion (**5.2.1**, **3.3.1**).  
 5. **Hit detection + bag** reaction (**6.2.1**, **2.4.1**).  

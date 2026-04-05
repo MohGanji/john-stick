@@ -29,7 +29,7 @@
 
 ## Prototype input — WASD move + shared facing yaw (WS-032 / WS-040, GP §3.1.4, §3.4.1)
 
-- **Bindings:** **WASD** for locomotion. **A** / **D** (`KeyA` / `KeyD`) add **hold-to-yaw** (screen-wise turn with follow cam) **and** lateral strafe on the same keys. **Arrow keys** move (strafe / forward) but **do not** yaw. **Q** / **E** are **not** used. Single **`facingYawRad`** (radians about world **+Y**). Turn rate: `KEYBOARD_LOCOMOTION.yawDegPerSec` in `src/game/input/keyboardLocomotion.ts` (tune strafe vs turn balance with rig — see `FUTURE_DESIGN_NOTES.md`).
+- **Bindings:** **WASD only** for locomotion (**no** arrow keys, **no** **Q**/**E**). **A** / **D** add **hold-to-yaw** (screen-wise turn with follow cam) **and** lateral strafe on the same keys. Single **`facingYawRad`** (radians about world **+Y**). Turn rate: `KEYBOARD_LOCOMOTION.yawDegPerSec` in `src/game/input/keyboardLocomotion.ts` (tune strafe vs turn balance with rig — see `FUTURE_DESIGN_NOTES.md`).
 - **Camera + body:** The same yaw drives **both** `updateThirdPersonFollowCamera` (orbit behind the player) and the **player capsule** via `syncRigidBodyYawFromFacing` before each physics step (`src/game/physics/rapierWorld.ts`). The body uses **`enabledRotations(false, true, false)`** so pitch/roll stay locked.
 - **Move:** **Facing-relative** horizontal move from `facingYawRad` (`moveFromFacing.ts` + capsule step).
 - **Focus:** Window `blur` and `document.visibilityState === "hidden"` **clear** held move keys so Tab-away does not leave stuck input.

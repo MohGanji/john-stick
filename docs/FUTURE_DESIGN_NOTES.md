@@ -6,9 +6,9 @@
 
 ---
 
-## Locomotion: WASD strafe + yaw on A/D (**shipped** in prototype, 2026-04)
+## Locomotion: WASD strafe + yaw on A/D (**shipped** in prototype, 2026-04-05)
 
-**What shipped first:** **No separate Q/E column.** **WASD** is the move set: **W/S** forward/back along facing, **A/D** apply **both** lateral **strafe** and **hold-to-yaw** at the same rate class as the old Q/E prototype (`KEYBOARD_LOCOMOTION.yawDegPerSec` in `src/game/input/keyboardLocomotion.ts`). **Arrow keys** still move (strafe/forward) but **do not** yaw — laptop-friendly without stealing turn from A/D.
+**What shipped first:** **No Q/E, no arrow-move** — **WASD only** for locomotion. **W/S** forward/back along facing; **A/D** apply **both** lateral **strafe** and **hold-to-yaw** at the same rate class as the old Q/E prototype (`KEYBOARD_LOCOMOTION.yawDegPerSec` in `src/game/input/keyboardLocomotion.ts`).
 
 **Playfeel:** Fast, dynamic, and fairly natural in the dojo; good enough to **standardize on WASD-only** for facing + locomotion until the rig argues otherwise.
 

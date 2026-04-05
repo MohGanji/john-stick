@@ -104,7 +104,7 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     -(floorHalfDepth + wallHalfThickness),
   );
 
-  /** WS-040 — kinematic capsule + KCC; yaw-only (WS-032). */
+  /** WS-040 — kinematic capsule + KCC; yaw-only facing (WS-032, KeyA and KeyD). */
   const playerRigidBody = world.createRigidBody(
     RAPIER.RigidBodyDesc.kinematicPositionBased()
       .setTranslation(0, playerCapsuleCenterY(), 0)
@@ -156,9 +156,9 @@ export function readRigidBodyTransform(
 }
 
 /**
- * WS-032 — world-space yaw (radians, about +Y) matches keyboard facing + third-person camera orbit.
- * Call **before** `world.step()` so contacts use the current facing; clears angular velocity so
- * collisions do not add pitch/roll or spin on Y.
+ * World-space yaw (radians, about +Y) matches keyboard facing + third-person camera orbit.
+ * Call **before** `world.step()` so contacts use the current facing. Dynamic bodies: clears angular
+ * velocity so collisions do not add pitch/roll or spin on Y. Kinematic: uses `setNextKinematicRotation`.
  */
 export function syncRigidBodyYawFromFacing(
   body: RAPIER.RigidBody,

@@ -5,7 +5,7 @@ import { CAMERA_PROBE_GROUPS } from "../physics/collisionLayers";
 
 /**
  * WS-030 / GP §3.1.1 — third-person follow: **fixed pitch** (orbit polar angle), **targets**
- * the player pivot. Horizontal orbit angle `cameraYawRad` equals **player facing yaw** (WS-032).
+ * the player pivot. Horizontal orbit angle `cameraYawRad` equals **player facing yaw** (WASD **A** and **D**).
  * WS-031 — spherecast pull-in via Rapier `World.castShape` (Ball).
  */
 export const THIRD_PERSON_FOLLOW = {

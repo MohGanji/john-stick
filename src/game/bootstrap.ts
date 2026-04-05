@@ -53,7 +53,7 @@ export async function mountGame(root: HTMLElement): Promise<void> {
   const jumpLatch: JumpLatch = { latched: false };
 
   /**
-   * Shared **facing** yaw (radians, +Y): **A**/**D** hold-to-yaw (WS-032 + WS-040) + follow cam.
+   * Shared **facing** yaw (radians, +Y): **A** and **D** hold-to-yaw (WS-032 + WS-040) + follow cam.
    */
   let facingYawRad = 0;
 

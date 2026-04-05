@@ -249,7 +249,7 @@ flowchart TB
   - **@** `role-gameplay-programmer`  
   - **GP** §3.1.1  
 
-- [x] **WS-032** — Keyboard yaw (e.g. **Q/E**); document camera vs character rotation choice.  
+- [x] **WS-032** — Keyboard facing yaw (**A**/**D** hold-to-turn with strafe; no **Q**/**E**); camera + body share `facingYawRad`.  
   - **Depends:** WS-030  
   - **∥** WS-031  
   - **@** `role-gameplay-programmer`  
@@ -257,7 +257,7 @@ flowchart TB
 
 ### Wave 4 — Player body
 
-- [x] **WS-040** — Character controller (capsule): WASD/arrows, jump (**Space**), grounded tests.  
+- [x] **WS-040** — Character controller (capsule): **WASD** move, jump (**Space**), grounded tests.  
   - **Depends:** WS-011, WS-032, WS-020  
   - **∥** WS-041 (until mesh needed for ship polish)  
   - **@** `role-gameplay-programmer` · `role-physics-programmer`  
