@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { runGameLoop } from "./gameLoop";
+import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import {
   createJohnStickPhysics,
   readRigidBodyTransform,
@@ -13,17 +14,7 @@ export async function mountGame(root: HTMLElement): Promise<void> {
 
   const { scene, camera, renderer } = createJohnStickRenderSetup(root);
 
-  const floorMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(48, 0.1, 48),
-    new THREE.MeshStandardMaterial({
-      color: 0x2a2a36,
-      roughness: 0.92,
-      metalness: 0.04,
-    }),
-  );
-  floorMesh.position.set(0, -0.05, 0);
-  floorMesh.receiveShadow = true;
-  scene.add(floorMesh);
+  scene.add(createDojoPlaceholderLevel());
 
   const demoMesh = new THREE.Mesh(
     new THREE.BoxGeometry(0.44, 0.44, 0.44),

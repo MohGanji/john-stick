@@ -1,5 +1,6 @@
 import RAPIER from "@dimforge/rapier3d-compat";
 
+import { DOJO_BLOCKOUT } from "../level/dojoBlockout";
 import { FIXED_DT } from "../gameLoop";
 import {
   collisionGroups,
@@ -31,13 +32,75 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     PhysicsFilter.allSolid | PhysicsMembership.trigger,
   );
 
+  const {
+    floorHalfWidth,
+    floorHalfDepth,
+    floorThickness,
+    wallHeight,
+    wallHalfThickness,
+  } = DOJO_BLOCKOUT;
+
   const floorBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
-  const floorCollider = RAPIER.ColliderDesc.cuboid(32, 0.05, 32)
-    .setTranslation(0, -0.05, 0)
+  const floorHalfY = floorThickness / 2;
+  const floorCollider = RAPIER.ColliderDesc.cuboid(
+    floorHalfWidth,
+    floorHalfY,
+    floorHalfDepth,
+  )
+    .setTranslation(0, -floorHalfY, 0)
     .setFriction(0.85)
     .setCollisionGroups(staticGroups)
     .setSolverGroups(staticGroups);
   world.createCollider(floorCollider, floorBody);
+
+  /** GP §7.2.1 — perimeter solids; spans extend past corners so there is no crack. +Z open (see dojoBlockout). */
+  const wallHalfY = wallHeight / 2;
+  const wallY = wallHalfY;
+  const zReach = floorHalfDepth + wallHalfThickness * 2;
+  const xReach = floorHalfWidth + wallHalfThickness * 2;
+  const boundsBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
+
+  function addWallCollider(
+    hx: number,
+    hy: number,
+    hz: number,
+    tx: number,
+    ty: number,
+    tz: number,
+  ): void {
+    const desc = RAPIER.ColliderDesc.cuboid(hx, hy, hz)
+      .setTranslation(tx, ty, tz)
+      .setFriction(0.45)
+      .setRestitution(0.02)
+      .setCollisionGroups(staticGroups)
+      .setSolverGroups(staticGroups);
+    world.createCollider(desc, boundsBody);
+  }
+
+  addWallCollider(
+    wallHalfThickness,
+    wallHalfY,
+    zReach,
+    floorHalfWidth + wallHalfThickness,
+    wallY,
+    0,
+  );
+  addWallCollider(
+    wallHalfThickness,
+    wallHalfY,
+    zReach,
+    -(floorHalfWidth + wallHalfThickness),
+    wallY,
+    0,
+  );
+  addWallCollider(
+    xReach,
+    wallHalfY,
+    wallHalfThickness,
+    0,
+    wallY,
+    -(floorHalfDepth + wallHalfThickness),
+  );
 
   const demoRigidBody = world.createRigidBody(
     RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 1.75, 0),

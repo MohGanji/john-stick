@@ -52,8 +52,9 @@ export function createJohnStickRenderSetup(
     0.1,
     200,
   );
-  camera.position.set(0, 1.35, 4.2);
-  camera.lookAt(0, 0.4, 0);
+  /** Default pose frames WS-021 dojo bounds (~24×18 m); closer shots land in WS-030. */
+  camera.position.set(0, 7.0, 21.0);
+  camera.lookAt(0, 0.25, 0);
 
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
@@ -85,8 +86,8 @@ export function createJohnStickRenderSetup(
     GRAPHICS_PRESET_DEFAULT.shadowMapSize,
   );
   sunLight.shadow.camera.near = 1.5;
-  sunLight.shadow.camera.far = 48;
-  const orthoExtent = 22;
+  sunLight.shadow.camera.far = 56;
+  const orthoExtent = 28;
   sunLight.shadow.camera.left = -orthoExtent;
   sunLight.shadow.camera.right = orthoExtent;
   sunLight.shadow.camera.top = orthoExtent;

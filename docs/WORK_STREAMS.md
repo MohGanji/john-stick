@@ -230,7 +230,7 @@ flowchart TB
   - **@** `role-graphics-programmer`  
   - **GP** §4.1.1  
 
-- [ ] **WS-021** — Dojo floor + boundary colliders (placeholder geo OK).  
+- [x] **WS-021** — Dojo floor + boundary colliders (placeholder geo OK).  
   - **Depends:** WS-011, WS-010  
   - **∥** WS-020 once WS-010 done  
   - **@** `role-level-designer` · `role-physics-programmer`  

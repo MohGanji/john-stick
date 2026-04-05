@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Default dev server port is **5174** (see `vite.config.ts`). Production build: `npm run build`, preview: `npm run preview`.
+Default dev server port is **5173** (see `vite.config.ts`). Production build: `npm run build`, preview: `npm run preview`.
 
 ## Repo layout
 
