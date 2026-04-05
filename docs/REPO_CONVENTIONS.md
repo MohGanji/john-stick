@@ -10,7 +10,7 @@
 | `src/game/` | All game runtime: loop, sim, rendering glue, data loaders. Add subfolders here as domains grow (e.g. `input/`, `combat/`) rather than a flat dump. |
 | `assets/` | **Source** art and audio committed to git. Import from TS (`import url from "../assets/..."`) or copy in build when a pipeline exists. Subfolders: `models/`, `textures/`, `audio/`. |
 | `public/` | **Static** files served at **site root** (`/file.ext`). Use for files that must keep exact URLs (e.g. `LoadingManager` paths, `fetch('/dojo/level.json')`). |
-| `docs/` | Design and process: `GAME_PLAN.md`, `WORK_STREAMS.md`, this file. |
+| `docs/` | Design and process: `GAME_PLAN.md`, `WORK_STREAMS.md`, `FUTURE_DESIGN_NOTES.md` (non-binding ideas), this file. |
 
 ## Naming
 
