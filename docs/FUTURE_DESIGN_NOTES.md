@@ -102,6 +102,18 @@
 
 ---
 
+## Combat: player knockdown / ragdoll — only after combos or power shots (idea, not implemented)
+
+**Context (2026-04):** Knockdown-style reactions in the dojo prototype target the **training dummy** (lab damage threshold → ragdoll, etc.). The **player** does not yet use the same articulated / ownership handoff pipeline (GP §6.1.1).
+
+**Future idea:** When the player can be **hit by enemies**, avoid “fall over on every light tap.” Gate **full knockdown or ragdoll** so it triggers mainly from **compound / sequence hits** (combo finishers, chord windows) or **power / charged** strikes — light jabs might only **stagger**, **hit-stop**, or **camera juice** without a full floor ragdoll. Designer knobs could include: `MoveId` or attack **tier**, **combo depth** or **scaling impulse** from chain position, and a **stagger → ragdoll** threshold curve (related to WS-092 on the dummy side).
+
+**Why defer:** Needs enemy hit resolution on the player, shared tuning with `trainingDummyFeel`-style scalars, and clarity on **PvE vs future PvP** before locking rules.
+
+**Related:** `trainingDummyFsm.ts` / `applyTrainingDummyHitFromStrike.ts` (reference receiver pipeline), `compoundMoveTable` / charge tiers, GP §6.1, WS-092, WS-094 (articulated ragdoll as visual/physics target).
+
+---
+
 ## Audio: combo identity + variation (per-move → per-chord)
 
 **Context (2026-04):** Training-bag hits now pick a **procedural preset per limb** (`CombatHitAttackKind`); each `playTrainingBagImpact` call still **randomizes pitch** within the preset’s `pitchCents` list so repeats don’t sound identical.

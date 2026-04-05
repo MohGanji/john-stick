@@ -1,3 +1,5 @@
+import type { ArticulatedBodyTransform } from "../physics/trainingDummyArticulatedRagdoll";
+
 /**
  * WS-090 / WS-091 / GP §2.1.2, §6.1 — dummy reactions: idle → hit → stagger → idle, or ragdoll → recover (kinematic blend).
  */
@@ -21,6 +23,9 @@ export type TrainingDummyFsm = {
   recoverBlendFromQuat: { x: number; y: number; z: number; w: number };
   recoverTargetPos: { x: number; y: number; z: number };
   recoverTargetQuat: { x: number; y: number; z: number; w: number };
+  /** WS-094 — per-body kinematic recover when articulated ragdoll is active. */
+  articulatedRecoverFrom: ArticulatedBodyTransform[] | null;
+  articulatedRecoverTo: ArticulatedBodyTransform[] | null;
 };
 
 export type TrainingDummyFsmTiming = {
@@ -63,6 +68,8 @@ export function createTrainingDummyFsm(): TrainingDummyFsm {
     recoverBlendFromQuat: { x: 0, y: 0, z: 0, w: 1 },
     recoverTargetPos: { x: 0, y: 0, z: 0 },
     recoverTargetQuat: { x: 0, y: 0, z: 0, w: 1 },
+    articulatedRecoverFrom: null,
+    articulatedRecoverTo: null,
   };
 }
 

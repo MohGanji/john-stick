@@ -59,6 +59,14 @@ import {
   rigidBodyPlanarSpeedLinAng,
 } from "./physics/trainingDummyAuthority";
 import {
+  beginTrainingDummyArticulatedRagdoll,
+  computeArticulatedBindWorldTransforms,
+  createTrainingDummyArticulatedRagdollShell,
+  findFirstSkinnedMesh,
+  syncTrainingDummySkeletonFromArticulatedRagdoll,
+  type ArticulatedBodyTransform,
+} from "./physics/trainingDummyArticulatedRagdoll";
+import {
   createJohnStickPhysics,
   readRigidBodyTransform,
   stepPhysicsWorld,
@@ -73,6 +81,7 @@ import { getCombatJuiceAccess } from "./accessibility/combatJuiceAccess";
 import { createCombatJuiceController } from "./combat/combatJuiceController";
 import { createJohnStickRenderSetup } from "./render";
 import { createGameplayRuntimeTuning } from "./tuning/gameplayRuntimeTuning";
+import { TRAINING_DUMMY_SPAWN_TRANSFORM } from "./level/trainingDummyConfig";
 import { attachCombatHitAudio } from "./audio/attachCombatHitAudio";
 import { createAudioMixer } from "./audio/audioMixer";
 import { playTrainingBagImpact } from "./audio/playTrainingBagImpact";
@@ -105,6 +114,14 @@ export async function mountGame(
   ]);
   scene.add(playerCharacter.root);
   scene.add(trainingDummyCharacter.root);
+
+  const s0 = TRAINING_DUMMY_SPAWN_TRANSFORM;
+  trainingDummyCharacter.root.position.set(s0.x, s0.y, s0.z);
+  trainingDummyCharacter.root.quaternion.set(s0.qx, s0.qy, s0.qz, s0.qw);
+  trainingDummyCharacter.root.updateMatrixWorld(true);
+  const trainingDummyArticulatedRecoverTos: ArticulatedBodyTransform[] =
+    computeArticulatedBindWorldTransforms(trainingDummyCharacter.root);
+  const trainingDummyArticulated = createTrainingDummyArticulatedRagdollShell();
 
   const scratchPos = { x: 0, y: 0, z: 0 };
   const scratchQuat = { x: 0, y: 0, z: 0, w: 1 };
@@ -317,9 +334,22 @@ export async function mountGame(
         FIXED_DT,
         dummyFsmTiming.recoverBlendSec,
         dummyFsmTiming.standUpBlendSec,
+        { physics, articulated: trainingDummyArticulated },
       );
       if (dummyPrePhys.resetLabDamageAfterRagdollRecover) {
         trainingDummyLabDamageTotal = 0;
+        findFirstSkinnedMesh(trainingDummyCharacter.root)?.skeleton?.pose();
+      }
+
+      if (
+        trainingDummyFsm.phase === "ragdoll" &&
+        !trainingDummyArticulated.active
+      ) {
+        beginTrainingDummyArticulatedRagdoll(
+          physics,
+          trainingDummyCharacter.root,
+          trainingDummyArticulated,
+        );
       }
 
       const dummyBody = physics.trainingDummyRigidBody;
@@ -498,7 +528,16 @@ export async function mountGame(
         dummyFsmTiming,
       );
       if (dummyFsmStep.armRecover) {
-        armTrainingDummyRecover(physics.trainingDummyRigidBody, trainingDummyFsm);
+        armTrainingDummyRecover(
+          physics.trainingDummyRigidBody,
+          trainingDummyFsm,
+          trainingDummyArticulated.active
+            ? {
+                articulated: trainingDummyArticulated,
+                recoverTos: trainingDummyArticulatedRecoverTos,
+              }
+            : undefined,
+        );
       }
       if (dummyFsmStep.armStandUp) {
         armTrainingDummyStandUp(physics.trainingDummyRigidBody, trainingDummyFsm);
@@ -585,12 +624,17 @@ export async function mountGame(
         dummyScratchQuat.z,
         dummyScratchQuat.w,
       );
+      if (trainingDummyArticulated.active) {
+        syncTrainingDummySkeletonFromArticulatedRagdoll(trainingDummyArticulated);
+      }
       trainingDummyCharacter.updateLocomotionAnim(dtSeconds, {
         planarInput: 0,
         grounded: true,
         freezePose:
+          trainingDummyArticulated.active ||
           trainingDummyFsm.phase === "ragdoll" ||
-          trainingDummyFsm.phase === "stand_up",
+          trainingDummyFsm.phase === "stand_up" ||
+          trainingDummyFsm.phase === "recover",
       });
 
       const { forward, strafe } = actionSample.interactModeOpen

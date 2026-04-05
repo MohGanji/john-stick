@@ -61,15 +61,17 @@ This is a **v1 locomotion** rig: keyframed **Idle** and **Walk** only (airborne 
 
 **Runtime:** `src/game/player/playerCharacter.ts` expects exact names **`Idle`** and **`Walk`**.
 
-## Future ragdoll (placeholder)
+## Ragdoll (WS-094 shipped)
 
-| Bone | Intended physics role (WS-091+) |
-|------|-----------------------------------|
-| `Hips` | Main mass / pelvis body |
-| `Spine` | Lower torso / lumbar hinge to Hips |
-| `Chest` | Upper torso / thorax; link to `Spine` |
-| `Head` | Light sphere / cone; joint limit |
-| `ArmL` / `ArmR` | Chain from shoulder (compound hits later) |
-| `Leg*` | Thigh / shin capsules; foot contact |
+Runtime: `src/game/physics/trainingDummyArticulatedRagdoll.ts` + `trainingDummyRagdollConfig.ts` — Rapier **impulse joints** (spherical + revolute limits on elbows/knees), **12** dynamic bodies at knockdown, skinned mesh driven from body poses, teardown + monolithic capsule restore after recover. Perf cap note: `TRAINING_DUMMY_ARTICULATED_DYNAMIC_BODY_CAP` (GP §6.4.2).
 
-Physics programmer owns collider sizes and joint limits; this document only fixes **naming and hierarchy** for export ↔ engine parity.
+| Bone | Physics role |
+|------|----------------|
+| `Hips` | Pelvis capsule on existing root body; COM impulses from combat |
+| `Spine` | Lower torso; spherical to Hips |
+| `Chest` | Upper torso; spherical to Spine |
+| `Head` | Ball collider; spherical to Chest |
+| `Shoulder*` / `Arm*` | Spherical shoulder; **revolute** elbow (`TRAINING_DUMMY_HINGE_LIMITS_RAD`) |
+| `LegUpper*` / `LegLower*` | Spherical hip; **revolute** knee |
+
+Physics programmer owns numeric tuning in `trainingDummyRagdollConfig.ts`; this document fixes **naming and hierarchy** for export ↔ engine parity.

@@ -29,7 +29,12 @@ export type JohnStickPhysics = {
   punchingBagPivotBody: RAPIER.RigidBody;
   /** WS-090 — dynamic dummy (player-scale capsule); hurt sensor moves with the body. */
   trainingDummyRigidBody: RAPIER.RigidBody;
+  /** WS-094 — monolithic capsule (removed while articulated ragdoll is active). */
+  trainingDummySolidCollider: RAPIER.Collider;
   trainingDummyHurtCollider: RAPIER.Collider;
+  /** WS-094 — same membership as bag/dummy solids for spawned limb colliders. */
+  propCollisionGroups: number;
+  propSolverGroups: number;
 };
 
 /**
@@ -231,7 +236,10 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     .setMass(d.colliderMassKg)
     .setCollisionGroups(propGroups)
     .setSolverGroups(propGroups);
-  world.createCollider(dummySolid, trainingDummyRigidBody);
+  const trainingDummySolidCollider = world.createCollider(
+    dummySolid,
+    trainingDummyRigidBody,
+  );
 
   const dhe = TRAINING_DUMMY_HURT_VOLUME.halfExtents;
   const trainingDummyHurtCollider = world.createCollider(
@@ -251,7 +259,10 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     punchingBagRigidBody,
     punchingBagPivotBody,
     trainingDummyRigidBody,
+    trainingDummySolidCollider,
     trainingDummyHurtCollider,
+    propCollisionGroups: propGroups,
+    propSolverGroups: propGroups,
   };
 }
 

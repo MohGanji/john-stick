@@ -7,6 +7,13 @@ import * as THREE from "three";
 
 import type { TrainingDummyFsm } from "../combat/trainingDummyFsm";
 import { TRAINING_DUMMY_SPAWN_TRANSFORM } from "../level/trainingDummyConfig";
+import type { JohnStickPhysics } from "./rapierWorld";
+import {
+  endTrainingDummyArticulatedRagdoll,
+  readArticulatedBodyTransform,
+  type ArticulatedBodyTransform,
+  type TrainingDummyArticulatedRagdoll,
+} from "./trainingDummyArticulatedRagdoll";
 
 const qa = new THREE.Quaternion();
 const qb = new THREE.Quaternion();
@@ -51,9 +58,16 @@ export function uprightWorldYawQuat(rot: {
   return { x: qo.x, y: qo.y, z: qo.z, w: qo.w };
 }
 
+export type ArmTrainingDummyRecoverContext = {
+  articulated: TrainingDummyArticulatedRagdoll;
+  /** Upright bind targets in world (same order as `articulated.bodies`). */
+  recoverTos: ArticulatedBodyTransform[];
+};
+
 export function armTrainingDummyRecover(
   body: RAPIER.RigidBody,
   fsm: TrainingDummyFsm,
+  ctx?: ArmTrainingDummyRecoverContext,
 ): void {
   copyFromRigidBody(body, fsm);
 
@@ -66,7 +80,41 @@ export function armTrainingDummyRecover(
   fsm.recoverTargetQuat.z = s.qz;
   fsm.recoverTargetQuat.w = s.qw;
 
-  setKinematicHoldCurrent(body);
+  if (ctx?.articulated.active && ctx.recoverTos.length === ctx.articulated.bodies.length) {
+    const n = ctx.articulated.bodies.length;
+    const from: ArticulatedBodyTransform[] = [];
+    const to: ArticulatedBodyTransform[] = [];
+    for (let i = 0; i < n; i++) {
+      const a: ArticulatedBodyTransform = {
+        px: 0,
+        py: 0,
+        pz: 0,
+        qx: 0,
+        qy: 0,
+        qz: 0,
+        qw: 1,
+      };
+      readArticulatedBodyTransform(ctx.articulated.bodies[i], a);
+      from.push(a);
+      const b = ctx.recoverTos[i]!;
+      to.push({
+        px: b.px,
+        py: b.py,
+        pz: b.pz,
+        qx: b.qx,
+        qy: b.qy,
+        qz: b.qz,
+        qw: b.qw,
+      });
+      setKinematicHoldCurrent(ctx.articulated.bodies[i]!);
+    }
+    fsm.articulatedRecoverFrom = from;
+    fsm.articulatedRecoverTo = to;
+  } else {
+    fsm.articulatedRecoverFrom = null;
+    fsm.articulatedRecoverTo = null;
+    setKinematicHoldCurrent(body);
+  }
 
   fsm.phase = "recover";
   fsm.timeInPhaseSec = 0;
@@ -160,7 +208,12 @@ function finishStandUpToDynamicIdle(
 function finishRagdollRecoverAtSpawn(
   body: RAPIER.RigidBody,
   fsm: TrainingDummyFsm,
+  physics: JohnStickPhysics | undefined,
+  articulated: TrainingDummyArticulatedRagdoll | undefined,
 ): void {
+  if (physics && articulated?.active) {
+    endTrainingDummyArticulatedRagdoll(physics, articulated);
+  }
   const s = TRAINING_DUMMY_SPAWN_TRANSFORM;
   body.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
   body.setTranslation({ x: s.x, y: s.y, z: s.z }, true);
@@ -169,11 +222,43 @@ function finishRagdollRecoverAtSpawn(
   body.setAngvel({ x: 0, y: 0, z: 0 }, true);
   fsm.phase = "idle";
   fsm.timeInPhaseSec = 0;
+  fsm.articulatedRecoverFrom = null;
+  fsm.articulatedRecoverTo = null;
+}
+
+function applyArticulatedRecoverSample(
+  bodies: RAPIER.RigidBody[],
+  from: ArticulatedBodyTransform[],
+  to: ArticulatedBodyTransform[],
+  t: number,
+): void {
+  for (let i = 0; i < bodies.length; i++) {
+    const a = from[i]!;
+    const b = to[i]!;
+    const px = a.px + (b.px - a.px) * t;
+    const py = a.py + (b.py - a.py) * t;
+    const pz = a.pz + (b.pz - a.pz) * t;
+    qa.set(a.qx, a.qy, a.qz, a.qw);
+    qb.set(b.qx, b.qy, b.qz, b.qw);
+    qo.copy(qa).slerp(qb, t);
+    bodies[i]!.setNextKinematicTranslation({ x: px, y: py, z: pz });
+    bodies[i]!.setNextKinematicRotation({
+      x: qo.x,
+      y: qo.y,
+      z: qo.z,
+      w: qo.w,
+    });
+  }
 }
 
 export type PrePhysicsTrainingDummyResult = {
   /** Ragdoll recover reached spawn and cleared knockdown lab damage (not used after light stand_up). */
   resetLabDamageAfterRagdollRecover: boolean;
+};
+
+export type PrePhysicsTrainingDummyOptions = {
+  physics: JohnStickPhysics;
+  articulated: TrainingDummyArticulatedRagdoll;
 };
 
 /**
@@ -185,6 +270,7 @@ export function prePhysicsTrainingDummy(
   fixedDt: number,
   recoverBlendSec: number,
   standUpBlendSec: number,
+  opts?: PrePhysicsTrainingDummyOptions,
 ): PrePhysicsTrainingDummyResult {
   if (fsm.phase === "stand_up") {
     const t = advanceKinematicBlend(fsm, fixedDt, standUpBlendSec);
@@ -198,11 +284,22 @@ export function prePhysicsTrainingDummy(
 
   if (fsm.phase === "recover") {
     const t = advanceKinematicBlend(fsm, fixedDt, recoverBlendSec);
-    applyBlendSample(body, fsm, t);
+    const from = fsm.articulatedRecoverFrom;
+    const to = fsm.articulatedRecoverTo;
+    if (
+      from &&
+      to &&
+      opts?.articulated.active &&
+      from.length === opts.articulated.bodies.length
+    ) {
+      applyArticulatedRecoverSample(opts.articulated.bodies, from, to, t);
+    } else {
+      applyBlendSample(body, fsm, t);
+    }
     if (t < 1) {
       return { resetLabDamageAfterRagdollRecover: false };
     }
-    finishRagdollRecoverAtSpawn(body, fsm);
+    finishRagdollRecoverAtSpawn(body, fsm, opts?.physics, opts?.articulated);
     return { resetLabDamageAfterRagdollRecover: true };
   }
 
