@@ -5,6 +5,11 @@ import {
 import { runGameLoop } from "./gameLoop";
 import { attachActionMap } from "./input/actionMap";
 import { attachActionMapDebugHud } from "./input/actionMapDebugHud";
+import {
+  createCombatIntentState,
+  resolveCombatIntent,
+  type ResolvedCombatIntent,
+} from "./input/combatIntent";
 import { attachKeyboardLocomotion } from "./input/keyboardLocomotion";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import {
@@ -45,14 +50,36 @@ export async function mountGame(root: HTMLElement): Promise<void> {
 
   /** Sampled at start of `update`; locomotion freezes while **interact** mode is open (WS-050). */
   let actionSample = actionMap.snapshot();
+  let combatIntentState = createCombatIntentState();
+  const initIntent = resolveCombatIntent(
+    combatIntentState,
+    actionSample,
+    actionSample,
+    performance.now() * 0.001,
+  );
+  combatIntentState = initIntent.nextState;
+  /** WS-051 — priority + chord/sequence resolution (GP §3.2.3–3.2.4). */
+  let combatIntent: ResolvedCombatIntent = initIntent.resolved;
 
   const actionMapDebugHud = import.meta.env.DEV
-    ? attachActionMapDebugHud(root, () => actionSample)
+    ? attachActionMapDebugHud(root, () => ({
+        snapshot: actionSample,
+        combat: combatIntent,
+      }))
     : null;
 
   runGameLoop({
     update(dtSeconds) {
+      const prevAction = actionSample;
       actionSample = actionMap.snapshot();
+      const intentOut = resolveCombatIntent(
+        combatIntentState,
+        prevAction,
+        actionSample,
+        performance.now() * 0.001,
+      );
+      combatIntentState = intentOut.nextState;
+      combatIntent = intentOut.resolved;
       if (!actionSample.interactModeOpen) {
         facingYawRad += keyboardLocomotion.facingYawDeltaRad(dtSeconds);
       }

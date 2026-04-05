@@ -1,4 +1,5 @@
 import { FIXED_DT } from "../gameLoop";
+import { INPUT_COMBAT } from "../input/inputCombatConstants";
 import {
   syncRigidBodyYawFromFacing,
   type JohnStickPhysics,
@@ -11,11 +12,13 @@ export type PlayerLocomotionState = {
   /** From last `computeColliderMovement` (start false until first step). */
   wasGrounded: boolean;
   verticalVelocity: number;
+  /** GP §3.2.3 — time left (seconds) to jump after leaving ground. */
+  coyoteRemainingSec: number;
 };
 
 export function createPlayerLocomotionState(): PlayerLocomotionState {
   /** Spawn on dojo floor — allows first-frame jump; KCC overwrites after first step. */
-  return { wasGrounded: true, verticalVelocity: 0 };
+  return { wasGrounded: true, verticalVelocity: 0, coyoteRemainingSec: 0 };
 }
 
 export type JumpLatch = { latched: boolean };
@@ -40,8 +43,9 @@ export function stepPlayerCapsule(
   let vy = state.verticalVelocity;
 
   if (jumpLatch.latched) {
-    if (state.wasGrounded) {
+    if (state.wasGrounded || state.coyoteRemainingSec > 0) {
       vy = PLAYER_CAPSULE.jumpVelocity;
+      state.coyoteRemainingSec = 0;
     }
     jumpLatch.latched = false;
   }
@@ -78,4 +82,9 @@ export function stepPlayerCapsule(
   vy = clampVerticalVelocityWhenGrounded(vy, grounded);
   state.verticalVelocity = vy;
   state.wasGrounded = grounded;
+  if (grounded) {
+    state.coyoteRemainingSec = INPUT_COMBAT.jumpCoyoteSec;
+  } else {
+    state.coyoteRemainingSec = Math.max(0, state.coyoteRemainingSec - dt);
+  }
 }

@@ -169,7 +169,7 @@ flowchart TB
 | WS-040 | 4 | WS-011, WS-032, WS-020 | WS-041 | `role-gameplay-programmer` + `role-physics-programmer` | Move + jump GP §3.3.1 |
 | WS-041 | 4 | WS-020 | WS-040 | `role-technical-animator` + `role-character-artist` | glTF stick + walk cycle GP §5.2.1 |
 | WS-050 | 5 | WS-040 | — | `role-gameplay-programmer` | 4 keys + Shift + interact GP §3.2.1 |
-| WS-051 | 5 | WS-050 | — | `role-gameplay-programmer` | Chords + priority GP §3.2.4 |
+| WS-051 | 5 | WS-050 | — | `role-gameplay-programmer` | Chords + priority + coyote GP §3.2.3–3.2.4 |
 | WS-060 | 6 | WS-050, WS-040 | WS-061 | `role-gameplay-programmer` | Hitbox + debug draw GP §6.2.1 |
 | WS-061 | 6 | WS-011, WS-021 | WS-060 | `role-physics-programmer` + `role-level-designer` | Bag anchor GP §7.1.2 |
 | WS-062 | 6 | WS-060, WS-061 | — | `role-gameplay-programmer` | Impulse + reaction on bag GP §2.4.1 |
@@ -177,8 +177,8 @@ flowchart TB
 | WS-071 | 7 | WS-070 | WS-072, WS-073 | `role-gameplay-programmer` + `role-creative-director` | Hit-stop, FOV punch GP §6.3.1 |
 | WS-072 | 7 | WS-070 | WS-071, WS-073 | `role-audio` | Web Audio buses + 1st SFX GP §8.2.1 |
 | WS-073 | 7 | WS-070 | WS-071, WS-072 | `role-vfx-artist` + `role-graphics-programmer` | Burst / flash GP §6.3.2 |
-| WS-080 | 8 | WS-062 | — | `role-lead-game-designer` + `role-gameplay-programmer` | 3 limbs + data table GP §2.2.1 |
-| WS-081 | 8 | WS-051, WS-080 | — | `role-lead-game-designer` + `role-technical-animator` + `role-gameplay-programmer` | Compound moves GP §2.2.1 |
+| WS-080 | 8 | WS-062 | — | `role-lead-game-designer` + `role-gameplay-programmer` + `role-technical-animator` | 3 limbs + table (+ recovery) GP §2.2.1 |
+| WS-081 | 8 | WS-051, WS-080 | — | `role-lead-game-designer` + `role-technical-animator` + `role-gameplay-programmer` | Compounds + hit profile + recovery GP §2.2.1–2.2.3 |
 | WS-090 | 9 | WS-062 | — | `role-gameplay-programmer` | Dummy + states GP §2.1.2 |
 | WS-091 | 9 | WS-090, WS-011 | — | `role-physics-programmer` + `role-technical-animator` | Ragdoll + get-up GP §6.1 |
 | WS-092 | 9 | WS-091 | — | `role-lead-game-designer` + `role-physics-programmer` | Threshold tuning GP §6.1.2 |
@@ -276,10 +276,11 @@ flowchart TB
   - **@** `role-gameplay-programmer`  
   - **GP** §3.2.1  
 
-- [ ] **WS-051** — Chord / sequence interpreter + conflict priority (guard vs attack vs interact).  
+- [x] **WS-051** — Chord / sequence interpreter + conflict priority (guard vs attack vs interact).  
   - **Depends:** WS-050  
   - **@** `role-gameplay-programmer` · `role-lead-game-designer`  
   - **GP** §3.2.3–3.2.4  
+  - **Deferred here (intentional):** strike **recovery / input cooldown** — wire when moves hit the sim: **default cooldown** plus **per-`MoveId` overrides** (punch vs kick vs compound; heavy combos e.g. bicycle kick = longer “back on feet”). Spec and columns land in **WS-080** / **WS-081**, not in the interpreter alone.  
 
 ### Wave 6 — First contact (bag)
 
@@ -331,11 +332,13 @@ flowchart TB
   - **Depends:** WS-062  
   - **@** `role-lead-game-designer` · `role-gameplay-programmer` · `role-technical-animator`  
   - **GP** §2.2.1  
+  - **Build:** move table includes **recovery / input cooldown** (or equivalent): a **repo default**, **per-row overrides** by move type (punch vs kick, etc.), and hooks so gameplay can gate new strikes from **sim time + last `MoveId` / state** (see WS-051 deferral).  
 
 - [ ] **WS-081** — Compound chord moves + animations + hit profiles.  
   - **Depends:** WS-051, WS-080  
   - **@** `role-lead-game-designer` · `role-gameplay-programmer` · `role-technical-animator`  
   - **GP** §2.2.1–2.2.3  
+  - **Build:** same table pattern as WS-080 — compound `MoveId` rows add **hit profile** data plus **recovery overrides** where needed (e.g. big aerial chords).  
 
 ### Wave 9 — Ragdoll target
 

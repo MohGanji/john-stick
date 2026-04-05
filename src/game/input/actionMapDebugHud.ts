@@ -1,12 +1,17 @@
 import type { ActionMapSnapshot } from "./actionMap";
+import type { ResolvedCombatIntent } from "./combatIntent";
 
 /**
- * Dev-only overlay: proves **U I J K** + Shift + Enter are sampled (WS-050).
+ * Dev-only overlay: proves **U I J K** + Shift + Enter are sampled (WS-050)
+ * and shows WS-051 resolved combat intent (priority + move id).
  * Stripped in production builds (`import.meta.env.PROD`).
  */
 export function attachActionMapDebugHud(
   container: HTMLElement,
-  getSnapshot: () => ActionMapSnapshot,
+  getFrame: () => {
+    snapshot: ActionMapSnapshot;
+    combat: ResolvedCombatIntent;
+  },
 ): { refresh: () => void; dispose: () => void } {
   const el = document.createElement("pre");
   el.setAttribute("aria-hidden", "true");
@@ -29,7 +34,7 @@ export function attachActionMapDebugHud(
 
   const dot = (on: boolean): string => (on ? "●" : "·");
 
-  function format(s: ActionMapSnapshot): string {
+  function format(s: ActionMapSnapshot, c: ResolvedCombatIntent): string {
     const { limb, shiftHeld } = s;
     return [
       "input debug (dev) — use keyboard, not mouse",
@@ -45,6 +50,11 @@ export function attachActionMapDebugHud(
         s.dockLeft,
       )} R${dot(s.dockRight)}`,
       `interact ${s.interactModeOpen ? "ON (move frozen)" : "off"}`,
+      "",
+      `intent ${c.priority}  move ${c.attackMoveId}`,
+      `eff grd L${dot(c.guardLeft)} R${dot(c.guardRight)} dock L${dot(
+        c.dockLeft,
+      )} R${dot(c.dockRight)}`,
     ].join("\n");
   }
 
@@ -52,7 +62,8 @@ export function attachActionMapDebugHud(
 
   return {
     refresh(): void {
-      el.textContent = format(getSnapshot());
+      const { snapshot, combat } = getFrame();
+      el.textContent = format(snapshot, combat);
     },
     dispose(): void {
       el.remove();

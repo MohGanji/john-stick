@@ -3,7 +3,7 @@
  * **Enter** interact toggle (signs). Sample `snapshot()` each frame; no mouse on this path.
  *
  * **Shift held:** punch keys → **guard** (left/right); kick keys → **dock** to that side.
- * **Shift released:** same keys → **attack** holds for WS-051 chord resolution.
+ * **Shift released:** same keys → **attack** holds for `combatIntent.ts` (WS-051) resolution.
  * **Enter:** each edge press toggles **interact mode** open ↔ closed.
  *
  * **Layout:** top row **U** / **I** = punches; home row **J** / **K** = kicks (row-based mnemonic).
