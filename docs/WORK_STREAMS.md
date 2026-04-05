@@ -296,7 +296,7 @@ flowchart TB
   - **@** `role-physics-programmer` · `role-level-designer`  
   - **GP** §7.1.2  
 
-- [ ] **WS-062** — Connect hit → bag: damage/impulse application + first “feel” pass.  
+- [x] **WS-062** — Connect hit → bag: damage/impulse application + first “feel” pass.  
   - **Depends:** WS-060, WS-061  
   - **@** `role-gameplay-programmer` · `role-lead-game-designer`  
   - **GP** §2.4.1, §6.2.2  

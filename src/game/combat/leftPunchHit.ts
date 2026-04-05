@@ -119,8 +119,8 @@ function probeHitTraining(
 }
 
 export type LeftPunchFixedStepResult = {
-  /** True once per strike window when the probe touches the training hurt sensor. */
-  hitTrainingDummy: boolean;
+  /** True once per strike window when the probe touches the bag hurt sensor (WS-060/062). */
+  hitPunchingBag: boolean;
   debug: LeftPunchHitDebugSnapshot;
 };
 
@@ -143,7 +143,7 @@ export function stepLeftPunchHitFixed(
   }
 
   const activeThisStep = strike.activeFramesRemaining > 0;
-  let hitTrainingDummy = false;
+  let hitPunchingBag = false;
 
   if (activeThisStep) {
     const touch = probeHitTraining(
@@ -154,9 +154,9 @@ export function stepLeftPunchHitFixed(
     );
     if (touch && !strike.hitConsumed) {
       strike.hitConsumed = true;
-      hitTrainingDummy = true;
+      hitPunchingBag = true;
       if (import.meta.env.DEV) {
-        console.debug("[combat] left punch → training hurt (WS-060)");
+        console.debug("[combat] left punch → punching bag hurt volume (WS-060)");
       }
     }
     strike.activeFramesRemaining -= 1;
@@ -166,7 +166,7 @@ export function stepLeftPunchHitFixed(
   }
 
   return {
-    hitTrainingDummy,
+    hitPunchingBag,
     debug: {
       active: activeThisStep,
       fistWorld: fist,

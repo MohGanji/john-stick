@@ -44,7 +44,8 @@ export function createJohnStickRenderSetup(
   root: HTMLElement,
 ): JohnStickRenderSetup {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x1a1a24);
+  /** Cool lifted gray — readable with default sun; darker than walls so depth still reads. */
+  scene.background = new THREE.Color(0x262a38);
 
   const camera = new THREE.PerspectiveCamera(
     50,
@@ -63,7 +64,7 @@ export function createJohnStickRenderSetup(
   });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.14;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -75,10 +76,12 @@ export function createJohnStickRenderSetup(
   );
   root.appendChild(renderer.domElement);
 
-  const hemi = new THREE.HemisphereLight(0xb8c4e8, 0x2a2620, 0.42);
+  /** Stronger fill + lighter ground bounce so shadowed sides of walls/actors aren’t mud. */
+  const hemi = new THREE.HemisphereLight(0xcad6f0, 0x4a4640, 0.58);
   scene.add(hemi);
 
-  const sunLight = new THREE.DirectionalLight(0xfff5e6, 1.12);
+  /** Primary shadow caster — higher intensity keeps shade gradients visible on mid tones. */
+  const sunLight = new THREE.DirectionalLight(0xfff8ef, 1.52);
   sunLight.position.set(8, 18, 6);
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.set(

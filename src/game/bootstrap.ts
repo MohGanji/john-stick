@@ -12,6 +12,7 @@ import {
 } from "./input/combatIntent";
 import { attachKeyboardLocomotion } from "./input/keyboardLocomotion";
 import { createCombatHitDebugDraw } from "./combat/combatHitDebugDraw";
+import { applyTrainingBagHitFromPunch } from "./combat/applyTrainingBagHit";
 import {
   createLeftPunchStrikeState,
   stepLeftPunchHitFixed,
@@ -19,6 +20,7 @@ import {
 } from "./combat/leftPunchHit";
 import { leftPunchAttackPressEdge } from "./combat/hitInputEdges";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
+import { createPunchingBagHangerVisual } from "./level/punchingBagHangerVisual";
 import { createPunchingBagSwingMesh } from "./level/punchingBagPlaceholder";
 import {
   createJohnStickPhysics,
@@ -39,6 +41,9 @@ export async function mountGame(root: HTMLElement): Promise<void> {
   const { scene, camera, renderer } = createJohnStickRenderSetup(root);
 
   scene.add(createDojoPlaceholderLevel());
+
+  const punchingBagHanger = createPunchingBagHangerVisual();
+  scene.add(punchingBagHanger.group);
 
   const punchingBagVisual = createPunchingBagSwingMesh();
   scene.add(punchingBagVisual);
@@ -76,6 +81,8 @@ export async function mountGame(root: HTMLElement): Promise<void> {
 
   /** WS-060 — left punch active frames + Rapier probe (after physics step). */
   let leftPunchStrike = createLeftPunchStrikeState();
+  /** WS-062 — abstract lab damage on the bag (no UI yet; tunable via `bagHitTuning`). */
+  let punchingBagLabDamageTotal = 0;
   let leftPunchHitDebug: LeftPunchHitDebugSnapshot = {
     active: false,
     fistWorld: { x: 0, y: 0, z: 0 },
@@ -139,12 +146,32 @@ export async function mountGame(root: HTMLElement): Promise<void> {
         scratchPos,
         scratchQuat,
       );
-      leftPunchHitDebug = stepLeftPunchHitFixed(
+      const punchHit = stepLeftPunchHitFixed(
         physics,
         leftPunchStrike,
         scratchPos,
         scratchQuat,
-      ).debug;
+      );
+      leftPunchHitDebug = punchHit.debug;
+      if (punchHit.hitPunchingBag) {
+        const { damageDealt } = applyTrainingBagHitFromPunch(physics, {
+          fistWorld: punchHit.debug.fistWorld,
+          playerPos: scratchPos,
+          playerFacingYawRad: facingYawRad,
+          /** GP §6.2.2 — tier 0 until WS-080 passes hold/charge or `MoveId` multipliers. */
+          chargeTierIndex: 0,
+        });
+        punchingBagLabDamageTotal += damageDealt;
+        if (import.meta.env.DEV) {
+          console.debug(
+            "[combat] bag hit — lab damage total",
+            punchingBagLabDamageTotal,
+            "(+",
+            damageDealt,
+            ")",
+          );
+        }
+      }
     },
     /**
      * GP §4.2.3 — `runGameLoop` exposes `beforeFixedSteps` + `fixedStepAlpha` for dual-buffer rendering.
@@ -179,6 +206,7 @@ export async function mountGame(root: HTMLElement): Promise<void> {
         bagScratchQuat.z,
         bagScratchQuat.w,
       );
+      punchingBagHanger.sync(dtSeconds, bagScratchPos);
       const { forward, strafe } = actionSample.interactModeOpen
         ? { forward: 0, strafe: 0 }
         : keyboardLocomotion.moveAxes();

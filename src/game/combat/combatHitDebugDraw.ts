@@ -9,6 +9,12 @@ import type { LeftPunchHitDebugSnapshot } from "./leftPunchHit";
 const FIST_COLOR = 0xff8844;
 const HURT_COLOR = 0x44aaff;
 
+/**
+ * Off by default: the hurt AABB tracks the swinging bag and reads as a distracting cyan box
+ * over the bag cylinder. Flip to `true` when aligning WS-060 probe vs Rapier sensor.
+ */
+const SHOW_TRAINING_HURT_AABB = false;
+
 export type TrainingHurtVolumeWorldPose = {
   x: number;
   y: number;
@@ -78,25 +84,28 @@ export function createCombatHitDebugDraw(scene: THREE.Scene): {
           snapshot.fistWorld.z,
         );
       }
-      if (hurtWorldPose) {
-        hurtMesh.position.set(
-          hurtWorldPose.x,
-          hurtWorldPose.y,
-          hurtWorldPose.z,
-        );
-        hurtMesh.quaternion.set(
-          hurtWorldPose.qx,
-          hurtWorldPose.qy,
-          hurtWorldPose.qz,
-          hurtWorldPose.qw,
-        );
-      } else {
-        hurtMesh.position.set(
-          TRAINING_HURT_VOLUME.center.x,
-          TRAINING_HURT_VOLUME.center.y,
-          TRAINING_HURT_VOLUME.center.z,
-        );
-        hurtMesh.quaternion.set(0, 0, 0, 1);
+      hurtMesh.visible = SHOW_TRAINING_HURT_AABB;
+      if (SHOW_TRAINING_HURT_AABB) {
+        if (hurtWorldPose) {
+          hurtMesh.position.set(
+            hurtWorldPose.x,
+            hurtWorldPose.y,
+            hurtWorldPose.z,
+          );
+          hurtMesh.quaternion.set(
+            hurtWorldPose.qx,
+            hurtWorldPose.qy,
+            hurtWorldPose.qz,
+            hurtWorldPose.qw,
+          );
+        } else {
+          hurtMesh.position.set(
+            TRAINING_HURT_VOLUME.center.x,
+            TRAINING_HURT_VOLUME.center.y,
+            TRAINING_HURT_VOLUME.center.z,
+          );
+          hurtMesh.quaternion.set(0, 0, 0, 1);
+        }
       }
     },
     dispose(): void {

@@ -3,8 +3,8 @@ import * as THREE from "three";
 import { PUNCHING_BAG } from "./punchingBagConfig";
 
 const BAG_MATERIAL = new THREE.MeshStandardMaterial({
-  color: 0x8b7355,
-  roughness: 0.88,
+  color: 0x9a8265,
+  roughness: 0.86,
   metalness: 0.04,
 });
 

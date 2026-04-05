@@ -1,9 +1,6 @@
 import * as THREE from "three";
 
-import {
-  PUNCHING_BAG,
-  punchingBagPivotWorldY,
-} from "./punchingBagConfig";
+import { PUNCHING_BAG } from "./punchingBagConfig";
 
 /**
  * GP §7.1.1 — training floor scale (role-level-designer default: 24m × 18m).
@@ -18,16 +15,16 @@ export const DOJO_BLOCKOUT = {
   wallHalfThickness: 0.2,
 } as const;
 
-/** Slightly lighter than floor / sky so WS-021 bounds read at default camera distance. */
+/** Lifted mid tones — still reads as interior mat, not black hole corners. */
 const WALL_MATERIAL = new THREE.MeshStandardMaterial({
-  color: 0x5c5c78,
-  roughness: 0.82,
+  color: 0x6e7190,
+  roughness: 0.8,
   metalness: 0.05,
 });
 
 const FLOOR_MATERIAL = new THREE.MeshStandardMaterial({
-  color: 0x2a2a36,
-  roughness: 0.92,
+  color: 0x3e4254,
+  roughness: 0.9,
   metalness: 0.04,
 });
 
@@ -88,27 +85,31 @@ export function createDojoPlaceholderLevel(): THREE.Group {
   south.receiveShadow = true;
   g.add(south);
 
-  /** WS-061 — chain/stand placeholder from floor to joint height (GP §7.1.2). */
-  const pivotY = punchingBagPivotWorldY();
-  const standH = pivotY;
-  const stand = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      PUNCHING_BAG.standRadius,
-      PUNCHING_BAG.standRadius,
-      standH,
-      10,
+  /**
+   * WS-061 / GP §7.1.2 — ceiling patch over the bag. Cord visual is **dynamic** (`punchingBagHangerVisual`)
+   * so it tilts with swings instead of a rigid vertical rod.
+   */
+  const ceilingUndersideY = wallHeight;
+  const ceilingSlabThickness = 0.14;
+  const mountHalfExtent = 1.35;
+
+  const ceilingPatch = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      mountHalfExtent * 2,
+      ceilingSlabThickness,
+      mountHalfExtent * 2,
     ),
-    new THREE.MeshStandardMaterial({
-      color: 0x4a4a58,
-      roughness: 0.78,
-      metalness: 0.12,
-    }),
+    WALL_MATERIAL,
   );
-  stand.position.set(PUNCHING_BAG.centerX, standH * 0.5, PUNCHING_BAG.centerZ);
-  stand.castShadow = true;
-  stand.receiveShadow = true;
-  stand.name = "punching_bag_stand_placeholder";
-  g.add(stand);
+  ceilingPatch.position.set(
+    PUNCHING_BAG.centerX,
+    ceilingUndersideY + ceilingSlabThickness / 2,
+    PUNCHING_BAG.centerZ,
+  );
+  ceilingPatch.castShadow = true;
+  ceilingPatch.receiveShadow = true;
+  ceilingPatch.name = "punching_bag_ceiling_patch";
+  g.add(ceilingPatch);
 
   return g;
 }

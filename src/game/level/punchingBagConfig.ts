@@ -17,11 +17,11 @@ export const PUNCHING_BAG = {
   linearDamping: 1.55,
   angularDamping: 2.35,
   /** Collider-only mass (kg-ish scale); density disabled via `setMass`. */
-  colliderMassKg: 52,
+  colliderMassKg: 86,
   friction: 0.62,
   restitution: 0.05,
-  /** Placeholder stand (m). */
-  standRadius: 0.045,
+  /** Visual-only: ceiling chain / strut radius (m); thinner than the bag reads as cable. */
+  ceilingHangerRadius: 0.017,
 } as const;
 
 /** World-space Y of the top mount (spherical joint anchors meet here at rest). */
