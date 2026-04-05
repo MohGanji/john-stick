@@ -303,7 +303,7 @@ flowchart TB
 
 ### Wave 7 — Juice
 
-- [ ] **WS-070** — Combat event bus (`CombatHit`, etc.) → subscribers.  
+- [x] **WS-070** — Combat event bus (`CombatHit`, etc.) → subscribers.  
   - **Depends:** WS-062  
   - **@** `role-gameplay-programmer`  
   - **GP** §4.3.3  

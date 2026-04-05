@@ -1,4 +1,12 @@
-export { mountGame } from "./bootstrap";
+export {
+  mountGame,
+  type MountGameResult,
+} from "./bootstrap";
+export type {
+  CombatEvent,
+  CombatEventBus,
+  CombatHit,
+} from "./combat/combatEventBus";
 export {
   collisionGroups,
   PhysicsFilter,

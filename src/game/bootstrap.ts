@@ -14,6 +14,10 @@ import { attachKeyboardLocomotion } from "./input/keyboardLocomotion";
 import { createCombatHitDebugDraw } from "./combat/combatHitDebugDraw";
 import { applyTrainingBagHitFromPunch } from "./combat/applyTrainingBagHit";
 import {
+  createCombatEventBus,
+  type CombatEventBus,
+} from "./combat/combatEventBus";
+import {
   createLeftPunchStrikeState,
   stepLeftPunchHitFixed,
   type LeftPunchHitDebugSnapshot,
@@ -35,7 +39,14 @@ import {
 import { loadPlayerCharacter } from "./player/playerCharacter";
 import { createJohnStickRenderSetup } from "./render";
 
-export async function mountGame(root: HTMLElement): Promise<void> {
+export type MountGameResult = {
+  /** WS-070 / GP §4.3.3 — subscribe for hit-stop, SFX, VFX (WS-071+). */
+  combatEvents: CombatEventBus;
+};
+
+export async function mountGame(
+  root: HTMLElement,
+): Promise<MountGameResult> {
   const physics = await createJohnStickPhysics();
 
   const { scene, camera, renderer } = createJohnStickRenderSetup(root);
@@ -83,6 +94,8 @@ export async function mountGame(root: HTMLElement): Promise<void> {
   let leftPunchStrike = createLeftPunchStrikeState();
   /** WS-062 — abstract lab damage on the bag (no UI yet; tunable via `bagHitTuning`). */
   let punchingBagLabDamageTotal = 0;
+  /** WS-070 / GP §4.3.3 — `CombatHit` → audio / VFX / hit-stop (WS-071+). */
+  const combatEvents = createCombatEventBus();
   let leftPunchHitDebug: LeftPunchHitDebugSnapshot = {
     active: false,
     fistWorld: { x: 0, y: 0, z: 0 },
@@ -154,14 +167,28 @@ export async function mountGame(root: HTMLElement): Promise<void> {
       );
       leftPunchHitDebug = punchHit.debug;
       if (punchHit.hitPunchingBag) {
-        const { damageDealt } = applyTrainingBagHitFromPunch(physics, {
-          fistWorld: punchHit.debug.fistWorld,
-          playerPos: scratchPos,
-          playerFacingYawRad: facingYawRad,
-          /** GP §6.2.2 — tier 0 until WS-080 passes hold/charge or `MoveId` multipliers. */
-          chargeTierIndex: 0,
-        });
+        const { damageDealt, impulseWorld } = applyTrainingBagHitFromPunch(
+          physics,
+          {
+            fistWorld: punchHit.debug.fistWorld,
+            playerPos: scratchPos,
+            playerFacingYawRad: facingYawRad,
+            /** GP §6.2.2 — tier 0 until WS-080 passes hold/charge or `MoveId` multipliers. */
+            chargeTierIndex: 0,
+          },
+        );
         punchingBagLabDamageTotal += damageDealt;
+        combatEvents.emit({
+          type: "combat_hit",
+          hit: {
+            attackKind: "left_punch",
+            targetKind: "training_bag",
+            damageDealt,
+            impulseWorld,
+            contactWorld: punchHit.debug.fistWorld,
+            chargeTierIndex: 0,
+          },
+        });
         if (import.meta.env.DEV) {
           console.debug(
             "[combat] bag hit — lab damage total",
@@ -241,4 +268,6 @@ export async function mountGame(root: HTMLElement): Promise<void> {
       renderer.render(scene, camera);
     },
   });
+
+  return { combatEvents };
 }
