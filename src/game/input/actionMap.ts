@@ -1,0 +1,165 @@
+/**
+ * WS-050 / GP §3.2.1 — **action map**: four limb keys, **Shift** defensive modifier,
+ * **Enter** interact toggle (signs). Sample `snapshot()` each frame; no mouse on this path.
+ *
+ * **Shift held:** punch keys → **guard** (left/right); kick keys → **dock** to that side.
+ * **Shift released:** same keys → **attack** holds for WS-051 chord resolution.
+ * **Enter:** each edge press toggles **interact mode** open ↔ closed.
+ *
+ * **Layout:** top row **U** / **I** = punches; home row **J** / **K** = kicks (row-based mnemonic).
+ */
+export const KEY_ACTION_MAP = {
+  shift: ["ShiftLeft", "ShiftRight"] as const,
+  leftPunch: "KeyU" as const,
+  rightPunch: "KeyI" as const,
+  leftKick: "KeyJ" as const,
+  rightKick: "KeyK" as const,
+  interactToggle: "Enter" as const,
+} as const;
+
+export type LimbId = "leftPunch" | "rightPunch" | "leftKick" | "rightKick";
+
+export type ActionMapSnapshot = {
+  shiftHeld: boolean;
+  /** Raw digital holds (`KeyboardEvent.code`). */
+  limb: Record<LimbId, boolean>;
+  /** Shift + punch — high guard / block per side (hold). */
+  guardLeft: boolean;
+  guardRight: boolean;
+  /** Shift + kick — dock / stance step to that side (hold). */
+  dockLeft: boolean;
+  dockRight: boolean;
+  /** Limb held with Shift **not** down — attacks for interpreter (WS-051). */
+  attackLeftPunch: boolean;
+  attackRightPunch: boolean;
+  attackLeftKick: boolean;
+  attackRightKick: boolean;
+  /** After last toggle: whether sign / interact UI is considered active. */
+  interactModeOpen: boolean;
+};
+
+const SHIFT_CODES = new Set<string>(KEY_ACTION_MAP.shift);
+
+function shiftFromHeld(held: ReadonlySet<string>): boolean {
+  for (const c of SHIFT_CODES) {
+    if (held.has(c)) return true;
+  }
+  return false;
+}
+
+/** Pure: map held key codes → combat-facing flags (no interact state). */
+export function computeActionMapFromHeld(
+  held: ReadonlySet<string>,
+): Omit<ActionMapSnapshot, "interactModeOpen"> {
+  const shiftHeld = shiftFromHeld(held);
+  const lp = held.has(KEY_ACTION_MAP.leftPunch);
+  const rp = held.has(KEY_ACTION_MAP.rightPunch);
+  const lk = held.has(KEY_ACTION_MAP.leftKick);
+  const rk = held.has(KEY_ACTION_MAP.rightKick);
+
+  return {
+    shiftHeld,
+    limb: {
+      leftPunch: lp,
+      rightPunch: rp,
+      leftKick: lk,
+      rightKick: rk,
+    },
+    guardLeft: shiftHeld && lp,
+    guardRight: shiftHeld && rp,
+    dockLeft: shiftHeld && lk,
+    dockRight: shiftHeld && rk,
+    attackLeftPunch: !shiftHeld && lp,
+    attackRightPunch: !shiftHeld && rp,
+    attackLeftKick: !shiftHeld && lk,
+    attackRightKick: !shiftHeld && rk,
+  };
+}
+
+export type ActionMapInput = {
+  /** Full frame snapshot (includes interact mode). */
+  snapshot: () => ActionMapSnapshot;
+  /**
+   * Edge-detected **Enter** since last poll — toggles internal interact mode when true.
+   * Call once per frame from `beforeFixedSteps` (same phase as jump latch).
+   */
+  takeInteractEnterLatch: () => boolean;
+  dispose: () => void;
+};
+
+export function attachActionMap(target: Window = window): ActionMapInput {
+  const held = new Set<string>();
+  let interactModeOpen = false;
+  let interactEnterPending = false;
+
+  const trackLimbOrShift = (code: string): boolean => {
+    if (SHIFT_CODES.has(code)) return true;
+    if (
+      code === KEY_ACTION_MAP.leftPunch ||
+      code === KEY_ACTION_MAP.rightPunch ||
+      code === KEY_ACTION_MAP.leftKick ||
+      code === KEY_ACTION_MAP.rightKick
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const onKeyDown = (e: KeyboardEvent): void => {
+    if (target.document.visibilityState !== "visible") return;
+
+    if (
+      e.code === KEY_ACTION_MAP.interactToggle &&
+      !e.repeat
+    ) {
+      interactModeOpen = !interactModeOpen;
+      interactEnterPending = true;
+    }
+
+    if (trackLimbOrShift(e.code)) {
+      held.add(e.code);
+    }
+  };
+
+  const onKeyUp = (e: KeyboardEvent): void => {
+    held.delete(e.code);
+  };
+
+  const clearHeld = (): void => {
+    held.clear();
+  };
+
+  const onVisibilityChange = (): void => {
+    if (target.document.visibilityState === "hidden") {
+      clearHeld();
+      interactEnterPending = false;
+    }
+  };
+
+  target.addEventListener("keydown", onKeyDown);
+  target.addEventListener("keyup", onKeyUp);
+  target.addEventListener("blur", clearHeld);
+  target.document.addEventListener("visibilitychange", onVisibilityChange);
+
+  return {
+    snapshot(): ActionMapSnapshot {
+      return {
+        ...computeActionMapFromHeld(held),
+        interactModeOpen,
+      };
+    },
+    takeInteractEnterLatch(): boolean {
+      const v = interactEnterPending;
+      interactEnterPending = false;
+      return v;
+    },
+    dispose(): void {
+      target.removeEventListener("keydown", onKeyDown);
+      target.removeEventListener("keyup", onKeyUp);
+      target.removeEventListener("blur", clearHeld);
+      target.document.removeEventListener("visibilitychange", onVisibilityChange);
+      held.clear();
+      interactEnterPending = false;
+    },
+  };
+}

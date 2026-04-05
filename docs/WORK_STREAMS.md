@@ -271,7 +271,7 @@ flowchart TB
 
 ### Wave 5 — Combat input
 
-- [ ] **WS-050** — Action map: **four limb keys**, **Shift** modifier, **interact** (signs), **no mouse** for core loop.  
+- [x] **WS-050** — Action map: **four limb keys** (**U**/**I** punches, **J**/**K** kicks), **Shift** (punches → guard, kicks → side dock), **Enter** toggles interact open/close (signs), **no mouse** for core loop.  
   - **Depends:** WS-040  
   - **@** `role-gameplay-programmer`  
   - **GP** §3.2.1  

@@ -3,6 +3,8 @@ import {
   updateThirdPersonFollowCamera,
 } from "./camera";
 import { runGameLoop } from "./gameLoop";
+import { attachActionMap } from "./input/actionMap";
+import { attachActionMapDebugHud } from "./input/actionMapDebugHud";
 import { attachKeyboardLocomotion } from "./input/keyboardLocomotion";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import {
@@ -32,6 +34,7 @@ export async function mountGame(root: HTMLElement): Promise<void> {
   const scratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const followCamScratch = createThirdPersonFollowScratch();
   const keyboardLocomotion = attachKeyboardLocomotion(window);
+  const actionMap = attachActionMap(window);
   const playerLocomotion = createPlayerLocomotionState();
   const jumpLatch: JumpLatch = { latched: false };
 
@@ -40,15 +43,33 @@ export async function mountGame(root: HTMLElement): Promise<void> {
    */
   let facingYawRad = 0;
 
+  /** Sampled at start of `update`; locomotion freezes while **interact** mode is open (WS-050). */
+  let actionSample = actionMap.snapshot();
+
+  const actionMapDebugHud = import.meta.env.DEV
+    ? attachActionMapDebugHud(root, () => actionSample)
+    : null;
+
   runGameLoop({
     update(dtSeconds) {
-      facingYawRad += keyboardLocomotion.facingYawDeltaRad(dtSeconds);
+      actionSample = actionMap.snapshot();
+      if (!actionSample.interactModeOpen) {
+        facingYawRad += keyboardLocomotion.facingYawDeltaRad(dtSeconds);
+      }
     },
     beforeFixedSteps() {
-      jumpLatch.latched = keyboardLocomotion.takeJumpLatch();
+      void actionMap.takeInteractEnterLatch();
+      if (!actionSample.interactModeOpen) {
+        jumpLatch.latched = keyboardLocomotion.takeJumpLatch();
+      } else {
+        void keyboardLocomotion.takeJumpLatch();
+        jumpLatch.latched = false;
+      }
     },
     fixedStep(_fixedDtSeconds) {
-      const { forward, strafe } = keyboardLocomotion.moveAxes();
+      const { forward, strafe } = actionSample.interactModeOpen
+        ? { forward: 0, strafe: 0 }
+        : keyboardLocomotion.moveAxes();
       stepPlayerCapsule(
         physics,
         playerLocomotion,
@@ -76,7 +97,9 @@ export async function mountGame(root: HTMLElement): Promise<void> {
         scratchQuat.z,
         scratchQuat.w,
       );
-      const { forward, strafe } = keyboardLocomotion.moveAxes();
+      const { forward, strafe } = actionSample.interactModeOpen
+        ? { forward: 0, strafe: 0 }
+        : keyboardLocomotion.moveAxes();
       const planarInput = Math.min(1, Math.hypot(forward, strafe));
       playerCharacter.updateLocomotionAnim(dtSeconds, {
         planarInput,
@@ -93,6 +116,7 @@ export async function mountGame(root: HTMLElement): Promise<void> {
           excludeRigidBody: physics.playerRigidBody,
         },
       );
+      actionMapDebugHud?.refresh();
     },
     render() {
       renderer.render(scene, camera);

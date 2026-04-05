@@ -1,9 +1,9 @@
 import * as THREE from "three";
 
 /**
- * WS-040 / GP §3.2.1 — **keyboard-only** move + jump + facing yaw (`KeyboardEvent.code`).
+ * WS-040 — **keyboard-only** move + jump + facing yaw (`KeyboardEvent.code`).
  * **WASD** only for move + **A** and **D** hold-to-yaw (same keys). **Arrows** and **Q** and **E** are not used.
- * Clears held keys on blur / hidden document.
+ * Limb / Shift / interact: `actionMap.ts` (WS-050, GP §3.2.1). Clears held keys on blur / hidden document.
  */
 export const KEYBOARD_LOCOMOTION = {
   forward: ["KeyW"] as const,

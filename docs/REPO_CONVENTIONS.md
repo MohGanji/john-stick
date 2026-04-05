@@ -33,3 +33,12 @@
 - **Camera + body:** The same yaw drives **both** `updateThirdPersonFollowCamera` (orbit behind the player) and the **player capsule** via `syncRigidBodyYawFromFacing` before each physics step (`src/game/physics/rapierWorld.ts`). The body uses **`enabledRotations(false, true, false)`** so pitch/roll stay locked.
 - **Move:** **Facing-relative** horizontal move from `facingYawRad` (`moveFromFacing.ts` + capsule step).
 - **Focus:** Window `blur` and `document.visibilityState === "hidden"` **clear** held move keys so Tab-away does not leave stuck input.
+
+## Action map — limbs + Shift + interact (WS-050, GP §3.2.1)
+
+- **Module:** `src/game/input/actionMap.ts` (`KEY_ACTION_MAP`, `attachActionMap`, `computeActionMapFromHeld`).
+- **Limb keys (`KeyboardEvent.code`):** **U** / **I** = left / right **punch**; **J** / **K** = left / right **kick** (row-based layout for memorization).
+- **Shift** (**ShiftLeft** or **ShiftRight**): with punches held → **guard** per side; with kicks held → **dock** per side. Same keys without Shift → **attack** holds for WS-051.
+- **Interact:** **Enter** toggles **interact mode** (open ↔ close). While open, bootstrap **freezes** move / yaw / jump so signs/UI can own the moment (retune with WS-101 / WS-051 priority graph).
+- **Focus:** Blur / hidden document clears **held** limb + Shift codes (interact mode is **not** cleared on blur).
+- **Dev (`npm run dev`):** bottom-left **input debug** overlay shows **U I J K**, Shift, guard/dock, and interact — limb keys are **keyboard** only (click the page/canvas so the window has focus).

@@ -356,7 +356,7 @@ Ship criteria: the game is **fully playable without a mouse** so laptops (trackp
 
 | Tier | ID | Ingredient | What “done” looks like | Best owner |
 |------|-----|------------|------------------------|------------|
-| **E** | **3.2.1** | Keyboard-only playability | **No mouse required:** movement, jump, defensive modifier (**Shift**-class), **interact** (for signs — key TBD), and **four limb attacks** on discrete keys; dojo uses **WASD** move + **A**/**D** yaw/strafe (revisit arrows/accessibility via **3.4** if needed). | Gameplay Programmer |
+| **E** | **3.2.1** | Keyboard-only playability | **No mouse required:** movement, jump, defensive modifier (**Shift** — punches guard, kicks dock), **interact** (**Enter** toggles sign/UI open and closed), and **four limb attacks** (**U**/**I** punch, **J**/**K** kick) on discrete keys; dojo uses **WASD** move + **A**/**D** yaw/strafe (revisit arrows/accessibility via **3.4** if needed). | Gameplay Programmer |
 | **E** | **3.2.4** | Chord / sequence interpreter | Input system resolves **simultaneous** and/or **ordered** limb inputs into **compound** move IDs; conflicts use a clear priority rule (documented). | Gameplay Programmer |
 | **C** | **3.2.3** | Buffering & priority | Coyote time for jump; small input buffer for chords; conflict matrix (guard vs attack, etc.). | Gameplay Programmer |
 | **N** | **3.2.2** | Optional mouse yaw | Pointer adjusts **horizontal** look only; **off** by default or absent on laptop — shipping build remains complete without it. | Gameplay Programmer |
