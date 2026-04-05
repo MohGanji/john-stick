@@ -42,6 +42,9 @@ import { getCombatJuiceAccess } from "./accessibility/combatJuiceAccess";
 import { createCombatJuiceController } from "./combat/combatJuiceController";
 import { createJohnStickRenderSetup } from "./render";
 import { createGameplayRuntimeTuning } from "./tuning/gameplayRuntimeTuning";
+import { attachCombatHitAudio } from "./audio/attachCombatHitAudio";
+import { createAudioMixer } from "./audio/audioMixer";
+import { playTrainingBagImpact } from "./audio/playTrainingBagImpact";
 
 export type MountGameResult = {
   /** WS-070 / GP §4.3.3 — subscribe for hit-stop, SFX, VFX (WS-071+). */
@@ -109,6 +112,13 @@ export async function mountGame(
     getAccess: () => getCombatJuiceAccess(window),
     getTuning: () => gameplayTuning.juice,
   });
+  const audioMixer = createAudioMixer(window);
+  const combatHitAudio = attachCombatHitAudio({
+    combatEvents,
+    mixer: audioMixer,
+    getCamera: () => camera,
+    getTrainingBagSfxStyle: () => gameplayTuning.audio.trainingBagSfxStyle,
+  });
   let leftPunchHitDebug: LeftPunchHitDebugSnapshot = {
     active: false,
     fistWorld: { x: 0, y: 0, z: 0 },
@@ -128,7 +138,34 @@ export async function mountGame(
 
   if (import.meta.env.DEV) {
     void import("./dev/gameplayTuningOverlay").then(({ attachGameplayTuningOverlay }) => {
-      attachGameplayTuningOverlay(root, gameplayTuning);
+      attachGameplayTuningOverlay(root, gameplayTuning, {
+        previewTrainingBagSfx() {
+          if (!audioMixer) return;
+          void audioMixer.getContext().resume();
+          const camPos = new THREE.Vector3();
+          camera.getWorldPosition(camPos);
+          const fwd = new THREE.Vector3();
+          camera.getWorldDirection(fwd);
+          const contact = camPos.clone().addScaledVector(fwd, 2.5);
+          playTrainingBagImpact(
+            audioMixer,
+            camera,
+            {
+              attackKind: "left_punch",
+              targetKind: "training_bag",
+              damageDealt: 1,
+              impulseWorld: { x: 0, y: 0, z: 0 },
+              contactWorld: {
+                x: contact.x,
+                y: contact.y,
+                z: contact.z,
+              },
+              chargeTierIndex: 0,
+            },
+            gameplayTuning.audio.trainingBagSfxStyle,
+          );
+        },
+      });
     });
   }
 
@@ -227,6 +264,7 @@ export async function mountGame(
      * Player mesh reads integrated pose; interpolation buffers belong in a later polish pass.
      */
     lateUpdate(dtSeconds, _fixedStepAlpha) {
+      combatHitAudio.flushQueuedCombatSounds();
       readRigidBodyTransform(
         physics.playerRigidBody,
         scratchPos,

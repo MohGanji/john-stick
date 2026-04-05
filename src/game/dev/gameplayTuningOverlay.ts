@@ -1,4 +1,9 @@
 import type { GameplayRuntimeTuning } from "../tuning/gameplayRuntimeTuning";
+import {
+  TRAINING_BAG_SFX_PRESETS,
+  TRAINING_BAG_SFX_STYLE_ORDER,
+  type TrainingBagSfxStyleId,
+} from "../audio/trainingBagSfxPresets";
 
 const TOGGLE_CODE = "Period";
 
@@ -82,9 +87,15 @@ function resetRow(
  * Dev-only panel: **.** toggles visibility. Mutates `tuning` in place; use “Reset …” to restore shipped defaults.
  * Stripped from production (`import.meta.env.PROD` callers should not attach).
  */
+export type GameplayTuningOverlayOptions = {
+  /** Plays the current training-bag preset once (needs user gesture + running AudioContext). */
+  previewTrainingBagSfx?: () => void;
+};
+
 export function attachGameplayTuningOverlay(
   container: HTMLElement,
   tuning: GameplayRuntimeTuning,
+  options?: GameplayTuningOverlayOptions,
 ): { dispose: () => void } {
   const panel = document.createElement("div");
   panel.setAttribute("role", "dialog");
@@ -123,9 +134,11 @@ export function attachGameplayTuningOverlay(
   panel.appendChild(body);
 
   const syncSliders: (() => void)[] = [];
+  const syncExtras: (() => void)[] = [];
 
   function refreshAllSliders(): void {
     for (const s of syncSliders) s();
+    for (const x of syncExtras) x();
   }
 
   function wireJuice(): void {
@@ -241,6 +254,77 @@ export function attachGameplayTuningOverlay(
     );
     resetRow(body, "Reset juice", () => {
       tuning.resetJuice();
+      refreshAllSliders();
+    });
+  }
+
+  function wireAudio(): void {
+    body.appendChild(sectionTitle("Combat SFX (dev)"));
+    const note = document.createElement("p");
+    note.style.cssText =
+      "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
+    note.textContent =
+      "Procedural training-bag hits: subtle → cartoon → arcade → martial → exaggerated → gritty. Punch the bag or use Preview.";
+    body.appendChild(note);
+
+    const a = tuning.audio;
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "margin:8px 0;";
+
+    const lab = document.createElement("label");
+    lab.style.cssText =
+      "display:block;color:#dbe7ff;opacity:0.92;font-size:12px;margin-bottom:4px;";
+    lab.textContent = "Bag hit sound preset";
+    lab.setAttribute("for", "js-sfx-bag-style");
+
+    const sel = document.createElement("select");
+    sel.id = "js-sfx-bag-style";
+    sel.style.cssText =
+      "width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1px solid rgba(120,140,200,0.45);background:rgba(28,36,60,0.95);color:#e8eefc;font:12px ui-sans-serif,system-ui,sans-serif;";
+
+    for (const id of TRAINING_BAG_SFX_STYLE_ORDER) {
+      const p = TRAINING_BAG_SFX_PRESETS[id];
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = p.title;
+      sel.appendChild(opt);
+    }
+
+    const blurb = document.createElement("p");
+    blurb.style.cssText =
+      "margin:8px 0 0 0;font-size:11px;line-height:1.35;opacity:0.82;color:#a8b8d8;";
+    function syncBlurb(): void {
+      blurb.textContent = TRAINING_BAG_SFX_PRESETS[a.trainingBagSfxStyle].tagline;
+    }
+
+    function syncSelect(): void {
+      sel.value = a.trainingBagSfxStyle;
+      syncBlurb();
+    }
+
+    syncSelect();
+
+    sel.addEventListener("change", () => {
+      a.trainingBagSfxStyle = sel.value as TrainingBagSfxStyleId;
+      syncBlurb();
+    });
+
+    wrap.appendChild(lab);
+    wrap.appendChild(sel);
+    wrap.appendChild(blurb);
+    body.appendChild(wrap);
+
+    syncExtras.push(syncSelect);
+
+    if (options?.previewTrainingBagSfx) {
+      const preview = options.previewTrainingBagSfx;
+      resetRow(body, "Preview bag SFX", () => {
+        preview();
+      });
+    }
+
+    resetRow(body, "Reset audio (preset)", () => {
+      tuning.resetAudio();
       refreshAllSliders();
     });
   }
@@ -522,6 +606,7 @@ export function attachGameplayTuningOverlay(
   }
 
   wireJuice();
+  wireAudio();
   wireBag();
   wirePlayer();
   wireCameraFollow();

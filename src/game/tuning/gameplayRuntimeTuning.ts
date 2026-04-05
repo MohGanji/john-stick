@@ -7,6 +7,10 @@ import { THIRD_PERSON_FOLLOW } from "../camera/thirdPersonFollowCamera";
 import { KEYBOARD_LOCOMOTION } from "../input/keyboardLocomotion";
 import { PLAYER_CAPSULE } from "../player/playerCapsuleConfig";
 import { DEFAULT_PERSPECTIVE_FOV_DEG } from "../render/johnStickRenderSetup";
+import {
+  DEFAULT_TRAINING_BAG_SFX_STYLE_ID,
+  type TrainingBagSfxStyleId,
+} from "../audio/trainingBagSfxPresets";
 
 /** Live bag scalars (tier multiplier tables stay on `BAG_HIT_TUNING`). */
 export type BagHitScalars = {
@@ -38,17 +42,24 @@ export type CameraRenderScalars = {
   baseFovDeg: number;
 };
 
+export type AudioDevScalars = {
+  /** Procedural training-bag hit voice (dev HUD); maps to future authored variants. */
+  trainingBagSfxStyle: TrainingBagSfxStyleId;
+};
+
 export type GameplayRuntimeTuning = {
   juice: CombatJuiceTuningValues;
   bag: BagHitScalars;
   player: PlayerLocomotionScalars;
   cameraFollow: CameraFollowScalars;
   camera: CameraRenderScalars;
+  audio: AudioDevScalars;
   resetJuice(): void;
   resetBag(): void;
   resetPlayer(): void;
   resetCameraFollow(): void;
   resetCamera(): void;
+  resetAudio(): void;
   resetAll(): void;
 };
 
@@ -87,6 +98,10 @@ function defaultCamera(): CameraRenderScalars {
   return { baseFovDeg: DEFAULT_PERSPECTIVE_FOV_DEG };
 }
 
+function defaultAudio(): AudioDevScalars {
+  return { trainingBagSfxStyle: DEFAULT_TRAINING_BAG_SFX_STYLE_ID };
+}
+
 /**
  * Mutable gameplay scalars for dev tuning overlay and future settings.
  * Initialized from the same sources as module constants (`PLAYER_CAPSULE`, etc.).
@@ -97,6 +112,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
   const player = defaultPlayer();
   const cameraFollow = defaultCameraFollow();
   const camera = defaultCamera();
+  const audio = defaultAudio();
 
   return {
     juice,
@@ -104,6 +120,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     player,
     cameraFollow,
     camera,
+    audio,
     resetJuice() {
       Object.assign(juice, defaultJuice());
     },
@@ -119,12 +136,16 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     resetCamera() {
       Object.assign(camera, defaultCamera());
     },
+    resetAudio() {
+      Object.assign(audio, defaultAudio());
+    },
     resetAll() {
       Object.assign(juice, defaultJuice());
       Object.assign(bag, defaultBag());
       Object.assign(player, defaultPlayer());
       Object.assign(cameraFollow, defaultCameraFollow());
       Object.assign(camera, defaultCamera());
+      Object.assign(audio, defaultAudio());
     },
   };
 }

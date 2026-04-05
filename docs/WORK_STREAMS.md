@@ -314,7 +314,7 @@ flowchart TB
   - **@** `role-gameplay-programmer` · `role-creative-director`  
   - **GP** §6.3.1  
 
-- [ ] **WS-072** — Web Audio buses + first impact SFX on event (see `role-audio` brief template).  
+- [x] **WS-072** — Web Audio buses + first impact SFX on event (see `role-audio` brief template).  
   - **Depends:** WS-070  
   - **∥** WS-071, WS-073  
   - **@** `role-audio`  
