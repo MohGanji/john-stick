@@ -1,5 +1,3 @@
-import * as THREE from "three";
-
 import {
   createThirdPersonFollowScratch,
   updateThirdPersonFollowCamera,
@@ -17,7 +15,7 @@ import {
   stepPlayerCapsule,
   type JumpLatch,
 } from "./player/stepPlayerCapsule";
-import { PLAYER_CAPSULE } from "./player/playerCapsuleConfig";
+import { loadPlayerCharacter } from "./player/playerCharacter";
 import { createJohnStickRenderSetup } from "./render";
 
 export async function mountGame(root: HTMLElement): Promise<void> {
@@ -27,23 +25,8 @@ export async function mountGame(root: HTMLElement): Promise<void> {
 
   scene.add(createDojoPlaceholderLevel());
 
-  const cylLen = PLAYER_CAPSULE.halfHeight * 2;
-  const playerMesh = new THREE.Mesh(
-    new THREE.CapsuleGeometry(
-      PLAYER_CAPSULE.radius,
-      cylLen,
-      6,
-      12,
-    ),
-    new THREE.MeshStandardMaterial({
-      color: 0x66ccff,
-      roughness: 0.45,
-      metalness: 0.08,
-    }),
-  );
-  playerMesh.castShadow = true;
-  playerMesh.receiveShadow = true;
-  scene.add(playerMesh);
+  const playerCharacter = await loadPlayerCharacter();
+  scene.add(playerCharacter.root);
 
   const scratchPos = { x: 0, y: 0, z: 0 };
   const scratchQuat = { x: 0, y: 0, z: 0, w: 1 };
@@ -86,13 +69,19 @@ export async function mountGame(root: HTMLElement): Promise<void> {
         scratchPos,
         scratchQuat,
       );
-      playerMesh.position.set(scratchPos.x, scratchPos.y, scratchPos.z);
-      playerMesh.quaternion.set(
+      playerCharacter.root.position.set(scratchPos.x, scratchPos.y, scratchPos.z);
+      playerCharacter.root.quaternion.set(
         scratchQuat.x,
         scratchQuat.y,
         scratchQuat.z,
         scratchQuat.w,
       );
+      const { forward, strafe } = keyboardLocomotion.moveAxes();
+      const planarInput = Math.min(1, Math.hypot(forward, strafe));
+      playerCharacter.updateLocomotionAnim(dtSeconds, {
+        planarInput,
+        grounded: playerLocomotion.wasGrounded,
+      });
       updateThirdPersonFollowCamera(
         camera,
         scratchPos,

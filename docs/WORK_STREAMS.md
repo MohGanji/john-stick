@@ -263,11 +263,11 @@ flowchart TB
   - **@** `role-gameplay-programmer` · `role-physics-programmer`  
   - **GP** §3.3.1  
 
-- [ ] **WS-041** — Stick character glTF + skinned idle/walk (replace capsule visual).  
+- [x] **WS-041** — Stick character glTF + skinned idle/walk (replace capsule visual).  
   - **Depends:** WS-020  
   - **∥** WS-040 early; **must finish** before trailer polish / WS-120  
   - **@** `role-technical-animator` · `role-character-artist` · `role-technical-artist`  
-  - **GP** §5.2.1, §5.3.1  
+  - **GP** §5.2.1, §5.3.1 — `public/models/char_player_stick_v01.glb`, `docs/CHARACTER_RIG_MAP.md`, `docs/GLTF_EXPORT.md`  
 
 ### Wave 5 — Combat input
 

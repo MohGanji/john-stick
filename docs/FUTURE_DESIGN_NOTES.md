@@ -37,3 +37,33 @@
 **Context:** WS-040 jump is **strict** (latched edge + grounded check) to ship a simple baseline. Adding either feature means tuning windows, multi-substep interaction, and playtest on **dojo edges** and future combat platforms so it doesn’t feel cheaty or double-jump by accident.
 
 **Related:** GP §3.2.3 (buffering & priority, C-tier), `src/game/player/stepPlayerCapsule.ts`, `keyboardLocomotion` jump latch.
+
+---
+
+## Character: airborne / in-air animation clip (deferred)
+
+**Context (2026-04):** Locomotion uses **Idle** + **Walk** only; when the capsule is **not** grounded, the mixer stays on **Idle** so there is no dedicated jump / fall / aerial combat pose yet.
+
+**Future idea:** Add a third glTF clip (e.g. **`Air`** or split **`JumpAscent` / `Fall`**) driven by grounded + vertical velocity (and later combat state). Cross-fade from walk/idle when leaving the floor; optional **frozen last frame** on apex for readability; align with hit-receive ragdoll handoff (GP §6.1) so ownership doesn’t fight the clip.
+
+**Related:** `src/game/player/playerCharacter.ts`, `PLAYER_ANIM_*` naming, WS-041 follow-up / WS-090+ aerial combat, `docs/CHARACTER_RIG_MAP.md`.
+
+---
+
+## Character: smooth blends where cylinders meet (nice-to-have)
+
+**Context:** V1 hero mesh is **composed cylinders** + **sphere head** (see `scripts/export-stick-character.mjs`). Joints are **hard cylinder caps** — readable and cheap, but not a single continuous “tube” silhouette.
+
+**Future idea:** Soften transitions at segment joins — e.g. **small shared sphere** at each joint, **fillet/bevel** in DCC, **metaball/sdf** blob pass, or **subdivision + sculpt** on a merged mesh — pick based on art target and perf. Not required for combat readability; ship plain cylinders first.
+
+**Related:** WS-041 procedural mesh, Blender export `docs/GLTF_EXPORT.md`.
+
+---
+
+## Character: `Neck` bone between `Chest` and `Head` (deferred)
+
+**Context (2026-04):** The procedural rig parents **`Head` directly under `Chest`**. Reference art (`docs/reference/character/john-stick-ref-hinge-combat.png`) shows a **neck hinge** so the head can tilt/recoil **independently** of the upper torso — clearer for hits, whiplash, and ragdoll than rotating the whole chest.
+
+**Future idea:** Insert a **`Neck`** bone: `Chest` → `Neck` → `Head`. Optionally a **short neck cylinder** (or invisible segment) skinned 100% to `Neck`; retarget **Idle/Walk** head motion onto `Neck` ± `Head`; update `CHARACTER_RIG_MAP.md` and any WS-091 bone ↔ collider tables. Coordinate with clip re-export so `PLAYER_ANIM_*` contracts stay stable.
+
+**Related:** `docs/CHARACTER_RIG_MAP.md` (visual vs physics, hinge table), `scripts/export-stick-character.mjs`, WS-091 ragdoll mapping.

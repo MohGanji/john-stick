@@ -1,0 +1,93 @@
+import * as THREE from "three";
+import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+
+/** Served from `public/` (Vite). Regenerate via `npm run export:character`. */
+export const PLAYER_GLTF_URL = "/models/char_player_stick_v01.glb";
+
+export const PLAYER_ANIM_IDLE = "Idle";
+export const PLAYER_ANIM_WALK = "Walk";
+
+const CROSS_FADE_SEC = 0.14;
+const WALK_BLEND_THRESHOLD = 0.06;
+
+export type PlayerCharacter = {
+  /** Add to scene; sync from capsule each frame. */
+  readonly root: THREE.Object3D;
+  updateLocomotionAnim(
+    dtSeconds: number,
+    opts: { planarInput: number; grounded: boolean },
+  ): void;
+  dispose(): void;
+};
+
+function findClip(gltf: GLTF, name: string): THREE.AnimationClip {
+  const clip = gltf.animations.find((a) => a.name === name);
+  if (!clip) {
+    throw new Error(
+      `Missing animation "${name}" in ${PLAYER_GLTF_URL} (got: ${gltf.animations.map((a) => a.name).join(", ") || "none"})`,
+    );
+  }
+  return clip;
+}
+
+/**
+ * WS-041 — skinned stick visual: load glTF, drive **Idle** / **Walk** from planar input.
+ * Physics capsule remains authoritative; `root` follows rigid-body transform.
+ */
+export async function loadPlayerCharacter(): Promise<PlayerCharacter> {
+  const loader = new GLTFLoader();
+  const gltf = await loader.loadAsync(PLAYER_GLTF_URL);
+
+  const mixer = new THREE.AnimationMixer(gltf.scene);
+  const idleClip = findClip(gltf, PLAYER_ANIM_IDLE);
+  const walkClip = findClip(gltf, PLAYER_ANIM_WALK);
+
+  const idleAction = mixer.clipAction(idleClip);
+  const walkAction = mixer.clipAction(walkClip);
+  idleAction.loop = THREE.LoopRepeat;
+  walkAction.loop = THREE.LoopRepeat;
+  idleAction.play();
+
+  let mode: "idle" | "walk" = "idle";
+
+  const disposeMaterialsAndGeometry = (o: THREE.Object3D): void => {
+    o.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        obj.geometry?.dispose();
+        const m = obj.material;
+        if (Array.isArray(m)) m.forEach((x) => x.dispose());
+        else m?.dispose();
+      }
+    });
+  };
+
+  return {
+    root: gltf.scene,
+    updateLocomotionAnim(dtSeconds, { planarInput, grounded }) {
+      const moving = grounded && planarInput > WALK_BLEND_THRESHOLD;
+      if (moving && mode === "idle") {
+        walkAction.reset().play();
+        idleAction.crossFadeTo(walkAction, CROSS_FADE_SEC, false);
+        mode = "walk";
+      } else if (!moving && mode === "walk") {
+        idleAction.reset().play();
+        walkAction.crossFadeTo(idleAction, CROSS_FADE_SEC, false);
+        mode = "idle";
+      }
+
+      if (mode === "walk") {
+        const t = THREE.MathUtils.clamp(planarInput, 0, 1);
+        walkAction.setEffectiveTimeScale(0.82 + 0.55 * t);
+      } else {
+        walkAction.setEffectiveTimeScale(1);
+      }
+
+      mixer.update(dtSeconds);
+    },
+    dispose() {
+      mixer.stopAllAction();
+      disposeMaterialsAndGeometry(gltf.scene);
+    },
+  };
+}
