@@ -1,6 +1,11 @@
 import RAPIER from "@dimforge/rapier3d-compat";
 
 import { DOJO_BLOCKOUT } from "../level/dojoBlockout";
+import {
+  PUNCHING_BAG,
+  punchingBagPivotLocalAnchorY,
+  punchingBagPivotWorldY,
+} from "../level/punchingBagConfig";
 import { FIXED_DT } from "../gameLoop";
 import { PLAYER_CAPSULE, playerCapsuleCenterY } from "../player/playerCapsuleConfig";
 import {
@@ -15,8 +20,12 @@ export type JohnStickPhysics = {
   playerRigidBody: RAPIER.RigidBody;
   playerCollider: RAPIER.Collider;
   characterController: RAPIER.KinematicCharacterController;
-  /** WS-060 — sensor hurt volume for left-punch hit tests (GP §6.2.1). */
+  /** WS-060 / WS-061 — hurt sensor on the swinging bag (GP §6.2.1, §7.1.2). */
   trainingHurtCollider: RAPIER.Collider;
+  /** WS-061 — dynamic bag; use for rendering and WS-062 hit impulses (GP §7.1.2). */
+  punchingBagRigidBody: RAPIER.RigidBody;
+  /** WS-061 — fixed ceiling/chain anchor for the spherical joint. */
+  punchingBagPivotBody: RAPIER.RigidBody;
 };
 
 /**
@@ -135,14 +144,57 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
   characterController.enableSnapToGround(0.38);
   characterController.disableAutostep();
 
-  /** WS-060 — fixed sensor aligned with `TRAINING_HURT_VOLUME` (trigger layer: no solid vs player). */
-  const trainingHurtBody = world.createRigidBody(
+  const propGroups = collisionGroups(
+    PhysicsMembership.prop,
+    PhysicsFilter.allSolid,
+  );
+
+  /** WS-061 — top pivot + dynamic capsule; spherical joint gives swing/recoil (GP §7.1.2). */
+  const pivotY = punchingBagPivotWorldY();
+  const punchingBagPivotBody = world.createRigidBody(
     RAPIER.RigidBodyDesc.fixed().setTranslation(
-      TRAINING_HURT_VOLUME.center.x,
-      TRAINING_HURT_VOLUME.center.y,
-      TRAINING_HURT_VOLUME.center.z,
+      PUNCHING_BAG.centerX,
+      pivotY,
+      PUNCHING_BAG.centerZ,
     ),
   );
+
+  const bagDesc = RAPIER.RigidBodyDesc.dynamic()
+    .setTranslation(
+      PUNCHING_BAG.centerX,
+      PUNCHING_BAG.centerY,
+      PUNCHING_BAG.centerZ,
+    )
+    .setLinearDamping(PUNCHING_BAG.linearDamping)
+    .setAngularDamping(PUNCHING_BAG.angularDamping);
+  const punchingBagRigidBody = world.createRigidBody(bagDesc);
+
+  const bagCapsule = RAPIER.ColliderDesc.capsule(
+    PUNCHING_BAG.capsuleHalfHeight,
+    PUNCHING_BAG.capsuleRadius,
+  )
+    .setFriction(PUNCHING_BAG.friction)
+    .setRestitution(PUNCHING_BAG.restitution)
+    .setMass(PUNCHING_BAG.colliderMassKg)
+    .setCollisionGroups(propGroups)
+    .setSolverGroups(propGroups);
+  world.createCollider(bagCapsule, punchingBagRigidBody);
+
+  const anchorPivot = { x: 0, y: 0, z: 0 };
+  const anchorBag = {
+    x: 0,
+    y: punchingBagPivotLocalAnchorY(),
+    z: 0,
+  };
+  const spherical = RAPIER.JointData.spherical(anchorPivot, anchorBag);
+  const bagJoint = world.createImpulseJoint(
+    spherical,
+    punchingBagPivotBody,
+    punchingBagRigidBody,
+    true,
+  );
+  bagJoint.setContactsEnabled(false);
+
   const hurtGroups = collisionGroups(
     PhysicsMembership.trigger,
     PhysicsMembership.player | PhysicsMembership.enemy,
@@ -156,7 +208,7 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
       .setSensor(true)
       .setCollisionGroups(hurtGroups)
       .setSolverGroups(hurtGroups),
-    trainingHurtBody,
+    punchingBagRigidBody,
   );
 
   return {
@@ -165,6 +217,8 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     playerCollider,
     characterController,
     trainingHurtCollider,
+    punchingBagRigidBody,
+    punchingBagPivotBody,
   };
 }
 

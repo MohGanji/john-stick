@@ -290,7 +290,7 @@ flowchart TB
   - **@** `role-gameplay-programmer`  
   - **GP** §6.2.1  
 
-- [ ] **WS-061** — Punching bag rigid body + constraint / stand; reacts to impulse.  
+- [x] **WS-061** — Punching bag rigid body + constraint / stand; reacts to impulse.  
   - **Depends:** WS-011, WS-021  
   - **∥** WS-060  
   - **@** `role-physics-programmer` · `role-level-designer`  

@@ -16,6 +16,7 @@ export const LEFT_PUNCH_HIT = {
 
 /** World-space AABB for the dojo training bag hurt sensor (shared: Rapier + debug draw). */
 export const TRAINING_HURT_VOLUME = {
-  center: { x: 0, y: 1.05, z: 5.5 },
+  center: { x: 0, y: 1.05, z: 6 },
+  /** Default rest pose at spawn; hurt collider is on the swinging bag — center moves with it. */
   halfExtents: { x: 0.42, y: 0.88, z: 0.22 },
 } as const;

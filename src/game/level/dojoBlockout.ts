@@ -1,5 +1,10 @@
 import * as THREE from "three";
 
+import {
+  PUNCHING_BAG,
+  punchingBagPivotWorldY,
+} from "./punchingBagConfig";
+
 /**
  * GP §7.1.1 — training floor scale (role-level-designer default: 24m × 18m).
  * GP §7.2.1 — boundary envelope for physics + placeholder visuals.
@@ -82,6 +87,28 @@ export function createDojoPlaceholderLevel(): THREE.Group {
   south.castShadow = true;
   south.receiveShadow = true;
   g.add(south);
+
+  /** WS-061 — chain/stand placeholder from floor to joint height (GP §7.1.2). */
+  const pivotY = punchingBagPivotWorldY();
+  const standH = pivotY;
+  const stand = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      PUNCHING_BAG.standRadius,
+      PUNCHING_BAG.standRadius,
+      standH,
+      10,
+    ),
+    new THREE.MeshStandardMaterial({
+      color: 0x4a4a58,
+      roughness: 0.78,
+      metalness: 0.12,
+    }),
+  );
+  stand.position.set(PUNCHING_BAG.centerX, standH * 0.5, PUNCHING_BAG.centerZ);
+  stand.castShadow = true;
+  stand.receiveShadow = true;
+  stand.name = "punching_bag_stand_placeholder";
+  g.add(stand);
 
   return g;
 }

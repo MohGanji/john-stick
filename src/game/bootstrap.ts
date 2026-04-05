@@ -19,6 +19,7 @@ import {
 } from "./combat/leftPunchHit";
 import { leftPunchAttackPressEdge } from "./combat/hitInputEdges";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
+import { createPunchingBagSwingMesh } from "./level/punchingBagPlaceholder";
 import {
   createJohnStickPhysics,
   readRigidBodyTransform,
@@ -39,11 +40,16 @@ export async function mountGame(root: HTMLElement): Promise<void> {
 
   scene.add(createDojoPlaceholderLevel());
 
+  const punchingBagVisual = createPunchingBagSwingMesh();
+  scene.add(punchingBagVisual);
+
   const playerCharacter = await loadPlayerCharacter();
   scene.add(playerCharacter.root);
 
   const scratchPos = { x: 0, y: 0, z: 0 };
   const scratchQuat = { x: 0, y: 0, z: 0, w: 1 };
+  const bagScratchPos = { x: 0, y: 0, z: 0 };
+  const bagScratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const followCamScratch = createThirdPersonFollowScratch();
   const keyboardLocomotion = attachKeyboardLocomotion(window);
   const actionMap = attachActionMap(window);
@@ -157,6 +163,22 @@ export async function mountGame(root: HTMLElement): Promise<void> {
         scratchQuat.z,
         scratchQuat.w,
       );
+      readRigidBodyTransform(
+        physics.punchingBagRigidBody,
+        bagScratchPos,
+        bagScratchQuat,
+      );
+      punchingBagVisual.position.set(
+        bagScratchPos.x,
+        bagScratchPos.y,
+        bagScratchPos.z,
+      );
+      punchingBagVisual.quaternion.set(
+        bagScratchQuat.x,
+        bagScratchQuat.y,
+        bagScratchQuat.z,
+        bagScratchQuat.w,
+      );
       const { forward, strafe } = actionSample.interactModeOpen
         ? { forward: 0, strafe: 0 }
         : keyboardLocomotion.moveAxes();
@@ -176,7 +198,15 @@ export async function mountGame(root: HTMLElement): Promise<void> {
           excludeRigidBody: physics.playerRigidBody,
         },
       );
-      combatHitDebugDraw?.sync(leftPunchHitDebug);
+      combatHitDebugDraw?.sync(leftPunchHitDebug, {
+        x: bagScratchPos.x,
+        y: bagScratchPos.y,
+        z: bagScratchPos.z,
+        qx: bagScratchQuat.x,
+        qy: bagScratchQuat.y,
+        qz: bagScratchQuat.z,
+        qw: bagScratchQuat.w,
+      });
       actionMapDebugHud?.refresh();
     },
     render() {

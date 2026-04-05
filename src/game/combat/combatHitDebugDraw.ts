@@ -9,8 +9,21 @@ import type { LeftPunchHitDebugSnapshot } from "./leftPunchHit";
 const FIST_COLOR = 0xff8844;
 const HURT_COLOR = 0x44aaff;
 
+export type TrainingHurtVolumeWorldPose = {
+  x: number;
+  y: number;
+  z: number;
+  qx: number;
+  qy: number;
+  qz: number;
+  qw: number;
+};
+
 export function createCombatHitDebugDraw(scene: THREE.Scene): {
-  sync(snapshot: LeftPunchHitDebugSnapshot): void;
+  sync(
+    snapshot: LeftPunchHitDebugSnapshot,
+    hurtWorldPose?: TrainingHurtVolumeWorldPose,
+  ): void;
   dispose(): void;
 } {
   const root = new THREE.Group();
@@ -51,7 +64,10 @@ export function createCombatHitDebugDraw(scene: THREE.Scene): {
   root.add(hurtMesh);
 
   return {
-    sync(snapshot: LeftPunchHitDebugSnapshot): void {
+    sync(
+      snapshot: LeftPunchHitDebugSnapshot,
+      hurtWorldPose?: TrainingHurtVolumeWorldPose,
+    ): void {
       fistMesh.visible = snapshot.active;
       if (snapshot.active) {
         const r = snapshot.radius;
@@ -61,6 +77,26 @@ export function createCombatHitDebugDraw(scene: THREE.Scene): {
           snapshot.fistWorld.y,
           snapshot.fistWorld.z,
         );
+      }
+      if (hurtWorldPose) {
+        hurtMesh.position.set(
+          hurtWorldPose.x,
+          hurtWorldPose.y,
+          hurtWorldPose.z,
+        );
+        hurtMesh.quaternion.set(
+          hurtWorldPose.qx,
+          hurtWorldPose.qy,
+          hurtWorldPose.qz,
+          hurtWorldPose.qw,
+        );
+      } else {
+        hurtMesh.position.set(
+          TRAINING_HURT_VOLUME.center.x,
+          TRAINING_HURT_VOLUME.center.y,
+          TRAINING_HURT_VOLUME.center.z,
+        );
+        hurtMesh.quaternion.set(0, 0, 0, 1);
       }
     },
     dispose(): void {
