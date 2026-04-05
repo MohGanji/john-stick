@@ -6,14 +6,34 @@
 
 ---
 
-## Locomotion: strafe vs steering vs WASD-only hybrid (open)
+## Locomotion: WASD strafe + yaw on A/D (**shipped** in prototype, 2026-04)
 
-**Context:** Today we have separate **Q/E facing yaw** (WS-032) and will eventually add **movement** (WS-040+). Lateral keys could mean pure strafe, pure steering (yaw), or something in between.
+**What shipped first:** **No separate Q/E column.** **WASD** is the move set: **W/S** forward/back along facing, **A/D** apply **both** lateral **strafe** and **hold-to-yaw** at the same rate class as the old Q/E prototype (`KEYBOARD_LOCOMOTION.yawDegPerSec` in `src/game/input/keyboardLocomotion.ts`). **Arrow keys** still move (strafe/forward) but **do not** yaw — laptop-friendly without stealing turn from A/D.
 
-**Idea A (minimal):** Drop separate lateral strafe and use **left/right only to yaw** (what Q/E do now), with **forward/back** along facing — steering while moving forward avoids a sidestep “tap-dance” once there is a walk cycle and rig. Risk: can feel **sluggish** or wrong in a brawler if you cannot adjust spacing quickly.
+**Playfeel:** Fast, dynamic, and fairly natural in the dojo; good enough to **standardize on WASD-only** for facing + locomotion until the rig argues otherwise.
 
-**Idea B (WASD end state, brawler-friendly):** Eventually keep **only WASD** for locomotion + facing on one hand: **A** and **D** each do a **mix** of what **Q+A** and **E+D** would mean together today — i.e. **both** a **lateral strafe** component **and** a **yaw (steer)** component in that direction. Goal: **spacing** (strafe) **and** **snappier facing** (yaw) without needing a separate yaw column, less sluggish than pure steering-only, still readable once the rig and animations exist. **W**/**S** stay along forward/back relative to current facing (or as tuned).
+**Still to tune (after rig + real locomotion physics/clips):** The **balance** between lateral slide and turn — e.g. **reduce strafe** while keeping yaw, **increase yaw** and soften strafe, or a **~50% strafe** with current yaw. That is **data + animation** work, not a binding change; expect iteration in combat spacing tests.
 
-**Uncertainty:** The **strafe vs yaw blend** on A/D (rates, when forward is held vs standstill, combat vs explore) needs playtest with **rig**, **locomotion clips**, and **real encounters**. Q/E might remain as legacy or accessibility, or disappear if A/D fully subsumes them — TBD.
+**Related:** `docs/REPO_CONVENTIONS.md` (prototype input), GP §3.1.4, §3.3.1, WS-032 / WS-040.
 
-**Related:** `docs/REPO_CONVENTIONS.md` (prototype input / shared yaw), `docs/GAME_PLAN.md` §3.1.4, WS-040 / WS-050.
+---
+
+## Locomotion: walk vs run speed (deferred)
+
+**Context (2026-04):** The playable default is a **single horizontal speed** tuned to feel like an **almost-run** brawler baseline. We are **not** adding a **Shift** walk/run split (or any speed lerp) yet — that would multiply tuning work on the kinematic character controller, input edge cases, and later **animation matching** (walk vs run cycles).
+
+**Future idea:** Introduce an optional **slower walk** once the rig and clips exist — e.g. hold **Shift** to walk (or the inverse: default walk + **Shift** sprint; pick after laptop playtests). Implementation would be a second `moveSpeed` constant (or curve) plus whatever animation/state hooks we add for locomotion, not a physics refactor unless something feels wrong.
+
+**Related:** `PLAYER_CAPSULE.moveSpeed` in `src/game/player/playerCapsuleConfig.ts`, GP §3.3.1, WS-040+ polish.
+
+---
+
+## Locomotion: coyote time + jump buffer (polish, deferred)
+
+**Coyote time:** After the player leaves a ledge, keep them **jump-eligible** for a **short window** (tens of milliseconds) as if they were still grounded — forgives late jump inputs when the character has visually “just” left the floor.
+
+**Jump buffer (related):** If the player presses jump **slightly before** landing, **honor it on touchdown** within a small time window — feels less input-strict on laptop keyboards.
+
+**Context:** WS-040 jump is **strict** (latched edge + grounded check) to ship a simple baseline. Adding either feature means tuning windows, multi-substep interaction, and playtest on **dojo edges** and future combat platforms so it doesn’t feel cheaty or double-jump by accident.
+
+**Related:** GP §3.2.3 (buffering & priority, C-tier), `src/game/player/stepPlayerCapsule.ts`, `keyboardLocomotion` jump latch.

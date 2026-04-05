@@ -42,7 +42,7 @@ flowchart TB
   subgraph W3["Wave 3 — Camera"]
     WS030[WS-030 Follow cam]
     WS031[WS-031 Cam collision]
-    WS032[WS-032 Key yaw Q/E]
+    WS032[WS-032 Facing yaw A/D]
   end
 
   subgraph W4["Wave 4 — Player"]
@@ -165,7 +165,7 @@ flowchart TB
 | WS-021 | 2 | WS-011, WS-010 | WS-020 | `role-level-designer` + `role-physics-programmer` | Floor + bounds GP §7.2.1 |
 | WS-030 | 3 | WS-020, WS-010 | — | `role-gameplay-programmer` | Fixed-pitch follow GP §3.1.1 |
 | WS-031 | 3 | WS-030 | WS-032 | `role-gameplay-programmer` | Pull-in / collision GP §3.1.1 |
-| WS-032 | 3 | WS-030 | WS-031 | `role-gameplay-programmer` | Q/E yaw GP §3.1.4 |
+| WS-032 | 3 | WS-030 | WS-031 | `role-gameplay-programmer` | Facing yaw (A/D + strafe) GP §3.1.4 |
 | WS-040 | 4 | WS-011, WS-032, WS-020 | WS-041 | `role-gameplay-programmer` + `role-physics-programmer` | Move + jump GP §3.3.1 |
 | WS-041 | 4 | WS-020 | WS-040 | `role-technical-animator` + `role-character-artist` | glTF stick + walk cycle GP §5.2.1 |
 | WS-050 | 5 | WS-040 | — | `role-gameplay-programmer` | 4 keys + Shift + interact GP §3.2.1 |
@@ -257,7 +257,7 @@ flowchart TB
 
 ### Wave 4 — Player body
 
-- [ ] **WS-040** — Character controller (capsule): WASD/arrows, jump (**Space**), grounded tests.  
+- [x] **WS-040** — Character controller (capsule): WASD/arrows, jump (**Space**), grounded tests.  
   - **Depends:** WS-011, WS-032, WS-020  
   - **∥** WS-041 (until mesh needed for ship polish)  
   - **@** `role-gameplay-programmer` · `role-physics-programmer`  

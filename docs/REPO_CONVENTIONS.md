@@ -27,9 +27,9 @@
 
 - Vite emits bundled JS under `dist/assets/` — do not hand-edit; it is not the same as repo-root `assets/`.
 
-## Prototype input — shared facing yaw (WS-032 / GP §3.1.4, §3.4.1)
+## Prototype input — WASD move + shared facing yaw (WS-032 / WS-040, GP §3.1.4, §3.4.1)
 
-- **Bindings:** **Q** / **E** (`KeyboardEvent.code` `KeyQ` / `KeyE`) hold-to-turn — **Q** = left, **E** = right (screen-wise). Single **`facingYawRad`** (radians about world **+Y**). Rate: `KEYBOARD_YAW.yawDegPerSec` in `src/game/input/keyboardYaw.ts`.
-- **Camera + body:** The same yaw drives **both** `updateThirdPersonFollowCamera` (orbit behind the player) and the **demo rigid body** via `syncRigidBodyYawFromFacing` before each physics step (`src/game/physics/rapierWorld.ts`). The body uses **`enabledRotations(false, true, false)`** so pitch/roll stay locked; angular velocity is cleared when syncing so collisions do not fight player-facing.
-- **WS-040+:** Locomotion should use **camera-relative** (or **facing-relative**) move from this yaw; strafe vs tank-controls can be decided when move lands.
-- **Focus:** Window `blur` and `document.visibilityState === "hidden"` **clear** held yaw keys so Tab-away does not leave a stuck turn.
+- **Bindings:** **WASD** for locomotion. **A** / **D** (`KeyA` / `KeyD`) add **hold-to-yaw** (screen-wise turn with follow cam) **and** lateral strafe on the same keys. **Arrow keys** move (strafe / forward) but **do not** yaw. **Q** / **E** are **not** used. Single **`facingYawRad`** (radians about world **+Y**). Turn rate: `KEYBOARD_LOCOMOTION.yawDegPerSec` in `src/game/input/keyboardLocomotion.ts` (tune strafe vs turn balance with rig — see `FUTURE_DESIGN_NOTES.md`).
+- **Camera + body:** The same yaw drives **both** `updateThirdPersonFollowCamera` (orbit behind the player) and the **player capsule** via `syncRigidBodyYawFromFacing` before each physics step (`src/game/physics/rapierWorld.ts`). The body uses **`enabledRotations(false, true, false)`** so pitch/roll stay locked.
+- **Move:** **Facing-relative** horizontal move from `facingYawRad` (`moveFromFacing.ts` + capsule step).
+- **Focus:** Window `blur` and `document.visibilityState === "hidden"` **clear** held move keys so Tab-away does not leave stuck input.

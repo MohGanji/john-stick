@@ -5,14 +5,19 @@ import {
   updateThirdPersonFollowCamera,
 } from "./camera";
 import { runGameLoop } from "./gameLoop";
-import { attachKeyboardYaw } from "./input/keyboardYaw";
+import { attachKeyboardLocomotion } from "./input/keyboardLocomotion";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import {
   createJohnStickPhysics,
   readRigidBodyTransform,
   stepPhysicsWorld,
-  syncRigidBodyYawFromFacing,
 } from "./physics/rapierWorld";
+import {
+  createPlayerLocomotionState,
+  stepPlayerCapsule,
+  type JumpLatch,
+} from "./player/stepPlayerCapsule";
+import { PLAYER_CAPSULE } from "./player/playerCapsuleConfig";
 import { createJohnStickRenderSetup } from "./render";
 
 export async function mountGame(root: HTMLElement): Promise<void> {
@@ -22,48 +27,67 @@ export async function mountGame(root: HTMLElement): Promise<void> {
 
   scene.add(createDojoPlaceholderLevel());
 
-  const demoMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(0.44, 0.44, 0.44),
+  const cylLen = PLAYER_CAPSULE.halfHeight * 2;
+  const playerMesh = new THREE.Mesh(
+    new THREE.CapsuleGeometry(
+      PLAYER_CAPSULE.radius,
+      cylLen,
+      6,
+      12,
+    ),
     new THREE.MeshStandardMaterial({
       color: 0x66ccff,
       roughness: 0.45,
       metalness: 0.08,
     }),
   );
-  demoMesh.castShadow = true;
-  demoMesh.receiveShadow = true;
-  scene.add(demoMesh);
+  playerMesh.castShadow = true;
+  playerMesh.receiveShadow = true;
+  scene.add(playerMesh);
 
   const scratchPos = { x: 0, y: 0, z: 0 };
   const scratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const followCamScratch = createThirdPersonFollowScratch();
-  const keyboardYaw = attachKeyboardYaw(window);
+  const keyboardLocomotion = attachKeyboardLocomotion(window);
+  const playerLocomotion = createPlayerLocomotionState();
+  const jumpLatch: JumpLatch = { latched: false };
+
   /**
-   * WS-032 — shared **facing** yaw (radians, +Y): demo body + follow camera use the same angle
-   * so the camera stays behind the player’s forward (+Z mesh axis at yaw 0).
+   * Shared **facing** yaw (radians, +Y): **A**/**D** hold-to-yaw (WS-032 + WS-040) + follow cam.
    */
   let facingYawRad = 0;
 
   runGameLoop({
     update(dtSeconds) {
-      facingYawRad += keyboardYaw.consumeYawDeltaRad(dtSeconds);
+      facingYawRad += keyboardLocomotion.facingYawDeltaRad(dtSeconds);
+    },
+    beforeFixedSteps() {
+      jumpLatch.latched = keyboardLocomotion.takeJumpLatch();
     },
     fixedStep(_fixedDtSeconds) {
-      syncRigidBodyYawFromFacing(physics.demoRigidBody, facingYawRad);
+      const { forward, strafe } = keyboardLocomotion.moveAxes();
+      stepPlayerCapsule(
+        physics,
+        playerLocomotion,
+        facingYawRad,
+        forward,
+        strafe,
+        jumpLatch,
+      );
       stepPhysicsWorld(physics.world);
     },
     /**
      * GP §4.2.3 — `runGameLoop` exposes `beforeFixedSteps` + `fixedStepAlpha` for dual-buffer rendering.
-     * Demo mesh uses the integrated pose directly; per-substep prev/curr buffers belong in WS-040+.
+     * Player mesh reads integrated pose; interpolation buffers belong in a later polish pass.
      */
     lateUpdate(dtSeconds, _fixedStepAlpha) {
       readRigidBodyTransform(
-        physics.demoRigidBody,
+        physics.playerRigidBody,
         scratchPos,
         scratchQuat,
       );
-      demoMesh.position.set(scratchPos.x, scratchPos.y, scratchPos.z);
-      demoMesh.quaternion.set(
+      playerMesh.position.set(scratchPos.x, scratchPos.y, scratchPos.z);
+      playerMesh.quaternion.set(
         scratchQuat.x,
         scratchQuat.y,
         scratchQuat.z,
@@ -77,7 +101,7 @@ export async function mountGame(root: HTMLElement): Promise<void> {
         followCamScratch,
         {
           world: physics.world,
-          excludeRigidBody: physics.demoRigidBody,
+          excludeRigidBody: physics.playerRigidBody,
         },
       );
     },

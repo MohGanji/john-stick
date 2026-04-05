@@ -2,6 +2,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import { DOJO_BLOCKOUT } from "../level/dojoBlockout";
 import { FIXED_DT } from "../gameLoop";
+import { PLAYER_CAPSULE, playerCapsuleCenterY } from "../player/playerCapsuleConfig";
 import {
   collisionGroups,
   PhysicsFilter,
@@ -10,8 +11,9 @@ import {
 
 export type JohnStickPhysics = {
   world: RAPIER.World;
-  /** Temporary dynamic body to validate gravity + floor; replace with player in WS-040. */
-  demoRigidBody: RAPIER.RigidBody;
+  playerRigidBody: RAPIER.RigidBody;
+  playerCollider: RAPIER.Collider;
+  characterController: RAPIER.KinematicCharacterController;
 };
 
 /**
@@ -27,9 +29,9 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     PhysicsMembership.staticWorld,
     PhysicsFilter.allSolid,
   );
-  const propGroups = collisionGroups(
-    PhysicsMembership.prop,
-    PhysicsFilter.allSolid | PhysicsMembership.trigger,
+  const playerGroups = collisionGroups(
+    PhysicsMembership.player,
+    PhysicsFilter.allSolid,
   );
 
   const {
@@ -102,21 +104,35 @@ export async function createJohnStickPhysics(): Promise<JohnStickPhysics> {
     -(floorHalfDepth + wallHalfThickness),
   );
 
-  /** Yaw-only spin: pitch/roll locked so Q/E facing + camera stay aligned (WS-032). */
-  const demoRigidBody = world.createRigidBody(
-    RAPIER.RigidBodyDesc.dynamic()
-      .setTranslation(0, 1.75, 0)
+  /** WS-040 — kinematic capsule + KCC; yaw-only (WS-032). */
+  const playerRigidBody = world.createRigidBody(
+    RAPIER.RigidBodyDesc.kinematicPositionBased()
+      .setTranslation(0, playerCapsuleCenterY(), 0)
       .enabledRotations(false, true, false),
   );
-  const demoCollider = RAPIER.ColliderDesc.cuboid(0.22, 0.22, 0.22)
-    .setDensity(2.2)
-    .setFriction(0.55)
-    .setRestitution(0.08)
-    .setCollisionGroups(propGroups)
-    .setSolverGroups(propGroups);
-  world.createCollider(demoCollider, demoRigidBody);
+  const playerColliderDesc = RAPIER.ColliderDesc.capsule(
+    PLAYER_CAPSULE.halfHeight,
+    PLAYER_CAPSULE.radius,
+  )
+    .setFriction(0.65)
+    .setRestitution(0)
+    .setCollisionGroups(playerGroups)
+    .setSolverGroups(playerGroups);
+  const playerCollider = world.createCollider(
+    playerColliderDesc,
+    playerRigidBody,
+  );
 
-  return { world, demoRigidBody };
+  const characterController = world.createCharacterController(
+    PLAYER_CAPSULE.characterControllerOffset,
+  );
+  characterController.setSlideEnabled(true);
+  characterController.setMaxSlopeClimbAngle(Math.PI * 0.42);
+  characterController.setMinSlopeSlideAngle(Math.PI * 0.32);
+  characterController.enableSnapToGround(0.38);
+  characterController.disableAutostep();
+
+  return { world, playerRigidBody, playerCollider, characterController };
 }
 
 export function stepPhysicsWorld(world: RAPIER.World): void {
@@ -150,6 +166,11 @@ export function syncRigidBodyYawFromFacing(
   wakeUp = true,
 ): void {
   const half = yawRad * 0.5;
-  body.setRotation({ x: 0, y: Math.sin(half), z: 0, w: Math.cos(half) }, wakeUp);
-  body.setAngvel({ x: 0, y: 0, z: 0 }, wakeUp);
+  const q = { x: 0, y: Math.sin(half), z: 0, w: Math.cos(half) };
+  if (body.isKinematic()) {
+    body.setNextKinematicRotation(q);
+  } else {
+    body.setRotation(q, wakeUp);
+    body.setAngvel({ x: 0, y: 0, z: 0 }, wakeUp);
+  }
 }
