@@ -224,7 +224,7 @@ flowchart TB
 
 ### Wave 2 — World shell
 
-- [ ] **WS-020** — Scene: lights, shadows, tone mapping, resize handling.  
+- [x] **WS-020** — Scene: lights, shadows, tone mapping, resize handling.  
   - **Depends:** WS-010  
   - **∥** WS-021 (after WS-011 exists)  
   - **@** `role-graphics-programmer`  
