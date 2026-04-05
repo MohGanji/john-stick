@@ -14,6 +14,9 @@ export const GRAPHICS_PRESET_DEFAULT = {
   maxPixelRatio: 2,
 } as const;
 
+/** WS-071 — baseline vertical FOV (degrees); combat FOV punch adds on top then decays. */
+export const DEFAULT_PERSPECTIVE_FOV_DEG = 50;
+
 export type JohnStickRenderSetup = {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -48,7 +51,7 @@ export function createJohnStickRenderSetup(
   scene.background = new THREE.Color(0x262a38);
 
   const camera = new THREE.PerspectiveCamera(
-    50,
+    DEFAULT_PERSPECTIVE_FOV_DEG,
     window.innerWidth / Math.max(1, window.innerHeight),
     0.1,
     200,

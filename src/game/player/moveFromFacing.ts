@@ -20,6 +20,32 @@ export function facingRelativeMoveXZ(
 }
 
 /**
+ * World-space XZ velocity (m/s) from facing-local forward/strafe holds, with **separate** axis speeds.
+ * Diagonal (−1..1, −1..1) is clamped to the unit disc before scaling — same geometry as `facingRelativeMoveXZ`.
+ * When `forwardSpeed === strafeSpeed`, matches `facingRelativeMoveXZ(...) * speed`.
+ */
+export function facingRelativePlanarVelocityXZ(
+  facingYawRad: number,
+  forwardSigned: number,
+  strafeSigned: number,
+  forwardSpeed: number,
+  strafeSpeed: number,
+): { vx: number; vz: number } {
+  let f = forwardSigned;
+  let s = strafeSigned;
+  const il = Math.hypot(f, s);
+  if (il > 1e-8 && il > 1) {
+    f /= il;
+    s /= il;
+  }
+  const sy = Math.sin(facingYawRad);
+  const cy = Math.cos(facingYawRad);
+  const vx = sy * f * forwardSpeed - cy * s * strafeSpeed;
+  const vz = cy * f * forwardSpeed + sy * s * strafeSpeed;
+  return { vx, vz };
+}
+
+/**
  * Unit direction in XZ for the character’s **left** (matches **KeyA** / strafe −1 at this yaw).
  * Use for limb offsets (punches/kicks) so hit probes stay consistent with locomotion handedness.
  */

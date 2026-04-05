@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import {
   createThirdPersonFollowScratch,
   updateThirdPersonFollowCamera,
@@ -37,7 +38,10 @@ import {
   type JumpLatch,
 } from "./player/stepPlayerCapsule";
 import { loadPlayerCharacter } from "./player/playerCharacter";
+import { getCombatJuiceAccess } from "./accessibility/combatJuiceAccess";
+import { createCombatJuiceController } from "./combat/combatJuiceController";
 import { createJohnStickRenderSetup } from "./render";
+import { createGameplayRuntimeTuning } from "./tuning/gameplayRuntimeTuning";
 
 export type MountGameResult = {
   /** WS-070 / GP §4.3.3 — subscribe for hit-stop, SFX, VFX (WS-071+). */
@@ -67,7 +71,10 @@ export async function mountGame(
   const bagScratchPos = { x: 0, y: 0, z: 0 };
   const bagScratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const followCamScratch = createThirdPersonFollowScratch();
-  const keyboardLocomotion = attachKeyboardLocomotion(window);
+  const gameplayTuning = createGameplayRuntimeTuning();
+  const keyboardLocomotion = attachKeyboardLocomotion(window, {
+    getYawDegPerSec: () => gameplayTuning.player.yawDegPerSec,
+  });
   const actionMap = attachActionMap(window);
   const playerLocomotion = createPlayerLocomotionState();
   const jumpLatch: JumpLatch = { latched: false };
@@ -96,6 +103,12 @@ export async function mountGame(
   let punchingBagLabDamageTotal = 0;
   /** WS-070 / GP §4.3.3 — `CombatHit` → audio / VFX / hit-stop (WS-071+). */
   const combatEvents = createCombatEventBus();
+  /** WS-071 / GP §6.3.1 — hit-stop (accumulator scale) + subtle FOV punch; see `getCombatJuiceAccess`. */
+  const combatJuice = createCombatJuiceController({
+    combatEvents,
+    getAccess: () => getCombatJuiceAccess(window),
+    getTuning: () => gameplayTuning.juice,
+  });
   let leftPunchHitDebug: LeftPunchHitDebugSnapshot = {
     active: false,
     fistWorld: { x: 0, y: 0, z: 0 },
@@ -113,7 +126,14 @@ export async function mountGame(
       }))
     : null;
 
+  if (import.meta.env.DEV) {
+    void import("./dev/gameplayTuningOverlay").then(({ attachGameplayTuningOverlay }) => {
+      attachGameplayTuningOverlay(root, gameplayTuning);
+    });
+  }
+
   runGameLoop({
+    accumulatorTimeScale: () => combatJuice.getAccumulatorTimeScale(),
     update(dtSeconds) {
       const prevAction = actionSample;
       actionSample = actionMap.snapshot();
@@ -152,6 +172,7 @@ export async function mountGame(
         forward,
         strafe,
         jumpLatch,
+        gameplayTuning.player,
       );
       stepPhysicsWorld(physics.world);
       readRigidBodyTransform(
@@ -176,6 +197,7 @@ export async function mountGame(
             /** GP §6.2.2 — tier 0 until WS-080 passes hold/charge or `MoveId` multipliers. */
             chargeTierIndex: 0,
           },
+          gameplayTuning.bag,
         );
         punchingBagLabDamageTotal += damageDealt;
         combatEvents.emit({
@@ -252,6 +274,18 @@ export async function mountGame(
           world: physics.world,
           excludeRigidBody: physics.playerRigidBody,
         },
+        {
+          armLength: gameplayTuning.cameraFollow.armLength,
+          smoothHalfLifeSec: gameplayTuning.cameraFollow.smoothHalfLifeSec,
+          pivotYOffset: gameplayTuning.cameraFollow.pivotYOffset,
+          pitchFromHorizontal: THREE.MathUtils.degToRad(
+            gameplayTuning.cameraFollow.pitchDeg,
+          ),
+        },
+      );
+      combatJuice.applyPerspectiveFov(
+        camera,
+        gameplayTuning.camera.baseFovDeg,
       );
       combatHitDebugDraw?.sync(leftPunchHitDebug, {
         x: bagScratchPos.x,
@@ -263,6 +297,7 @@ export async function mountGame(
         qw: bagScratchQuat.w,
       });
       actionMapDebugHud?.refresh();
+      combatJuice.endFrame(dtSeconds);
     },
     render() {
       renderer.render(scene, camera);

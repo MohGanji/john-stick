@@ -15,8 +15,13 @@ export const KEYBOARD_LOCOMOTION = {
    * Hold-to-yaw rate for **KeyA** / **KeyD** (degrees per second).
    * Retune with strafe vs turn balance once rig + locomotion clips exist (`FUTURE_DESIGN_NOTES.md`).
    */
-  yawDegPerSec: 95,
+  yawDegPerSec: 170,
 } as const;
+
+export type KeyboardLocomotionOptions = {
+  /** Live yaw rate (deg/s); default `KEYBOARD_LOCOMOTION.yawDegPerSec`. */
+  getYawDegPerSec?: () => number;
+};
 
 export type KeyboardLocomotionInput = {
   /** −1..1 forward (−1 = back), −1..1 strafe (−1 = left); normalized diagonals. */
@@ -33,6 +38,7 @@ export type KeyboardLocomotionInput = {
 
 export function attachKeyboardLocomotion(
   target: Window = window,
+  options?: KeyboardLocomotionOptions,
 ): KeyboardLocomotionInput {
   const held = new Set<string>();
   let jumpPending = false;
@@ -90,9 +96,14 @@ export function attachKeyboardLocomotion(
     return Math.max(-1, Math.min(1, v));
   }
 
-  const radPerSec = THREE.MathUtils.degToRad(KEYBOARD_LOCOMOTION.yawDegPerSec);
   const keyYawLeft = KEYBOARD_LOCOMOTION.left[0];
   const keyYawRight = KEYBOARD_LOCOMOTION.right[0];
+
+  function yawRadPerSec(): number {
+    const deg =
+      options?.getYawDegPerSec?.() ?? KEYBOARD_LOCOMOTION.yawDegPerSec;
+    return THREE.MathUtils.degToRad(deg);
+  }
 
   return {
     moveAxes(): { forward: number; strafe: number } {
@@ -105,7 +116,7 @@ export function attachKeyboardLocomotion(
       let sign = 0;
       if (held.has(keyYawLeft)) sign -= 1;
       if (held.has(keyYawRight)) sign += 1;
-      return -sign * radPerSec * dtSeconds;
+      return -sign * yawRadPerSec() * dtSeconds;
     },
     takeJumpLatch(): boolean {
       const j = jumpPending;

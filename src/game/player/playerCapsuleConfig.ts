@@ -7,8 +7,10 @@ export const PLAYER_CAPSULE = {
   radius: 0.22,
   /** Rapier KCC skin; must be > 0 (see Rapier character controller docs). */
   characterControllerOffset: 0.02,
-  /** Single-speed default: brisk “almost run” until walk/run split (see `FUTURE_DESIGN_NOTES.md`). */
+  /** W/S max planar speed (m/s); brisk “almost run” until walk/run split (`FUTURE_DESIGN_NOTES.md`). */
   moveSpeed: 7.35,
+  /** A/D strafe max planar speed (m/s); lower than forward so turn-heavy A/D reads cleaner. */
+  strafeMoveSpeed: 0.35,
   jumpVelocity: 7.85,
   /** Matches `World` gravity in `rapierWorld.ts` for consistent falls. */
   gravityY: -28,

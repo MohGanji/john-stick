@@ -38,6 +38,7 @@ export function attachActionMapDebugHud(
     const { limb, shiftHeld } = s;
     return [
       "input debug (dev) — use keyboard, not mouse",
+      ". (period) — gameplay tuning panel",
       "U/I punch  J/K kick  Shift+… guard/dock  Enter interact",
       "",
       `Shift ${dot(shiftHeld)}   U ${dot(limb.leftPunch)}   I ${dot(

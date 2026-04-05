@@ -1,12 +1,14 @@
 import { FIXED_DT } from "../gameLoop";
 import { INPUT_COMBAT } from "../input/inputCombatConstants";
+import { KEYBOARD_LOCOMOTION } from "../input/keyboardLocomotion";
 import {
   syncRigidBodyYawFromFacing,
   type JohnStickPhysics,
 } from "../physics/rapierWorld";
 import { clampVerticalVelocityWhenGrounded } from "./groundedMotion";
-import { facingRelativeMoveXZ } from "./moveFromFacing";
+import { facingRelativePlanarVelocityXZ } from "./moveFromFacing";
 import { PLAYER_CAPSULE } from "./playerCapsuleConfig";
+import type { PlayerLocomotionScalars } from "../tuning/gameplayRuntimeTuning";
 
 export type PlayerLocomotionState = {
   /** From last `computeColliderMovement` (start false until first step). */
@@ -34,9 +36,18 @@ export function stepPlayerCapsule(
   moveForwardSigned: number,
   moveStrafeSigned: number,
   jumpLatch: JumpLatch,
+  /** When set, overrides move/jump/gravity scalars from `PLAYER_CAPSULE`. */
+  locomotionScalars?: PlayerLocomotionScalars,
 ): void {
   const { playerRigidBody, playerCollider, characterController } = physics;
   const dt = FIXED_DT;
+  const loc = locomotionScalars ?? {
+    forwardMoveSpeed: PLAYER_CAPSULE.moveSpeed,
+    strafeMoveSpeed: PLAYER_CAPSULE.strafeMoveSpeed,
+    yawDegPerSec: KEYBOARD_LOCOMOTION.yawDegPerSec,
+    jumpVelocity: PLAYER_CAPSULE.jumpVelocity,
+    gravityY: PLAYER_CAPSULE.gravityY,
+  };
 
   syncRigidBodyYawFromFacing(playerRigidBody, facingYawRad);
 
@@ -44,24 +55,25 @@ export function stepPlayerCapsule(
 
   if (jumpLatch.latched) {
     if (state.wasGrounded || state.coyoteRemainingSec > 0) {
-      vy = PLAYER_CAPSULE.jumpVelocity;
+      vy = loc.jumpVelocity;
       state.coyoteRemainingSec = 0;
     }
     jumpLatch.latched = false;
   }
 
-  vy += PLAYER_CAPSULE.gravityY * dt;
+  vy += loc.gravityY * dt;
 
-  const { wx, wz } = facingRelativeMoveXZ(
+  const { vx, vz } = facingRelativePlanarVelocityXZ(
     facingYawRad,
     moveForwardSigned,
     moveStrafeSigned,
+    loc.forwardMoveSpeed,
+    loc.strafeMoveSpeed,
   );
-  const hSpeed = PLAYER_CAPSULE.moveSpeed;
   const desiredTranslation = {
-    x: wx * hSpeed * dt,
+    x: vx * dt,
     y: vy * dt,
-    z: wz * hSpeed * dt,
+    z: vz * dt,
   };
 
   characterController.computeColliderMovement(

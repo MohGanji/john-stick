@@ -308,7 +308,7 @@ flowchart TB
   - **@** `role-gameplay-programmer`  
   - **GP** §4.3.3  
 
-- [ ] **WS-071** — Hit-stop (tunable) + subtle FOV punch; accessibility hooks.  
+- [x] **WS-071** — Hit-stop (tunable) + subtle FOV punch; accessibility hooks.  
   - **Depends:** WS-070  
   - **∥** WS-072, WS-073  
   - **@** `role-gameplay-programmer` · `role-creative-director`  

@@ -46,6 +46,14 @@ export type ThirdPersonCameraCollision = {
   excludeRigidBody: RAPIER.RigidBody;
 };
 
+/** Optional runtime overrides (dev tuning / future settings). Unspecified fields use `THIRD_PERSON_FOLLOW`. */
+export type ThirdPersonFollowOverrides = Partial<{
+  armLength: number;
+  pitchFromHorizontal: number;
+  pivotYOffset: number;
+  smoothHalfLifeSec: number;
+}>;
+
 export function createThirdPersonFollowScratch(): ThirdPersonFollowScratch {
   return {
     smoothedCameraWorld: new THREE.Vector3(0, 7.0, 21.0),
@@ -56,8 +64,9 @@ function applyPullIn(
   world: RAPIER.World,
   excludeRigidBody: RAPIER.RigidBody,
   idealCam: THREE.Vector3,
+  armLength: number,
 ): void {
-  const { collisionSkin, collisionMinArm, armLength } = THIRD_PERSON_FOLLOW;
+  const { collisionSkin, collisionMinArm } = THIRD_PERSON_FOLLOW;
 
   pullRayDir.copy(idealCam).sub(pivot);
   const chord = pullRayDir.length();
@@ -113,9 +122,17 @@ export function updateThirdPersonFollowCamera(
   dtSeconds: number,
   scratch: ThirdPersonFollowScratch,
   collision?: ThirdPersonCameraCollision,
+  followOverrides?: ThirdPersonFollowOverrides,
 ): void {
-  const { armLength, pitchFromHorizontal, pivotYOffset, smoothHalfLifeSec } =
-    THIRD_PERSON_FOLLOW;
+  const armLength =
+    followOverrides?.armLength ?? THIRD_PERSON_FOLLOW.armLength;
+  const pitchFromHorizontal =
+    followOverrides?.pitchFromHorizontal ??
+    THIRD_PERSON_FOLLOW.pitchFromHorizontal;
+  const pivotYOffset =
+    followOverrides?.pivotYOffset ?? THIRD_PERSON_FOLLOW.pivotYOffset;
+  const smoothHalfLifeSec =
+    followOverrides?.smoothHalfLifeSec ?? THIRD_PERSON_FOLLOW.smoothHalfLifeSec;
 
   const h = armLength * Math.cos(pitchFromHorizontal);
   const v = armLength * Math.sin(pitchFromHorizontal);
@@ -135,7 +152,12 @@ export function updateThirdPersonFollowCamera(
 
   if (collision) {
     idealCamScratch.set(idealCamX, idealCamY, idealCamZ);
-    applyPullIn(collision.world, collision.excludeRigidBody, idealCamScratch);
+    applyPullIn(
+      collision.world,
+      collision.excludeRigidBody,
+      idealCamScratch,
+      armLength,
+    );
   } else {
     desiredCam.set(idealCamX, idealCamY, idealCamZ);
   }

@@ -8,6 +8,7 @@ import {
   bagDamageTierMultiplier,
   bagImpulseDamageTierMultiplier,
 } from "./bagHitTuning";
+import type { BagHitScalars } from "../tuning/gameplayRuntimeTuning";
 
 export type TrainingBagHitContext = {
   fistWorld: { x: number; y: number; z: number };
@@ -49,6 +50,8 @@ function planarDirPlayerToBag(
 export function applyTrainingBagHitFromPunch(
   physics: JohnStickPhysics,
   ctx: TrainingBagHitContext,
+  /** When set (e.g. dev tuning), overrides `BAG_HIT_TUNING` scalars; tier tables unchanged. */
+  bagScalars?: BagHitScalars,
 ): TrainingBagHitOutcome {
   const bag = physics.punchingBagRigidBody;
   const bagT = bag.translation();
@@ -59,9 +62,14 @@ export function applyTrainingBagHitFromPunch(
     { x: fwd.wx, z: fwd.wz },
   );
 
+  const bases = bagScalars ?? {
+    basePlanarImpulse: BAG_HIT_TUNING.basePlanarImpulse,
+    upwardImpulse: BAG_HIT_TUNING.upwardImpulse,
+    baseDamage: BAG_HIT_TUNING.baseDamage,
+  };
   const impMul = bagImpulseDamageTierMultiplier(ctx.chargeTierIndex);
-  const planarMag = BAG_HIT_TUNING.basePlanarImpulse * impMul;
-  const iy = BAG_HIT_TUNING.upwardImpulse * impMul;
+  const planarMag = bases.basePlanarImpulse * impMul;
+  const iy = bases.upwardImpulse * impMul;
 
   const impulseWorld = {
     x: planar.x * planarMag,
@@ -72,7 +80,7 @@ export function applyTrainingBagHitFromPunch(
   bag.applyImpulseAtPoint(impulseWorld, ctx.fistWorld, true);
 
   const dmgMul = bagDamageTierMultiplier(ctx.chargeTierIndex);
-  const damageDealt = BAG_HIT_TUNING.baseDamage * dmgMul;
+  const damageDealt = bases.baseDamage * dmgMul;
 
   return { damageDealt, impulseWorld };
 }

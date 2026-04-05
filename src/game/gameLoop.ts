@@ -17,6 +17,11 @@ export type GameLoopHooks = {
    */
   update: (dtSeconds: number) => void;
   /**
+   * WS-071 — scales real-time delta added to the fixed-step accumulator (0 = sim paused / hit-stop).
+   * Evaluated once per frame with the same `dt` as the accumulator (before `update`). Default 1.
+   */
+  accumulatorTimeScale?: () => number;
+  /**
    * Once per display frame, **before** the fixed-step accumulator runs.
    * Snapshot physics (or kinematic) state for render interpolation — GP §4.2.3.
    */
@@ -49,7 +54,8 @@ export function runGameLoop(hooks: GameLoopHooks): () => void {
     if (!running) return;
 
     const dt = Math.min(clock.getDelta(), MAX_FRAME_DT_SEC);
-    accumulator += dt;
+    const accScale = hooks.accumulatorTimeScale?.() ?? 1;
+    accumulator += dt * accScale;
 
     hooks.update(dt);
 
