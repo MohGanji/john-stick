@@ -10,13 +10,20 @@ import type { ActionMapSnapshot } from "./actionMap";
 import { baseStrikePressIntent } from "./baseStrikeInput";
 import type { ResolvedCombatIntent, StrikeMoveId } from "./combatIntent";
 
+export type StrikePressIntentOptions = {
+  pauseMenuOpen?: boolean;
+};
+
 export function strikePressIntent(
   prev: ActionMapSnapshot,
   curr: ActionMapSnapshot,
   intent: ResolvedCombatIntent,
   prevIntent: ResolvedCombatIntent,
+  options?: StrikePressIntentOptions,
 ): StrikeMoveId | null {
-  if (curr.interactModeOpen || curr.shiftHeld) return null;
+  if (options?.pauseMenuOpen || curr.interactModeOpen || curr.shiftHeld) {
+    return null;
+  }
 
   const base = baseStrikePressIntent(prev, curr, intent);
   if (base !== null) return base;

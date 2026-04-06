@@ -2,13 +2,14 @@
  * WS-051 / GP §3.2.3–3.2.4 — **combat intent** after priority + chord/sequence rules.
  *
  * ## Conflict priority (highest wins)
- * 1. **Interact** — `interactModeOpen`: limb combat intent cleared (sign/UI owns the moment;
+ * 1. **Pause menu** — `pauseMenuOpen` (WS-111): same suppression as interact.
+ * 2. **Interact** — `interactModeOpen`: limb combat intent cleared (sign/UI owns the moment;
  *    locomotion freeze stays in `bootstrap.ts`). Raw keys still read in `ActionMapSnapshot`.
- * 2. **Defensive** — **Shift** + limb (`guard*` / `dock*`): no attack move id; guards/docks pass through.
- * 3. **Simultaneous hold chord** — two or more `attack*` holds → compound `MoveId` (WS-081 expands table).
- * 4. **Ordered sequence** — two distinct limb **press edges** within `INPUT_COMBAT.sequenceChainSec`.
- * 5. **Base attack** — exactly one `attack*` hold → single-limb `MoveId`.
- * 6. **Idle** — none of the above.
+ * 3. **Defensive** — **Shift** + limb (`guard*` / `dock*`): no attack move id; guards/docks pass through.
+ * 4. **Simultaneous hold chord** — two or more `attack*` holds → compound `MoveId` (WS-081 expands table).
+ * 5. **Ordered sequence** — two distinct limb **press edges** within `INPUT_COMBAT.sequenceChainSec`.
+ * 6. **Base attack** — exactly one `attack*` hold → single-limb `MoveId`.
+ * 7. **Idle** — none of the above.
  *
  * Simultaneous chord beats a sequence resolved on the same frame if both qualify.
  */
@@ -208,13 +209,30 @@ function defenseFrom(snapshot: ActionMapSnapshot): Pick<
  * Advance buffered sequence state and produce this frame’s resolved intent.
  * Call once per **render** frame after sampling `curr` and retaining `prev`.
  */
+export type ResolveCombatIntentOptions = {
+  /** WS-111 — Esc pause menu blocks strikes like the sign interact UI. */
+  pauseMenuOpen?: boolean;
+};
+
 export function resolveCombatIntent(
   state: CombatIntentState,
   prev: ActionMapSnapshot,
   curr: ActionMapSnapshot,
   nowSec: number,
+  options?: ResolveCombatIntentOptions,
 ): { resolved: ResolvedCombatIntent; nextState: CombatIntentState } {
   const chain = INPUT_COMBAT.sequenceChainSec;
+
+  if (options?.pauseMenuOpen) {
+    return {
+      resolved: {
+        priority: "interact",
+        ...zeroDefense(),
+        attackMoveId: "none",
+      },
+      nextState: { sequencePending: null },
+    };
+  }
 
   if (curr.interactModeOpen) {
     return {

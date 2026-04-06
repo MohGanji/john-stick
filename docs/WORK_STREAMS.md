@@ -591,16 +591,18 @@ flowchart TB
   - **Intent (§9.2.1):** **No** conventional title / loading menu — **immediate playable dojo** on `mountGame` (already true). **Diegetic** game title on the **north wall** in the **opening sightline**: condensed **italic** sans (Wick-adjacent), **“JOHN STICK”** with the **i** as a **stickman silhouette** (WICK “I” replacement trope).  
   - **Build:** `dojoTitleLogoWall.ts` — canvas texture + `MeshBasicMaterial` plane on the north wall (**+X** = **viewer-left** at spawn, clear of bag at **x ≈ 0**), just inside **+Z** inner face (`DOJO_BLOCKOUT.floorHalfDepth`); wired in `bootstrap.ts`. **“I”** = `public/logo/dojo-stickman-i.png` (ref copy `docs/reference/logo/dojo-stickman-i.png`) composited after weathering, same italic skew as **ST** / **CK**. **Refs:** `docs/reference/logo/` (mood, scale, two-line lockup).  
 
-- [ ] **WS-111** — Pause menu + help text (bindings match live config).  
+- [x] **WS-111** — Pause menu + help text (bindings match live config).  
   - **Depends:** WS-050  
   - **∥** WS-113  
   - **@** `role-ux-ui-designer` · `role-gameplay-programmer`  
   - **GP** §9.3.3, §3.4.2  
+  - **Build:** `attachPauseMenuModal.ts` — **Esc** toggles overlay (**after** sign modal so Escape closes sign first); `syncGamePause({ pauseMenuOpen })`; help sections from `pauseHelpSections()` in `dojoSignCopy.ts` (same strings as kiosks). `resolveCombatIntent` / `strikePressIntent` take `{ pauseMenuOpen }`. Sign Escape uses `stopImmediatePropagation` so closing a sign does not open pause on the same key.  
 
-- [ ] **WS-112** — `levelOrder` data + restart + next level stub (client-only).  
+- [x] **WS-112** — `levelOrder` data + restart + next level stub (client-only).  
   - **Depends:** WS-110  
   - **@** `role-gameplay-programmer` · `role-web-tools-engineer` · `role-lead-game-designer`  
   - **GP** §2.5  
+  - **Build:** `levelOrder.ts` — `LEVEL_ORDER` (dojo first), `?level=<index>` via `readLevelIndexFromLocation()` / `buildHrefWithLevelIndex`; pause **Restart level** → `location.reload()`; **Next level** disabled + stub copy until more rows exist.  
 
 - [ ] **WS-113** — Graphics presets (shadows/post/physics quality) wired.  
   - **Depends:** WS-020  

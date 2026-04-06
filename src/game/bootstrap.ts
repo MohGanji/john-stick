@@ -59,6 +59,11 @@ import {
   DOJO_SIGN_INTERACT_KEY_LABEL,
 } from "./level/dojoSignCopy";
 import {
+  buildHrefWithLevelIndex,
+  hasNextLevel,
+  readLevelIndexFromLocation,
+} from "./level/levelOrder";
+import {
   createDojoSignKiosks,
   getDojoSignReadPromptState,
   isPlayerInAnyDojoSignVolume,
@@ -118,6 +123,7 @@ import {
   contextPromptHudStateForVariant,
 } from "./ui/contextPromptCopy";
 import { resolveContextPromptVariant } from "./ui/contextPromptResolve";
+import { attachPauseMenuModal } from "./ui/attachPauseMenuModal";
 import { attachSignReadModal } from "./ui/attachSignReadModal";
 import { attachStaminaHud } from "./ui/attachStaminaHud";
 
@@ -129,6 +135,8 @@ export type MountGameResult = {
 export async function mountGame(
   root: HTMLElement,
 ): Promise<MountGameResult> {
+  const levelIndex = readLevelIndexFromLocation();
+
   const physics = await createJohnStickPhysics();
 
   const { scene, camera, renderer } = createJohnStickRenderSetup(root);
@@ -202,11 +210,14 @@ export async function mountGame(
   /** Sampled at start of `update`; locomotion freezes while **interact** mode is open (WS-050). */
   let actionSample = actionMap.snapshot();
   let combatIntentState = createCombatIntentState();
+  let pauseMenuOpen = false;
+
   const initIntent = resolveCombatIntent(
     combatIntentState,
     actionSample,
     actionSample,
     performance.now() * 0.001,
+    { pauseMenuOpen },
   );
   combatIntentState = initIntent.nextState;
   /** WS-051 — priority + chord/sequence resolution (GP §3.2.3–3.2.4). */
@@ -235,6 +246,28 @@ export async function mountGame(
   const signReadModal = attachSignReadModal(root, {
     dismissHintLine: `Press ${DOJO_SIGN_INTERACT_KEY_LABEL} or Escape to close`,
     onRequestClose: () => actionMap.closeInteractMode(),
+  });
+  attachPauseMenuModal(root, {
+    onOpenChange: (open) => {
+      pauseMenuOpen = open;
+    },
+    levelActions: {
+      onRestart: () => {
+        window.location.reload();
+      },
+      onNextLevel: () => {
+        const next = levelIndex + 1;
+        if (hasNextLevel(levelIndex)) {
+          window.location.href = buildHrefWithLevelIndex(
+            window.location.href,
+            next,
+          );
+        }
+      },
+      nextLevelAvailable: hasNextLevel(levelIndex),
+      nextLevelStubHint:
+        "Next level slot is reserved for future builds — only the training hall ships today.",
+    },
   });
   const contextPromptHud = attachContextPromptHud(root);
   let hudStaminaBlocked = false;
@@ -355,13 +388,14 @@ export async function mountGame(
       actionSample = actionMap.snapshot();
       syncGamePause({
         interactModalOpen: actionSample.interactModeOpen,
-        pauseMenuOpen: false,
+        pauseMenuOpen,
       });
       const intentOut = resolveCombatIntent(
         combatIntentState,
         prevAction,
         actionSample,
         performance.now() * 0.001,
+        { pauseMenuOpen },
       );
       combatIntentState = intentOut.nextState;
       const prevResolvedIntent = combatIntent;
@@ -374,6 +408,7 @@ export async function mountGame(
         actionSample,
         combatIntent,
         prevResolvedIntent,
+        { pauseMenuOpen },
       );
       if (
         press !== null &&

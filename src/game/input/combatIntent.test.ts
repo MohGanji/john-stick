@@ -45,6 +45,23 @@ describe("resolveCombatIntent", () => {
     expect(nextState.sequencePending).toBeNull();
   });
 
+  it("pause menu clears combat intent like interact (WS-111)", () => {
+    const prev = baseSnapshot();
+    const curr: ActionMapSnapshot = {
+      ...baseSnapshot(),
+      limb: { ...baseSnapshot().limb, leftPunch: true },
+      attackLeftPunch: true,
+    };
+    const state = createCombatIntentState();
+    state.sequencePending = { limb: "rightPunch", timeSec: 1 };
+    const { resolved, nextState } = resolveCombatIntent(state, prev, curr, 0, {
+      pauseMenuOpen: true,
+    });
+    expect(resolved.priority).toBe("interact");
+    expect(resolved.attackMoveId).toBe("none");
+    expect(nextState.sequencePending).toBeNull();
+  });
+
   it("Shift defensive path clears sequence buffer and exposes guards", () => {
     const prev = baseSnapshot();
     const curr: ActionMapSnapshot = {

@@ -112,6 +112,7 @@ export function attachSignReadModal(
     }
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
     opts.onRequestClose();
     hideModal();
   };

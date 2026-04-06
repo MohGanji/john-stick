@@ -5,9 +5,9 @@
  * Call `syncGamePause(...)` once per frame after sampling UI-driving input (e.g. `actionMap`).
  * Systems read `getGamePauseSnapshot()` instead of scattering `interactModeOpen` checks.
  *
- * **Combat priority** (`resolveCombatIntent`) still keys off `ActionMapSnapshot.interactModeOpen`
- * today. When adding **pause_menu**, extend input resolution so limb attacks cannot fire while
- * paused (same effective “modal owns the moment” rule as interact).
+ * **Combat** — `resolveCombatIntent` / `strikePressIntent` take **`pauseMenuOpen`** (WS-111) alongside
+ * `ActionMapSnapshot.interactModeOpen` so limb attacks cannot fire while paused (same “modal owns
+ * the moment” rule as interact).
  */
 
 export type GamePauseReason = "none" | "interaction_ui" | "pause_menu";

@@ -64,6 +64,17 @@ export function dojoSignCombatBodyLines(): string[] {
   ];
 }
 
+/**
+ * WS-111 / GP §9.3.3 — pause / help uses the **same** live-bound strings as the dojo signs
+ * (movement kiosk → combat kiosk), so §3.4.2 stays aligned when defaults change.
+ */
+export function pauseHelpSections(): { title: string; lines: string[] }[] {
+  return [
+    { title: DOJO_SIGN_TITLE_MOVEMENT, lines: dojoSignMovementBodyLines() },
+    { title: DOJO_SIGN_TITLE_COMBAT, lines: dojoSignCombatBodyLines() },
+  ];
+}
+
 /** Kiosk order matches `DOJO_SIGN_KIOSK_SPECS` (0 = movement, 1 = combat). */
 export function getDojoSignReadContent(
   kioskIndex: number,
