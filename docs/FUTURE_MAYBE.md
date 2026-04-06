@@ -1,6 +1,6 @@
 # Future / maybe (non-binding)
 
-**Purpose:** **Future / maybe** — ideas not confused with **scheduled work** in `WORK_STREAMS.md`. The gap this file closes: **“might do, not on the board yet”** vs **“in the DAG / next iteration.”** Nothing here is a commitment.
+**Purpose:** **Future / maybe** — ideas not confused with **scheduled work** in `WORK_STREAMS.md`. The gap this file closes: **“might do, not on the board yet”** vs **“listed as a WS in the DAG.”** Nothing here is a commitment.
 
 **How to use:** Short dated or titled bullets. When an idea is **real next work**, add or extend a **WS** (and GP anchor if needed), then **delete or trim** the note here so the doc does not go stale. If an idea is **dead**, **remove** it — we do not keep deprecated narratives. If it stays a **long-lived optional** (e.g. coyote time), it can remain until someone schedules it or cuts it.
 
@@ -32,7 +32,7 @@
 
 **Playfeel:** Fast, dynamic, and fairly natural in the dojo; good enough to **standardize on WASD-only** for facing + locomotion until the rig argues otherwise.
 
-**Still to tune (after rig + real locomotion physics/clips):** The **balance** between lateral slide and turn — e.g. **reduce strafe** while keeping yaw, **increase yaw** and soften strafe, or a **~50% strafe** with current yaw. That is **data + animation** work, not a binding change; expect iteration in combat spacing tests.
+**Still to tune (after rig + real locomotion physics/clips):** The **balance** between lateral slide and turn — e.g. **reduce strafe** while keeping yaw, **increase yaw** and soften strafe, or a **~50% strafe** with current yaw. That is **data + animation** work, not a binding change; expect tuning passes in combat spacing playtests.
 
 **Related:** `docs/REPO_CONVENTIONS.md` (prototype input), GP §3.1.4, §3.3.1, WS-032 / WS-040.
 
@@ -114,9 +114,11 @@
 
 ## Character: one motion system (clips + physics on the same rig)
 
-**Context (2026-04):** The target is **a single implementation**, not two parallel “modes.” **One** foundational skeleton (`CHARACTER_RIG_MAP`) feeds both **authored glTF clips** (locomotion, strikes when keyed) and **Rapier-backed** bodies/constraints/ragdoll for **contact, knockback, balance loss, and fall** reads. **Per game state**, either **animation** or **simulation** (or a documented **blend / handoff**) owns the bones — that split is **policy inside one stack**, not a “temporary v1” to be replaced by a separate “v2 physics.” Third-party glbs can still be wrong (e.g. “Walk” that is really a fight cycle, or missing strike actions); fix the **asset or export** so the **same** pipeline has honest data.
+**Context (2026-04):** The target is **a single implementation**, not two parallel engines. **One** foundational skeleton (`CHARACTER_RIG_MAP` + `STICKMAN_BASE_GLTF_URL`) feeds **authored glTF clips** (locomotion, strikes) and **Rapier** bodies/constraints/ragdoll for **hit receive, knockback, balance loss, and falls**. **Per game state**, **clips**, **kinematic capsule**, or **simulation** owns the pose — that split is **policy inside one stack**, tuned until it feels right. **WS-133** is the **foundational Blender/DCC** export that makes clip data trustworthy; bad third-party packs are fixed in DCC, not papered over long-term in code.
 
-**Streams that compose this (one architecture):** **WS-133** (neutral hero glb + clip catalog), **WS-139** (strike presentation / blend), **WS-091 / WS-094** (ragdoll + articulated receive). **WS-223** ties the **contract** together: base file, naming, validation, and **one** written ownership map (when clips drive, when sim drives, how dummy and player stay aligned on the **same** bone ↔ physics map).
+**Default division of labor:** **Player** — **clips + capsule** for movement and authored strikes (**WS-139** presentation). **Targets (dummy first)** — **WS-091 / WS-094** prove **the same bone map** in Rapier. Extending full receive to **player** or **sparring** is **scheduling the same stack** (**WS-223**), not starting a separate physics product.
+
+**Streams:** **WS-133** (canonical glb + clip catalog), **WS-139** (strike blend / read), **WS-091 / WS-094** (ragdoll + articulated receive on shared bones). **WS-223** — written contract: naming, validation, **per-state ownership**, and refactor touchpoints so asset and handoff changes do not fork behavior.
 
 **Related:** `docs/CHARACTER_RIG_MAP.md`, `docs/GLTF_EXPORT.md`, `playerCharacter.ts`, **WS-223**.
 
@@ -126,7 +128,7 @@
 
 **What it is:** An **optional** workflow aid, not a requirement. Someone pastes a link to a **short clip** (gameplay capture, trailer moment, longplay timestamp, etc.) whose **punch / bag / impact** feel should be the north star.
 
-**Why it helps:** It gives a **shared target** (“snappier than Street Fighter, drier than Mortal Kombat”) so procedural presets, authored **Ogg** stems, or mix tweaks can be tuned **toward** that vibe instead of iterating only on adjectives.
+**Why it helps:** It gives a **shared target** (“snappier than Street Fighter, drier than Mortal Kombat”) so procedural presets, authored **Ogg** stems, or mix tweaks can be tuned **toward** that vibe instead of swapping adjectives without a concrete reference.
 
 **How it could show up later:** A line in a sound brief, a pinned note in `docs/` or issue, or a field in a tooling checklist — **not** something the runtime or repo needs to fetch automatically.
 

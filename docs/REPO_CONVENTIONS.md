@@ -2,7 +2,7 @@
 
 **Owner lens:** Game Director — keep the spine shippable (`docs/GAME_PLAN.md`), **no backend**, **keyboard-only**. This doc is the **layout contract** for code and art handoffs.
 
-**Process (matches `WORK_STREAMS.md`):** **Linear iteration** — improve what exists; **no “v1 / v2”** release layering in how we run the project. **YAGNI** in code; **delete** unused or superseded implementation instead of versioning it. **Assets** may remain as **pickable options**, **refs**, or **inspiration**. **Docs** should stay accurate: **update or remove** stale sections rather than treating them as history.
+**Process (matches `WORK_STREAMS.md`):** **Incremental delivery** — improve what exists; **no “v1 / v2”** release layering in how we run the project. **YAGNI** in code; **delete** unused or superseded implementation instead of versioning it. **Assets** may remain as **pickable options**, **refs**, or **inspiration**. **Docs** should stay accurate: **update or remove** stale sections rather than treating them as history.
 
 ## Directory map
 

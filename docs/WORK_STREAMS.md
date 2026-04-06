@@ -8,90 +8,7 @@
 
 **Ops model (agentic crew):** You (visionary + product owner) set **direction, access, and approvals**. Agents adopt **@ roles** as domain experts (taste, prompts, export presets, physics tuning). Some streams are **blocked until you complete a USER step** (logins, API keys, Blender license, approving an MCP install). Those are first-class work items, not footnotes.
 
-**How we work — iteration, not “versions”:** We improve what is already here in a **linear flow** until it meets the bar. **Waves** and **WS IDs** are **scheduling and dependencies**, not product releases (no “v1 / v2” workflow in this repo). **YAGNI:** keep the code minimal; if a path is **unused or superseded**, **delete it** and move on — don’t maintain parallel “legacy” implementations. **Assets** may stay when they are **options to choose from**, **references**, or **inspiration**. **Docs** that are wrong or stale should be **updated or removed**, not left as historical noise. **`docs/FUTURE_MAYBE.md`** is for **maybes** until something **graduates into a work stream** (or is cut); it exists to separate “not scheduled yet” from “explicitly optional idea,” not to version the game.
-
-**Taste is a ticket:** **Wave 15** schedules **play → feel wrong → fix** as **explicit deliverables** (tuning tables, prompt packs, multi-option gens, **USER pick**, revision log). Creative Director, Art Director, and Lead Game Designer **own** those streams; they are not implied by “polish later.” **Body feel:** taste passes explicitly chase **less rigid / more flowy** motion (slightly **bendy** limbs, natural recovery arcs) while keeping **readability** — implementation may span **WS-139** (strike / procedural layer), **WS-133** (rig + clip quality), and **WS-155** (player vs dummy thresholds), not the KCC **capsule** (invisible physics proxy only).
-
----
-
-## Legend
-
-| Field | Meaning |
-|--------|---------|
-| **Wave** | Rough phase (lower = earlier). |
-| **Depends on** | IDs that must be done first (DAG edges). |
-| **∥** | **Safe to parallelize** with listed IDs (same prerequisites, no edge between them). |
-| **@rule** | Suggested Cursor rule file (see `john-stick-role-index.mdc`). |
-| **GP §** | `GAME_PLAN` ingredient anchor (optional). |
-| **USER** | **Human (you) prerequisite** — account, token, browser session, legal OK, hardware; no agent can finish this without you. |
-| **Artifact** | Expected output type: **code**, **3D asset** (glTF etc.), **2D/generated** (refs, icons, textures), **audio**, **doc**, or **pipeline** (scripts, MCP, SOP). |
-| **Tool** | Examples only (Blender, browser, image/SFX generators); **replaceable** — the stream stays valid if the specific tool changes. |
-| **Round** | For **Wave 15** taste streams: minimum **USER review cycles** (e.g. ≥2) and/or **gen A/B option count** before sign-off — written in each WS **Build** block. |
-
----
-
-## GAME_PLAN index → work streams (coverage)
-
-`docs/GAME_PLAN.md` is the **ingredient list**; this file is the **schedule**. Most `[E]` items are covered by **earlier waves** (dojo + combat path). Gaps fell into: **implicit** (shipped inside another WS without a line item), **not yet pulled forward** (`WS-200+` bucket), or **missing** — filled by **later waves**, **taste passes**, and bucket items as priorities shift.
-
-| GP region | Primary WS (or bucket) | Gap addressed |
-|-----------|----------------------|---------------|
-| §1.1.2 cause→effect | WS-062, WS-070–073, WS-091, WS-094 | — |
-| §1.1.1 one-vs-many | **WS-201** | Crowd readability + AI — **WS-201** bucket until pulled forward |
-| §1.1.3 sensory density | WS-071–073, WS-072, WS-133+ | Coherence **WS-141**; **material / particle shader** work **WS-139**, **WS-141** (incl. hit-burst upgrades after WS-073); **fullscreen post** **WS-216**; **taste pass WS-150–153** |
-| §1.2.2 multi-level | WS-112 stub + **WS-201** | Objectives / director in WS-201 |
-| §1.3.3 perf + §11.1.x | **WS-135** (new) | Min-spec + stress + cold-start |
-| §1.3.2 combat readability | WS-060, WS-030 | **Telegraph + timing taste WS-151** |
-| §2.1.2 target states (feel) | WS-090, WS-091, WS-094 | **WS-095** (enemy stance / receive); **Feel matrix + USER tuning WS-155** |
-| §2.3.2 training / enemy tiers (feel) | WS-062, WS-092 | **WS-155** (bag / dummy / NPC read) |
-| §2.1.1 strike loop (moment feel) | WS-080, WS-081 | **WS-151** (poke / launcher / sweep read) |
-| §1.3.1 “fun in 60s” + §1.1.3 density | WS-101, juice | **WS-150** pillars + **WS-157** loops |
-| §3.1.x camera comfort | WS-030–031, WS-071 | **WS-152** (USER session + deltas) |
-| §3.4.1 playtest loop | WS-120 | **WS-157** structured rounds **before** final WS-120 sign-off |
-| §5.1.1 silhouette | WS-041, WS-133 | **WS-154** multi-option gen + USER pick |
-| §4.1.2 art direction (taste) | WS-100, WS-141 | **WS-154** + **WS-150** rubric alignment |
-| §8.x mix / loudness taste | WS-072, WS-140 | **WS-153** A/B + USER ladder |
-| §12.1 creative leadership | Roles | **WS-150** documented pillars + juice rubric |
-| §11.2 cuts / scope | WS-120 | **WS-156** explicit taste-based cut list **feeds** WS-120 |
-| §2.1.1 strike loop roles + moment feel | **WS-138** + **WS-095** + WS-080/081 | **WS-151** telegraph/timing taste |
-| §2.1.3 risk/reward | **WS-201** + **WS-138** | Dojo-light until extra levels |
-| §2.2.2 cancels / caps | **WS-138** (new) | Explicit designer rules |
-| §2.2.3 hit-type data | Partial in compounds | **WS-138** audit vs table; **WS-095** enemy receive tiers |
-| §2.3.3 pacing | **WS-201** | Per-level curves |
-| §2.4.3 micro-challenges | **WS-210** deferred | |
-| §2.5.2 load/restart | WS-112 | Optional persist → **WS-218** |
-| §2.5.3 local score UI | **WS-208** deferred | |
-| §3.2.3 buffer / coyote | Partial WS-051 | Full pass **WS-207** deferred |
-| §3.2.5 gamepad | **WS-211** deferred | |
-| §3.3.3 slopes/stairs | **WS-137** (new) | |
-| §3.3.2 root-motion policy | **WS-137** (new) | Doc + implementation alignment |
-| §3.1.3 camera accessibility | Juice hooks exist | **WS-212** deferred (turn speed, shake/flash) |
-| §4.1.2 art direction lock | WS-100 + **WS-141** | Character+world coherence |
-| §4.1.3 post FX (fullscreen) | **WS-216** deferred | Per-object **shaders** **WS-139** / **WS-141**; **WS-100** baseline shipped; **WS-113** gates cost |
-| §4.3.2 actor model | **WS-135** audit bullet | Composability refactor plan |
-| §4.4.5 cold-start | **WS-135** | |
-| §4.4.3 telemetry | **WS-217** deferred | |
-| §5.1.3 hit feedback rules | **WS-139** | Beyond generic VFX burst |
-| §5.2.2 strike blending | **WS-139** | Key vs procedural policy |
-| §5.2.x motion source of truth (rig + clips + physics read) | **WS-133**, **WS-139**, WS-091/094 | **WS-223**: **one** stack — neutral base glb + **full strike/loco clip catalog** + **same** bone map for clips and ragdoll (documented handoffs, no separate “physics edition”) |
-| §5.3.2 material variants | **WS-134** | Outfit masks / instances |
-| §6.2.3 crowd knockback | **WS-201** / **WS-219** | Perf + falloff with mobs |
-| §6.3.3 bag-specific juice | **WS-141** (new) | Swing / spring / **bag + hit-burst** materials; WS-073 = shipped hit-burst baseline only |
-| §6.4.3 determinism | **WS-218** deferred | |
-| §7.2.3 lighting identity | WS-100, WS-020 | Env art pass |
-| §7.2.2 spawn markers | **WS-222** deferred | Planner convenience |
-| §7.3.x mission template | **WS-201** | |
-| §7.4 diegetic story | **WS-200** | |
-| §8.1.1 impact library | WS-072 first pass | **WS-140** breadth + stingers |
-| §8.1.3 music | **WS-140** | Philosophy + loop/stinger |
-| §8.2.3 dynamic mix | **WS-140** | Optional low-pass under chaos |
-| §9.1.3 floating damage | **WS-213** deferred | |
-| §9.2.3 remap UI | **WS-214** deferred | |
-| §9.3.1 sign hierarchy | WS-101 | Deep structure / beats **WS-221** deferred |
-| §9.3.2 progressive hints | **WS-215** deferred | |
-| §10.x narrative/factions | WS-200, WS-201, WS-202, WS-134 | |
-| §11.2.3 browser matrix | **WS-136** (new) | Chrome / Firefox / Safari |
-| §12.x roles | `john-stick-role-index.mdc` | Staffing map, not a WS |
+**Scheduling:** **Waves** and **WS IDs** order **dependencies** in this file only — they are not product release labels. **YAGNI:** remove **unused or superseded** code instead of keeping parallel paths. **`docs/FUTURE_MAYBE.md`** lists **unscheduled** ideas until they become a **WS** (or are cut). **Assets** may remain as **options**, **references**, or **inspiration**. **Docs** must match the repo or be **removed**.
 
 *Many one-to-one rows are omitted* (e.g. §4.3.1 → WS-010, §4.2.1–4.2.3 → WS-011, §6.2.1 → WS-060) — this table highlights **splits**, **bundles**, and **gaps** only.
 
@@ -158,6 +75,7 @@ flowchart TB
     WS092[WS-092 Stagger tuning]
     WS093[WS-093 Dojo harmless NPC]
     WS094[WS-094 Limb ragdoll]
+    WS226[WS-226 Sparring ragdoll]
   end
 
   subgraph W10["Wave 10 — Dojo UX"]
@@ -181,7 +99,9 @@ flowchart TB
     WS130[WS-130 Access + secrets layout]
     WS131[WS-131 DCC / MCP / automation spike]
     WS132[WS-132 Creative gen capability map]
-    WS133[WS-133 Hero stickman DCC]
+    WS133[WS-133 Hero mesh + rig + skin]
+    WS224[WS-224 Hero Idle + Walk]
+    WS225[WS-225 Hero strike clips]
     WS134[WS-134 Modular limb outfits]
   end
 
@@ -194,9 +114,10 @@ flowchart TB
     WS139[WS-139 Strike blend + hit flash rules]
     WS140[WS-140 Audio depth + music]
     WS141[WS-141 Bag juice + art lock]
+    WS223[WS-223 Motion stack policy]
   end
 
-  subgraph W15["Wave 15 — Taste & USER iteration (first-class tickets)"]
+  subgraph W15["Wave 15 — Taste & USER sign-off (first-class tickets)"]
     WS150[WS-150 Pillars + juice rubric]
     WS151[WS-151 Combat timing + reads]
     WS152[WS-152 Camera comfort]
@@ -267,8 +188,10 @@ flowchart TB
   WS041 --> WS133
   WS132 --> WS133
   WS131 -.-> WS133
-  WS133 --> WS134
-  WS133 -.-> WS120
+  WS133 --> WS224
+  WS224 --> WS225
+  WS225 --> WS134
+  WS225 -.-> WS120
 
   WS113 --> WS135
   WS094 --> WS135
@@ -280,10 +203,13 @@ flowchart TB
   WS081 --> WS095
   WS081 --> WS139
   WS041 --> WS139
+  WS225 --> WS139
   WS072 --> WS140
   WS061 --> WS141
   WS070 --> WS141
   WS100 -.-> WS141
+  WS225 --> WS223
+  WS094 --> WS223
   WS135 -.-> WS120
   WS136 -.-> WS120
 
@@ -300,9 +226,11 @@ flowchart TB
   WS071 --> WS152
   WS140 --> WS153
   WS132 --> WS154
-  WS133 --> WS154
+  WS225 --> WS154
   WS061 --> WS155
   WS094 --> WS155
+  WS093 --> WS226
+  WS094 --> WS226
   WS093 --> WS155
   WS095 -.-> WS155
   WS150 -.-> WS120
@@ -344,10 +272,11 @@ flowchart TB
 | WS-080 | 8 | WS-062 | done | `role-lead-game-designer` + `role-gameplay-programmer` + `role-technical-animator` | 3 limbs + table (+ recovery) GP §2.2.1 |
 | WS-081 | 8 | WS-051, WS-080 | done | `role-lead-game-designer` + `role-technical-animator` + `role-gameplay-programmer` | Compounds + hit profile + recovery GP §2.2.1–2.2.3 |
 | WS-090 | 9 | WS-062 | done | `role-gameplay-programmer` | Dummy + states GP §2.1.2 |
-| WS-091 | 9 | WS-090, WS-011 | — | `role-physics-programmer` + `role-technical-animator` | Ragdoll + get-up GP §6.1 |
+| WS-091 | 9 | WS-090, WS-011 | — | `role-physics-programmer` + `role-technical-animator` | Ragdoll + get-up GP §6.1 — dummy KD/recover; pairs WS-094 |
 | WS-092 | 9 | WS-091 | — | `role-lead-game-designer` + `role-physics-programmer` | Threshold tuning GP §6.1.2 |
 | WS-093 | 9 | WS-091, WS-040, WS-041 | WS-092 | `role-gameplay-programmer` + `role-lead-game-designer` | Harmless dojo NPC wander + hits; juice QA GP §2.3.2 |
-| WS-094 | 9 | WS-091, WS-041 | WS-092 | `role-physics-programmer` + `role-technical-animator` | **Articulated** ragdoll (multi-body + joints) GP §5.2.1, §6.1, §6.4 |
+| WS-094 | 9 | WS-091, WS-041 | WS-092 | `role-physics-programmer` + `role-technical-animator` | **Articulated** ragdoll (multi-body + joints) GP §5.2.1, §6.1, §6.4 — dummy first; same bones as player |
+| WS-226 | 9 | WS-093, WS-094 | WS-092 | `role-physics-programmer` + `role-gameplay-programmer` | Sparring partner **WS-094-class** articulated ragdoll (shared rig pipeline) |
 | WS-095 | 14 | WS-092, WS-081 | WS-138, WS-139 | `role-lead-game-designer` + `role-gameplay-programmer` + `role-physics-programmer` | Enemy stance + receive: light hits stay up; KD from buildup or tiers GP §2.2.3, §6.1.2 |
 | WS-100 | 10 | WS-021 | WS-101 | `role-environment-artist` + `role-art-director` | Replace placeholder geo GP §7.1 |
 | WS-101 | 10 | WS-050, WS-030 | WS-100 | `role-level-designer` + `role-narrative-designer` | Signs + interact GP §2.4.2 |
@@ -360,20 +289,23 @@ flowchart TB
 | WS-130 | 13 | — | WS-131, WS-132 | `role-web-tools-engineer` + **USER** | Env + key slots; no secrets in repo |
 | WS-131 | 13 | — | WS-130, WS-132 | `role-technical-artist` + `role-web-tools-engineer` | MCP vs CLI vs browser SOP |
 | WS-132 | 13 | — | WS-130, WS-131 | `role-art-director` + `role-creative-director` | Art/audio **classes** of generation (tool-agnostic) |
-| WS-133 | 13 | WS-041, WS-132 | WS-131 | `role-character-artist` + `role-technical-artist` + `role-technical-animator` | Hero glTF; refs + `CHARACTER_RIG_MAP` |
-| WS-134 | 13 | WS-133 | WS-100 | `role-character-artist` + `role-gameplay-programmer` + `role-technical-artist` | Per-limb swap / mix-match outfits |
+| WS-133 | 13 | WS-041, WS-132 | WS-131 | `role-character-artist` + `role-technical-artist` + `role-technical-animator` | Foundational hero **mesh + skeleton + skin** → canonical `STICKMAN_BASE_GLTF_URL` (bind pose; `CHARACTER_RIG_MAP`; `validate:gltf`) |
+| WS-224 | 13 | WS-133 | WS-131 | `role-technical-animator` + `role-character-artist` + `role-technical-artist` | Foundational hero **locomotion clips** — `Idle`, `Walk` per `GLTF_EXPORT` + runtime check |
+| WS-225 | 13 | WS-224 | WS-131 | `role-technical-animator` + `role-character-artist` | Foundational hero **strike clips** — names in `strikePresentation.ts` + `compoundMoveTable.ts` + `validate:gltf` |
+| WS-134 | 13 | WS-225 | WS-100 | `role-character-artist` + `role-gameplay-programmer` + `role-technical-artist` | Per-limb swap / mix-match outfits |
 | WS-135 | 14 | WS-011, WS-020, WS-094, WS-113 | WS-136 | `role-graphics-programmer` + `role-physics-programmer` + `role-qa-playtest` | Min-spec + ragdoll stress + cold-start + **shader/post GPU budget** GP §1.3.3 §11.1 |
 | WS-136 | 14 | WS-112 | WS-135 | `role-web-tools-engineer` + `role-qa-playtest` | Chrome / Firefox / Safari pass GP §11.2.3 |
 | WS-137 | 14 | WS-040, WS-021 | WS-100 | `role-physics-programmer` + `role-technical-animator` | Slopes/stairs + root-motion doc GP §3.3 |
 | WS-138 | 14 | WS-081 | WS-139 | `role-lead-game-designer` + `role-gameplay-programmer` | Combo caps + hit-type audit GP §2.2 |
-| WS-139 | 14 | WS-081, WS-041 | WS-133 | `role-technical-animator` + `role-art-director` + `role-graphics-programmer` | Strike blend + **anti-stiff** body/limb motion + hit flash / **rim / toon** shaders GP §5.2 §5.1 |
-| WS-140 | 14 | WS-072 | WS-133 | `role-audio` + `role-creative-director` | Impact library + music + mix GP §8.1 §8.2 |
-| WS-141 | 14 | WS-061, WS-070 | WS-100 | `role-vfx-artist` + `role-graphics-programmer` + `role-art-director` | Bag + **WS-073** hit-burst **shader iter** + dojo large-surface mats + **PBR / physical / deform** + §4.1.2 lock |
+| WS-139 | 14 | WS-081, WS-041, WS-225 | WS-224 | `role-technical-animator` + `role-art-director` + `role-graphics-programmer` | Strike blend + **anti-stiff** body/limb motion + hit flash / **rim / toon** shaders GP §5.2 §5.1 |
+| WS-140 | 14 | WS-072 | WS-225 | `role-audio` + `role-creative-director` | Impact library + music + mix GP §8.1 §8.2 |
+| WS-141 | 14 | WS-061, WS-070 | WS-100 | `role-vfx-artist` + `role-graphics-programmer` + `role-art-director` | Bag + **WS-073** hit-burst **shader pass** + dojo large-surface mats + **PBR / physical / deform** + §4.1.2 lock |
+| WS-223 | 14 | WS-225, WS-094 | — | `role-technical-animator` + `role-physics-programmer` + `role-gameplay-programmer` + `role-character-artist` | **Motion stack** — policy doc + integration checklist (`docs/`); authoring + runtime ownership + code touchpoints |
 | WS-150 | 15 | — | WS-151–WS-155 | `role-creative-director` + **USER** | Pillars + rubric incl. **flowy / not pipe-stiff** body read; gates cuts + playtests |
 | WS-151 | 15 | WS-081, WS-071, WS-138, WS-095 | WS-152, WS-155 | `role-lead-game-designer` + `role-gameplay-programmer` + **USER** | Timing + reads + **anti-stiff** windup/recovery; tuning tickets |
 | WS-152 | 15 | WS-030, WS-031, WS-071 | WS-153 | `role-gameplay-programmer` + `role-creative-director` + **USER** | Camera comfort session → delta list (cam + juice) |
 | WS-153 | 15 | WS-140 | WS-154 | `role-audio` + `role-creative-director` + **USER** | Mix A/B, loudness ladder, duck/sidechain taste |
-| WS-154 | 15 | WS-132, WS-133 | WS-155 | `role-art-director` + `role-character-artist` + **USER** | Prompt packs; ≥2 options/class; USER pick + revision log |
+| WS-154 | 15 | WS-132, WS-225 | WS-155 | `role-art-director` + `role-character-artist` + **USER** | Prompt packs; ≥2 options/class; USER pick + revision log |
 | WS-155 | 15 | WS-061, WS-093, WS-094 | WS-151–WS-154, WS-157 | `role-lead-game-designer` + `role-physics-programmer` + **USER** | Target matrix + **soft/bendy vs rigid** tuning (player mesh + ragdolls) |
 | WS-156 | 15 | WS-150, WS-157 | — | `role-game-director` + `role-creative-director` + **USER** | Explicit ship-scope cuts / deferrals → feeds WS-120 cut list |
 | WS-157 | 15 | WS-112, WS-150 | WS-151–WS-155 | `role-qa-playtest` + `role-game-director` + **USER** | ≥N scripted playtest rounds before final WS-120 sign-off |
@@ -538,10 +470,11 @@ flowchart TB
   - **Depends:** WS-090, WS-011  
   - **@** `role-physics-programmer` · `role-technical-animator`  
   - **GP** §6.1  
-  - **Build (shipped):** One **dynamic capsule** per dummy — knockdown uses **full body rotation**, recover blends to spawn / stand-up. **Not** per-limb Rapier bodies; that scope is **WS-094** (GP §5.2.1). Stiff stick mesh is still **demo / skinned follow** until articulated ragdoll + final character art land.
+  - **Build (shipped):** **Training dummy:** **dynamic capsule** for knockdown tumble when not in **WS-094** articulated mode; recover blends to spawn / stand-up. **WS-094** adds **per-limb Rapier** bodies on the **same** bone map (`CHARACTER_RIG_MAP`). This is **one motion stack**, not a throwaway “dummy-only physics”: the player still uses **clip + kinematic capsule** for locomotion and authored strikes today; extending **receive / ragdoll** to the player (or other roles) uses the **identical** skeleton contract via **WS-223** — **never** a parallel physics codebase. **WS-133–WS-225** deliver the **foundational Blender/DCC** glb so clips and bones match code on that shared rig.
 
 - [x] **WS-094** — **Articulated ragdoll** — Rapier **multi-body** chain (or equivalent) mapped from `docs/CHARACTER_RIG_MAP.md`, joint limits, skinned mesh driven by physics poses; reuse dummy FSM + `trainingDummyFeel` as baseline. Respect **perf cap** (GP §6.4.2).  
   - **Build:** `trainingDummyArticulatedRagdoll.ts` — spawn on `ragdoll` phase, revolute limits on elbows/knees, multi-body kinematic recover, `skeleton.pose()` after teardown.  
+  - **Intent:** First **full** bone ↔ Rapier implementation ships on the **dummy** for clear lab feedback. **Same** `STICKMAN_BASE_GLTF_URL` skeleton drives **player**, **dummy**, and **sparring** instances — advancing who gets articulated receive is **scheduling and tuning**, not a second rig standard.  
   - **Depends:** WS-091, WS-041  
   - **∥** WS-092  
   - **@** `role-physics-programmer` · `role-technical-animator`  
@@ -559,8 +492,15 @@ flowchart TB
   - **∥** WS-092  
   - **@** `role-gameplay-programmer` · `role-lead-game-designer`  
   - **GP** §2.3.2, §2.1.2, §6.3.x, §8.x  
-  - **Build:** `sparringNpcConfig` spawn + Rapier capsule/hurt; `sphereStrikeHit` → `sparring_npc`; `applyTrainingDummyHitFromStrike(..., targetBody)` + shared FSM / `trainingDummyFeel`; ragdoll **recover** uses **in-place upright** anchor (dummy still uses fixed spawn); `sparringNpcWander` planar goals with bag/dummy exclusions; `sparring_partner` glTF tint. **No** articulated ragdoll on the partner (capsule tumbling only).  
+  - **Build:** `sparringNpcConfig` spawn + Rapier capsule/hurt; `sphereStrikeHit` → `sparring_npc`; `applyTrainingDummyHitFromStrike(..., targetBody)` + shared FSM / `trainingDummyFeel`; ragdoll **recover** uses **in-place upright** anchor (dummy still uses fixed spawn); `sparringNpcWander` planar goals with bag/dummy exclusions; `sparring_partner` glTF tint. **Articulated ragdoll (WS-094 class) on the partner is optional for this milestone** — partner uses **capsule tumbling** today under WS-093 scope; **same** shared rig/GPU as everyone else, and promoting the partner to **WS-094**-depth receive is **one-stack** work when playtests demand it — not a fork.  
   - **Note:** Ships in dojo only as a **lab / QA** character unless promoted later; not a blocker for WS-120 unless playtest asks for it.  
+
+- [ ] **WS-226** — **Sparring partner — articulated ragdoll (WS-094 class)**.  
+  - **Depends:** WS-093, WS-094  
+  - **∥** WS-092  
+  - **Build:** Apply **dummy** articulated ragdoll pipeline to **`sparring_partner`** — same `STICKMAN_BASE_GLTF_URL` bone map, no second physics implementation. Ragdoll spawn/recover consistent with **WS-091** FSM; meet **WS-135** perf budget.  
+  - **@** `role-physics-programmer` · `role-gameplay-programmer` · `role-technical-animator`  
+  - **GP** §5.2.1, §6.1, §6.4  
 
 ### Wave 10 — Dojo presentation
 
@@ -620,14 +560,14 @@ flowchart TB
   - **Depends:** WS-081, WS-092, WS-102, WS-112  
   - **@** `role-qa-playtest` · `role-game-director` · `role-creative-director`  
   - **GP** §11.2, §1.3.1  
-  - **Note:** **Recommended before marketing / “min-spec” claims:** **WS-133** (hero DCC silhouette), **WS-135** (documented perf + ragdoll stress), **WS-136** (browser matrix). None are hard blockers for an **internal** first rubric on mechanics.  
+  - **Note:** **Recommended before marketing / “min-spec” claims:** **WS-225** (foundational hero glb complete: mesh + locomotion + strikes), **WS-135** (documented perf + ragdoll stress), **WS-136** (browser matrix). None are hard blockers for an **internal** first rubric on mechanics.  
   - **Note (taste / external ship):** For a **public or “we love this”** milestone, treat **Wave 15** (**WS-150–WS-157**) as **required** alongside this item: roles run prompt packs, multi-option gens, timing/read/camera/mix passes, **USER** pick + revision — then **WS-156** + **WS-157** feed the final rubric and cut list. Internal alpha can run WS-120 earlier with a subset of Wave 15.
 
 ### Wave 13 — Production art, modular character & creative tooling
 
 Cross-disciplinary streams: **3D hero**, **outfit modularity**, **tooling investigations**, and **your** access to external services. Deliverables are often **assets + docs + thin code hooks**, not features alone.
 
-- [ ] **WS-130** — **Creative & toolchain access pack** (repo + team hygiene).  
+- [x] **WS-130** — **Creative & toolchain access pack** (repo + team hygiene).  
   - **Depends:** —  
   - **∥** WS-131, WS-132  
   - **USER** Document where API keys / tokens live (e.g. `.env.local`, OS keychain); enable **image / audio generation** accounts the project will use; Blender or other DCC **license/install** on a machine agents can target; Cursor **browser** or remote desktop if “click-through” authoring is the fallback. **Do not commit secrets.**  
@@ -635,7 +575,7 @@ Cross-disciplinary streams: **3D hero**, **outfit modularity**, **tooling invest
   - **@** `role-web-tools-engineer` · `role-game-director`  
   - **GP** §4.4.1–4.4.2 (asset pipeline), §5.3.1 (export / validation hygiene)  
 
-- [ ] **WS-131** — **DCC automation & integration spike** (Blender-first, tool-agnostic outcome).  
+- [x] **WS-131** — **DCC automation & integration spike** (Blender-first, tool-agnostic outcome).  
   - **Depends:** — (soft: WS-130 for install/login)  
   - **∥** WS-130, WS-132  
   - **Build:** Research **MCP** (or other bridge) to Blender vs **headless CLI** (`blender -b -P …`) vs **manual SOP** (Cursor browser + official docs + export checklist). Record **one** recommended path for the crew + fallback.  
@@ -650,17 +590,33 @@ Cross-disciplinary streams: **3D hero**, **outfit modularity**, **tooling invest
   - **Artifact** doc (brief templates may live beside `role-art-director` / `role-audio` rules)  
   - **@** `role-art-director` · `role-creative-director` · `role-audio`  
 
-- [ ] **WS-133** — **Hero stickman — DCC pass** (replace procedural placeholder when ready).  
+- [ ] **WS-133** — **Foundational hero — mesh, skeleton, skin** (canonical `STICKMAN_BASE_GLTF_URL`).  
   - **Depends:** WS-041, WS-132  
   - **∥** WS-131 (informing export automation)  
-  - **Build:** Mesh + rig in DCC aligned to **`docs/CHARACTER_RIG_MAP.md`** and refs under `docs/reference/character/` (hinge layout, rounded/readable silhouette vs separated pipes). Re-export **`Idle` / `Walk`** (+ existing strike clip names the runtime expects). Author strikes with **natural joint flex** and **flowy arcs** (not fully locked “pipe” poses) where refs allow — pairs with **WS-139** / **WS-151** anti-stiff goals. Validate via `docs/GLTF_EXPORT.md` / `npm run validate:gltf`. Optional: **Neck** bone per `docs/FUTURE_MAYBE.md`. Optional **shader** pass with **WS-139**: **matcap / stepped diffuse / outline** for readable silhouette at distance (preset-gated via **WS-113**).  
-  - **Artifact** `public/models/char_player_stick_v01.glb` (or versioned successor) + short changelog  
+  - **Build:** DCC mesh + armature + weights aligned to **`docs/CHARACTER_RIG_MAP.md`** and `docs/reference/character/`. **Bind pose** only — no locomotion or strike clips on this ticket. Export glb; `npm run validate:gltf`; set **`STICKMAN_BASE_GLTF_URL`**; changelog. Optional: **Neck** bone per `docs/FUTURE_MAYBE.md`.  
+  - **Artifact** glb + changelog  
   - **Tool** Blender (recommended) or DCC per WS-131  
   - **@** `role-character-artist` · `role-technical-artist` · `role-technical-animator` · `role-art-director`  
   - **GP** §5.2.1, §5.3.1  
 
-- [ ] **WS-134** — **Modular limbs / outfits** (mix-and-match look system).  
+- [ ] **WS-224** — **Foundational hero — locomotion clips** (`Idle`, `Walk`).  
   - **Depends:** WS-133  
+  - **∥** WS-131  
+  - **Build:** Looping **`Idle`** and **`Walk`**; re-export same glb target; `docs/GLTF_EXPORT.md`; `npm run validate:gltf`; in-engine check (`resolveIdleWalkClips`, foot alignment).  
+  - **Artifact** Updated glb + changelog  
+  - **@** `role-technical-animator` · `role-character-artist` · `role-technical-artist`  
+  - **GP** §5.2.1, §3.3.1  
+
+- [ ] **WS-225** — **Foundational hero — strike clip set**.  
+  - **Depends:** WS-224  
+  - **∥** WS-131  
+  - **Build:** Author/export **every** clip name required by `src/game/player/strikePresentation.ts` and by compound rows in `src/game/combat/compoundMoveTable.ts` (e.g. `suggestedAnimClipName`); `validate:gltf`; dojo spot-check. Coordinate anti-stiff goals with **WS-139** / **WS-151**. Optional silhouette shaders with **WS-139** (**WS-113** gated).  
+  - **Artifact** Final foundational hero glb + changelog  
+  - **@** `role-technical-animator` · `role-character-artist` · `role-art-director`  
+  - **GP** §5.2.1, §2.2.x  
+
+- [ ] **WS-134** — **Modular limbs / outfits** (mix-and-match look system).  
+  - **Depends:** WS-225  
   - **∥** WS-100 (environment art can parallel once hero schema exists)  
   - **Build:** **Design** segment IDs (e.g. head accessory, upper arm L/R, forearm, torso band, …) matching rig regions; **asset** convention (separate glTF parts, material slots, or skinned sub-meshes); **runtime** hook to swap mesh/material per segment from data (preserves animation + hit/ragdoll mapping). Feeds long-term **faction / enemy variety** (see WS-202).  
   - **Artifact** doc + schema + minimal code path in engine  
@@ -697,16 +653,16 @@ Closes **essential / core** ingredients that were implied by earlier waves but l
   - **∥** WS-138, WS-139  
   - **@** `role-lead-game-designer` · `role-gameplay-programmer` · `role-physics-programmer`  
   - **GP** §2.2.3, §2.1.2, §6.1.2  
-  - **Build:** **Doc** the target matrix (what a “light” vs “knockdown” hit is). **Data:** extend base + compound move rows (or parallel table) with **receive reaction tier** / **stagger contribution** / **ragdoll eligibility** as needed — wire resolve so **training dummy + future grunts** reuse the same `trainingDummyFsm`-shaped pipeline (`docs/FUTURE_MAYBE.md` — dummy as canonical enemy). **Validate** on dummy; **optional** on **WS-093** NPC when it ships. **Player** receive (fall only on combos / power shots) stays in `docs/FUTURE_MAYBE.md` until enemy-vs-player hitting exists — align rules conceptually when implementing.
+  - **Build:** **Doc** the target matrix (what a “light” vs “knockdown” hit is). **Data:** extend base + compound move rows (or parallel table) with **receive reaction tier** / **stagger contribution** / **ragdoll eligibility** as needed — wire resolve so **training dummy + future grunts** reuse the same `trainingDummyFsm`-shaped pipeline (`docs/FUTURE_MAYBE.md` — dummy as canonical enemy). **Validate** on dummy; **optional** on **WS-093** NPC when it ships. **Player** hit receive (ragdoll/recover): **WS-227**; gating copy may stay sketched in `docs/FUTURE_MAYBE.md` until that stream is implemented.
 
 - [ ] **WS-139** — **Strike presentation policy** — document + implement gaps for **keyframed vs procedural** exaggeration on strikes (GP §5.2.2); **hit flash / rim** rules consistent across targets (GP §5.1.3). Include **anti-stiff / flowy** goals: **secondary motion** (follow-through, slight overshoot, eased recovery), optional **soft IK / springy layers / joint bias** where they do not break hitboxes; **limb bend** reads natural at gameplay camera — not “pipe mannequin” unless pillar calls for it. **Shaders (optional, data-driven):** **rim light** / **Fresnel** accent on limbs for silhouette; **short emissive pulse** or **color lift** on hit (uniforms from combat events / **WS-070**); **toon-stepped** or **matcap** variant if art lock chooses stylized read — all **preset-gated** (**WS-113**) and costed in **WS-135**.  
-  - **Depends:** WS-081, WS-041  
-  - **∥** WS-133, WS-095  
+  - **Depends:** WS-081, WS-041, WS-225  
+  - **∥** WS-224, WS-095  
   - **@** `role-technical-animator` · `role-art-director` · `role-graphics-programmer`  
 
 - [ ] **WS-140** — **Audio depth** — expand **impact library** beyond first SFX; **music** stinger/loop philosophy and at least one loop or stinger integrated (GP §8.1.1, §8.1.3); optional **dynamic mix** (e.g. low-pass under hit chaos) (GP §8.2.3).  
   - **Depends:** WS-072  
-  - **∥** WS-133  
+  - **∥** WS-225  
   - **@** `role-audio` · `role-creative-director`  
 
 - [ ] **WS-141** — **Bag-specific juice + character/world art lock** — swing arc readability, spring/chain feel, optional **shader displacement** or material treatment (GP §6.3.3); align stickman + dojo materials with **PBR-lite / toon-rim** decision (GP §4.1.2) alongside WS-100. **Shaders:** **`MeshPhysicalMaterial`** for vinyl/leather + **normal** or **height** map where art provides; **vertex / texture displacement** on strike impulse (driven from hit event, clamped); optional **decal** or **projected UV** for **武** / graffiti read (refs `docs/reference/environment/punching-bag/`); coordinate **soft** contact shadow or AO fake if bag still floats visually. **Hit VFX (extends WS-073):** optional **soft particles** (depth fade / near-camera clamp), **stretched billboard** sparks, **simple unlit** burst materials — **preset-aware** (**WS-113**) and costed (**WS-135**). **Dojo env (when glTF / trim replaces procedural):** optional **distance blend** / **triplanar** or **detail-normal** on large floors/walls to hide tiling without huge texture memory — same preset + budget gates.  
@@ -714,7 +670,13 @@ Closes **essential / core** ingredients that were implied by earlier waves but l
   - **∥** WS-100  
   - **@** `role-vfx-artist` · `role-graphics-programmer` · `role-art-director` · `role-environment-artist`  
 
-### Wave 15 — Taste & USER iteration (Creative / Art / LGD — first-class)
+- [ ] **WS-223** — **Unified motion stack — policy doc + integration checklist** —  
+  - **Depends:** WS-225, WS-094  
+  - **Build:** (1) **Authoring contract:** satisfied when **WS-133–WS-225** are done — `STICKMAN_BASE_GLTF_URL` contains **mesh, skeleton, `Idle`, `Walk`, and all strike clips** required by code; `npm run validate:gltf`; playtest sign-off on mislabeled or missing clips. (2) **Runtime policy doc** in `docs/`: **per state**, whether **clips**, **kinematic capsule**, or **Rapier** own the pose; handoffs for **dummy**, **sparring (WS-226)**, **player receive (WS-227)**; **IK / partial motors** only as extensions of this stack. (3) **Code touchpoint list:** `playerCharacter`, ragdoll bind, strike presentation, training/sparring FSM — so asset changes stay single-path.  
+  - **@** `role-technical-animator` · `role-physics-programmer` · `role-gameplay-programmer` · `role-character-artist`  
+  - **GP** §5.2, §6.1, `docs/FUTURE_MAYBE.md` (one motion system)  
+
+### Wave 15 — Taste & USER sign-off (Creative / Art / LGD — first-class)
 
 **Roles do not replace “play, feel wrong, fix”** — they **own** the **tickets**: tuning tables, prompt packs, gen **options**, and **your** approvals. **WS-139 / WS-140 / WS-141** deliver *systems and breadth*; Wave 15 delivers *choices and convergence*.
 
@@ -729,7 +691,7 @@ Closes **essential / core** ingredients that were implied by earlier waves but l
 - [ ] **WS-151** — **Combat timing + enemy read pass** —  
   - **Depends:** WS-081, WS-071, WS-138, WS-095  
   - **∥** WS-152, WS-155  
-  - **Build:** **Timing tables** (startup / active / recovery) vs move data; **telegraph** audit on **bag, dummy, NPC**; list **misreads** → gameplay tuning tickets. Align with strike roles (poke / launcher / sweep) from WS-138 and **when targets stay up vs ragdoll** from WS-095. Add a **stiffness pass:** windups/recoveries should feel **organic** (easing, overlap, small anticipation) — file tickets against **WS-139** (presentation code), **WS-133** (poses / rig / clips), or juice (**WS-071**) where the fix belongs; the **player capsule** is not the art target.  
+  - **Build:** **Timing tables** (startup / active / recovery) vs move data; **telegraph** audit on **bag, dummy, NPC**; list **misreads** → gameplay tuning tickets. Align with strike roles (poke / launcher / sweep) from WS-138 and **when targets stay up vs ragdoll** from WS-095. Add a **stiffness pass:** windups/recoveries should feel **organic** (easing, overlap, small anticipation) — file tickets against **WS-139** (presentation code), **WS-133 / WS-224 / WS-225** (poses / rig / clips), or juice (**WS-071**) where the fix belongs; the **player capsule** is not the art target.  
   - **Round:** ≥2 **USER** review cycles with playable build; document deltas per round.  
   - **@** `role-lead-game-designer` · `role-gameplay-programmer` · **USER**  
   - **GP** §1.3.2, §2.1.1–2.1.2, §2.2.x  
@@ -751,7 +713,7 @@ Closes **essential / core** ingredients that were implied by earlier waves but l
   - **GP** §8.1.x, §8.2.x, §1.1.3  
 
 - [ ] **WS-154** — **Visual gen rounds (multi-option)** —  
-  - **Depends:** WS-132, WS-133  
+  - **Depends:** WS-132, WS-225  
   - **∥** WS-155  
   - **Build:** **Prompt packs** per asset class (hero treatment, dojo materials, VFX look); **≥2 options** per deliverable class; **USER** pick + **revision log** (what changed in prompts). Hand winners into WS-100 / WS-139 / export path.  
   - **Round:** Per class: generate → shortlist → **USER** pick → revise; repeat until sign-off or defer to backlog (record in WS-156).  
@@ -809,11 +771,12 @@ These IDs are **ordered later in the DAG** or tie to **GP `[N]`** ingredients �
 - [ ] **WS-220** — Optional **checkpoint / persist** beyond restart GP §2.5.2 extension `[C]`  
 - [ ] **WS-221** — Sign content hierarchy / “movie beat” copy depth GP §9.3.1 `[C]` (beyond WS-101 baseline)  
 - [ ] **WS-222** — Reserved spawn markers / planner hooks GP §7.2.2 `[N]`  
-- [ ] **WS-223** — **Foundational stickman rig + unified motion stack** —  
-  - **Depends:** WS-133 (neutral DCC base), WS-094 (articulated ragdoll proves bone ↔ physics map on **dummy**); pull forward if hero glTF keeps shipping **wrong** locomotion or **missing** strike clips.  
-  - **Build:** (1) **Authoring contract:** one **neutral** `STICKMAN_BASE_GLTF_URL` with **Idle**, **Walk**, and **named strike clips** matching `CHARACTER_RIG_MAP` + `strikePresentation` / compound tables (no “Walk” that is secretly a fight cycle; no expecting the engine to invent missing punches). **`npm run validate:gltf`** and playtest gates. (2) **Single runtime policy:** one document that states, **per state**, whether **clips**, **capsule kinematics**, or **Rapier ragdoll/constraints** own the pose — and how **dummy vs player** stay on the **same** rig + physics mapping (extend player to match dummy where design requires; no second “alternate physics” path). Include room for **partial motors / IK** only as **extensions of the same stack**, not a parallel codebase. (3) **Refactor envelope:** code touchpoints (`playerCharacter`, ragdoll bind, strike presentation) so asset or handoff tweaks don’t fork behavior.  
-  - **@** `role-technical-animator` · `role-physics-programmer` · `role-gameplay-programmer` · `role-character-artist`  
-  - **GP** §5.2, §6.1, `docs/FUTURE_MAYBE.md` (one motion system)  
+
+- [ ] **WS-227** — **Player hit receive — ragdoll / recover** (enemy attacks damage player).  
+  - **Depends:** WS-095, WS-225, WS-094  
+  - **Build:** Reuse **WS-094** bone ↔ Rapier mapping on **player** body; capsule ↔ ragdoll authority handoff; knockdown/stagger rules per **WS-095** / design; tune with **WS-092** class scalars. **No** duplicate ragdoll system.  
+  - **@** `role-physics-programmer` · `role-gameplay-programmer` · `role-lead-game-designer`  
+  - **GP** §6.1.1, §2.2.3  
 
 ---
 

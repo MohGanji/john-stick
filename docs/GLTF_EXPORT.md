@@ -3,7 +3,9 @@
 **Engine:** Three.js `^0.175` (see `package.json`). `loadPlayerCharacter` scales the glTF to the capsule height band, samples **`Walk` at t = 0**, and uses **`setFromObject(…, true)`** so **skinned** bounds include deformation (bind-pose-only boxes float the mesh). It then offsets by **`-(halfHeight + radius + spawnClearance)`** so soles sit on **level art y = 0** while the rigid body stays at the **capsule center** (`rapierWorld.ts`).  
 **Player stick:** procedural: `npm run export:character` → `public/models/char_player_stick_v01.glb`. **Blender (agent + MCP):** `scripts/blender/export_john_stick_hero_glb.py` (see `docs/DCC_AUTOMATION_PIPELINE.md`). Silhouette: `docs/reference/character/` (`CHARACTER_RIG_MAP.md`).
 
-## Blender handoff (when replacing procedural mesh)
+## Blender handoff (foundational hero — **WS-133**)
+
+Use this SOP to produce the **canonical** `STICKMAN_BASE_GLTF_URL` asset (same file for **player / dummy / sparring**). **Iteration** in DCC until clips and silhouette match the bar — this export is **source of truth** for the unified motion stack (`docs/FUTURE_MAYBE.md`, **WS-223**).
 
 1. **Apply modifiers** on export mesh where needed; final mesh only in the export collection.
 2. **Scale / pivot:** 1 Blender unit = **1 m**; **Y-up**; character **+Z forward**; **feet on the ground** (exported AABB bottom ≈ 0 before engine root motion). Visual **standing height** should land near the capsule band **~1.48 m** (`PLAYER_CAPSULE.halfHeight * 2 + radius * 2` in `playerCapsuleConfig.ts`) unless you intentionally retune physics to match.

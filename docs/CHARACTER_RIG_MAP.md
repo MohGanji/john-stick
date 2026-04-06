@@ -13,7 +13,7 @@
 |--------|------------|
 | **Runtime glb** | **`STICKMAN_BASE_GLTF_URL`** — typically **Mixamo-compatible** for flowy motion and clip libraries (`mixamorig:…` tracks in-file). |
 | **Logical / physics map** | Bone **Hierarchy** table below — canonical **`Hips` / `Spine` / …** names are the **contract** for **WS-094** ragdoll and docs. **`TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS`** maps those slots to Mixamo node names when the mesh is not the procedural export. |
-| **Procedural export** | `char_player_stick_v01.glb` — **parametric** reference mesh + dev fallback; regenerate with `export:character`, **or** use as `STICKMAN_BASE_GLTF_URL` until WS-133 lands a neutral `stickman_base_v01.glb`. |
+| **Procedural export** | `char_player_stick_v01.glb` — **parametric** reference mesh + dev fallback; regenerate with `export:character`, **or** use as `STICKMAN_BASE_GLTF_URL` until **WS-133** lands the **foundational Blender/DCC** canonical base. |
 
 **Procurement:** Prefer **Mixamo-rigged** base meshes. Retarget all locomotion/strikes to **that** skeleton; clip names still follow the **Hero glTF export checklist** below.
 
@@ -31,11 +31,13 @@ Rename or author actions so names match lookups (case-sensitive):
 
 **Swapping the base asset:** Overwrite or relink **`STICKMAN_BASE_GLTF_URL`** — every stickman in the scene picks it up. Ship **mesh + skeleton + animations** for one base, or **retarget** in Mixamo/Blender. Do not add a second “hero-only” path for the same cast; use **`gltfUrlOverride`** in `loadPlayerCharacter` only for dev experiments.
 
-## Visual mesh vs gameplay physics (today vs later)
+## Visual mesh vs gameplay physics (one stack, different owners per state)
 
-**Right now (WS-040 + WS-041):** The glTF stickman is **presentation only** for the player. **Rapier** uses a **single kinematic capsule** (see `PLAYER_CAPSULE` + `rapierWorld.ts`) for **movement, floor contact, and world collision**. The skinned mesh **does not** drive hit detection or rigid-body shape yet; it **follows** the capsule’s position/yaw and plays **Idle/Walk** on the skeleton (`playerCharacter.ts` + `bootstrap.ts`).
+**Player — locomotion + strikes:** The glTF stickman **follows** a **kinematic capsule** (`PLAYER_CAPSULE`, `rapierWorld.ts`) for **move, floor, world collision**. The skinned mesh **tracks** capsule position/yaw and plays **authored clips** (`playerCharacter.ts`, **WS-139** for strike read). This path is **not** “temporary until physics takes over” — it is the **default** motion owner for the hero unless **WS-223** schedules **receive / ragdoll** on the player for a given state.
 
-**Later (WS-091 / GP §6.1.1):** Combat and knockback add **ragdoll or partial ragdoll** — **separate physics bodies and joints** in Rapier (or similar), **mapped from this bone hierarchy** (see table below). Collider sizes, limits, and “who owns motion” (capsule vs ragdoll) are **physics-programmer tuning**, not the glTF triangle mesh. The **hinge layout in art** should stay **consistent with bone parents** so that mapping stays 1:1.
+**Targets — hit receive (training dummy, etc.):** **WS-091** + **WS-094** drive **Rapier** ragdoll and recovery using **this same bone hierarchy** (`CHARACTER_RIG_MAP` + name fallbacks). The **first** full articulated implementation is the **dummy** for lab clarity; **player** and **sparring** use the **identical** `STICKMAN_BASE_GLTF_URL` skeleton — extending who gets **WS-094**-depth receive stays **on the same bone map**, not a second rig standard.
+
+**Policy:** Collider sizes, joint limits, and **who owns the bones** (clips vs capsule vs sim) are documented in **WS-223** and **`docs/FUTURE_MAYBE.md`** (*one motion system*), and tuned by gameplay/physics — not implied by triangle mesh alone. **Hinge layout in art** stays **consistent with bone parents** so bone ↔ collider mapping stays 1:1.
 
 **Hinge read vs this rig** (see `docs/reference/character/john-stick-ref-hinge-combat.png`):
 
@@ -46,28 +48,28 @@ Rename or author actions so names match lookups (case-sensitive):
 | Arm hinges | **`Shoulder*` → `Arm*`** (shoulder + elbow-style split as upper/lower cylinders) |
 | Head on neck | **`Head`** is parented to **`Chest`** today — works for head animation; a dedicated **`Neck`** bone is a **deferred** idea (`docs/FUTURE_MAYBE.md` → *Character: `Neck` bone…*) |
 
-So: **yes** — today the stick is **visual + animation skeleton**; **gameplay collision** is the **capsule** until ragdoll work **reuses these bone names and hierarchy** for real physics shapes.
+So: the **player’s** gameplay proxy is still the **capsule** + **clips**; the **dummy** already uses **ragdoll** on these **same** bone names. **WS-133** lands the **foundational Blender** asset; **WS-223** keeps **handoffs** explicit so nothing forks.
 
 ## Art direction & where this is “finalized”
 
-**V1 mesh authoring:** **cylinders** for pelvis, **two stacked torso** cylinders (`Spine` + `Chest` bones), **short neck** stub (weighted to `Chest`), **two cylinders + mitten sphere per arm**, **two cylinders + foot blob per leg**, **large sphere** head — flat caps at segment joins (optional joint smoothing: `docs/FUTURE_MAYBE.md`). **Back katana** on the procedural mesh is **optional** (`EXPORT_BACK_KATANA` in `scripts/export-stick-character.mjs`; default **off** until design locks swords for all stickmen).
+**Procedural placeholder mesh (export script):** **cylinders** for pelvis, **two stacked torso** cylinders (`Spine` + `Chest` bones), **short neck** stub (weighted to `Chest`), **two cylinders + mitten sphere per arm**, **two cylinders + foot blob per leg**, **large sphere** head — flat caps at segment joins (optional joint smoothing: `docs/FUTURE_MAYBE.md`). **Back katana** on the procedural mesh is **optional** (`EXPORT_BACK_KATANA` in `scripts/export-stick-character.mjs`; default **off** until design locks swords for all stickmen).
 
 **Target look** (silhouette, not pose-for-pose): solid **black** fill, **heroic** proportions — **head ~ torso width**, **blocky** upper body (mild V-taper), **long legs (~60% of height)**, **wide stance**, **large pill feet**, **mitten hands**. **Canonical 2D ref** (what the wall logo uses and what 3D should chase):
 
 - `docs/reference/logo/dojo-stickman-i.png` (shipped copy: `public/logo/dojo-stickman-i.png`) — **primary** clean silhouette for **scale, proportions, and graphic read** in-engine and in marketing
 
-Supporting character-folder PNGs (mood, combat poses, hinge language — not pose-matched in v1 export):
+Supporting character-folder PNGs (mood, combat poses, hinge language — not pose-matched to current procedural export):
 
 - `docs/reference/character/john-stick-ref-thick-capsule-katana-canonical.png` — earlier thick capsule + sheathed katana mood (katana optional in 3D today)
 - `docs/reference/character/john-stick-ref-thick-rounded-action.png` — weighted, rounded stick + dynamic stance
 - `docs/reference/character/john-stick-ref-sleek-combat-airborne.png` — long-limbed brawler read (enemy palette differs in-game; shape language is the cue)
 - `docs/reference/character/john-stick-ref-hinge-combat.png` — hinge layout: torso break, limbs, head (2D capsule read; we use cylinders + sphere in 3D)
-- `docs/reference/character/john-stick-ref-combat-katana-ready-stance.png` — **held** katana: two-hand grip, blade horizontal behind head/neck, **wide low stance**, **flat pill feet**, head can read **floating** (minimal neck). Use for a future **combat-ready clip** or **weapon state** (distinct from v1 **sheathed-on-back** procedural mesh).
+- `docs/reference/character/john-stick-ref-combat-katana-ready-stance.png` — **held** katana: two-hand grip, blade horizontal behind head/neck, **wide low stance**, **flat pill feet**, head can read **floating** (minimal neck). Use for a future **combat-ready clip** or **weapon state** (distinct from **sheathed-on-back** procedural mesh today).
 - `docs/reference/character/john-stick-ref-eyes-and-vector-blood.png` — **face / VFX language** (not skeleton): optional **angry eyes** (white + red glow, slanted almond), **blank** head for neutral; **blood** as solid red circles; sword **grey blade / warm guard & hilt** for keyed reads. Implementation likely **decal / emissive texture / sprite** on the head sphere — see `docs/FUTURE_MAYBE.md`.
 
-**WS-041** delivered the **pipeline** (glTF load, skinned mesh, Idle/Walk, validation, bone naming for ragdoll prep). The **in-repo procedural mesh** is an **iterating placeholder** that chases those refs until a **Blender (or DCC) hero export** replaces it under the same clip names and bone table. Final marketing/trailer silhouette = art pass + engine lighting, not a single closed ticket.
+**WS-041** delivered the **pipeline** (glTF load, skinned mesh, Idle/Walk, validation, bone naming for ragdoll prep). The **in-repo procedural mesh** is a **temporary placeholder** that chases those refs until a **Blender (or DCC) hero export** replaces it under the same clip names and bone table. Final marketing/trailer silhouette = art pass + engine lighting, not a single closed ticket.
 
-This is a **v1 locomotion** rig: keyframed **Idle** and **Walk** only (airborne clip: `docs/FUTURE_MAYBE.md`). When Rapier ragdoll lands (WS-091), map these bones to capsule / limb colliders in code — do not rename bones without updating this table and the export script.
+**Baseline locomotion** on the procedural export: keyframed **Idle** and **Walk** only (airborne clip ideas: `docs/FUTURE_MAYBE.md`). **Dummy** ragdoll (**WS-094**) already maps these bones to Rapier bodies; **player** extension follows **WS-223**. Do not rename bones without updating this table and the export script.
 
 ## Hierarchy (parent → child)
 
