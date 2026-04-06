@@ -18,11 +18,11 @@
 
 ## UI: onboarding & interact affordances (future)
 
-**Context (2026-04):** Players cannot guess **Enter** reads a sign without a hint. Shipped v1: **`attachInteractPromptHud`** shows **`[Enter]` + “Read sign”** when **in kiosk volume** and **facing** the board (`getDojoSignReadPromptState` in `dojoSignKiosks.ts`).
+**Context (2026-04):** Players cannot guess **Enter** reads a sign without a hint. Shipped: **`attachContextPromptHud`** (WS-102) shows **`[Enter]` + “Read sign”** when **in kiosk volume** and **facing** the board (`getDojoSignReadPromptState` in `dojoSignKiosks.ts`), plus stamina / guard context lines.
 
 **Future ideas:** Context prompts for **bag**, **dummy**, **sparring partner** (what you can do from range); **first-time** tooltips or a **short scripted beat** on first spawn; **progressive** sign hints (GP §9.3.2, WS-215); **accessibility**: screen-reader strings, reduce-motion (prompts without pulse animations); unify prompt styling with WS-102 HUD spec.
 
-**Related:** `attachInteractPromptHud.ts`, `dojoSignKiosks.ts`, WS-102, `role-ux-ui-designer`.
+**Related:** `attachContextPromptHud.ts`, `contextPromptResolve.ts`, `dojoSignKiosks.ts`, WS-102, `role-ux-ui-designer`.
 
 ---
 

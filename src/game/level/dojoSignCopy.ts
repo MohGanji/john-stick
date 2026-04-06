@@ -23,6 +23,16 @@ const interactKey = codeToDisplayLabel(KEY_ACTION_MAP.interactToggle);
 
 /** For UI hints (sign modal footer, future pause help). */
 export const DOJO_SIGN_INTERACT_KEY_LABEL = interactKey;
+
+/** WS-102 — HUD context prompts use the same live labels as signs (GP §3.4.2). */
+export const CONTEXT_HUD_KEY_LABELS = {
+  shift: codeToDisplayLabel(KEY_ACTION_MAP.shift[0]),
+  leftPunch: codeToDisplayLabel(KEY_ACTION_MAP.leftPunch),
+  rightPunch: codeToDisplayLabel(KEY_ACTION_MAP.rightPunch),
+  leftKick: codeToDisplayLabel(KEY_ACTION_MAP.leftKick),
+  rightKick: codeToDisplayLabel(KEY_ACTION_MAP.rightKick),
+} as const;
+
 const lp = codeToDisplayLabel(KEY_ACTION_MAP.leftPunch);
 const rp = codeToDisplayLabel(KEY_ACTION_MAP.rightPunch);
 const lk = codeToDisplayLabel(KEY_ACTION_MAP.leftKick);

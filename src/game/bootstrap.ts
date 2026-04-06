@@ -109,7 +109,14 @@ import {
   getGamePauseSnapshot,
   syncGamePause,
 } from "./runtime/gamePause";
-import { attachInteractPromptHud } from "./ui/attachInteractPromptHud";
+import { attachContextPromptHud } from "./ui/attachContextPromptHud";
+import {
+  contextPromptHudStateForVariant,
+} from "./ui/contextPromptCopy";
+import {
+  CONTEXT_PROMPT_GUARD_HINT_WALL_SEC,
+  resolveContextPromptVariant,
+} from "./ui/contextPromptResolve";
 import { attachSignReadModal } from "./ui/attachSignReadModal";
 import { attachStaminaHud } from "./ui/attachStaminaHud";
 
@@ -225,10 +232,10 @@ export async function mountGame(
     dismissHintLine: `Press ${DOJO_SIGN_INTERACT_KEY_LABEL} or Escape to close`,
     onRequestClose: () => actionMap.closeInteractMode(),
   });
-  const signInteractPromptHud = attachInteractPromptHud(root, {
-    keyLabel: DOJO_SIGN_INTERACT_KEY_LABEL,
-    actionLabel: "Read sign",
-  });
+  const contextPromptHud = attachContextPromptHud(root);
+  let hudStaminaBlocked = false;
+  let guardHintDismissed = false;
+  let sessionPlaySec = 0;
   let prevSignReadInteractOpen = false;
   /** WS-062 — abstract lab damage on the bag (no UI yet; tunable via `bagHitTuning`). */
   let punchingBagLabDamageTotal = 0;
@@ -373,6 +380,15 @@ export async function mountGame(
         staminaAllowsStrike(staminaState, gameplayTuning.combatStamina)
       ) {
         strikeQueuedMoveId = press;
+      }
+      hudStaminaBlocked =
+        press !== null &&
+        !strikeBusy &&
+        strikeCooldownAllowsStart(strikeCooldownGate, combatSimTimeSec) &&
+        !staminaAllowsStrike(staminaState, gameplayTuning.combatStamina);
+      sessionPlaySec += dtSeconds;
+      if (actionSample.guardLeft || actionSample.guardRight) {
+        guardHintDismissed = true;
       }
       if (!getGamePauseSnapshot().simulationPaused) {
         facingYawRad += keyboardLocomotion.facingYawDeltaRad(dtSeconds);
@@ -925,10 +941,17 @@ export async function mountGame(
         facingYawRad,
         volumes: dojoSignKiosks.interactVolumes,
       });
-      signInteractPromptHud.setVisible(
-        signPrompt.inRange &&
-          signPrompt.facingSign &&
-          !getGamePauseSnapshot().simulationPaused,
+      const promptVariant = resolveContextPromptVariant({
+        simulationPaused: getGamePauseSnapshot().simulationPaused,
+        signInRangeAndFacing:
+          signPrompt.inRange && signPrompt.facingSign,
+        staminaBlockedStrike: hudStaminaBlocked,
+        guardHintActive:
+          !guardHintDismissed &&
+          sessionPlaySec < CONTEXT_PROMPT_GUARD_HINT_WALL_SEC,
+      });
+      contextPromptHud.setState(
+        contextPromptHudStateForVariant(promptVariant),
       );
     },
     render() {

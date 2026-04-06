@@ -575,10 +575,11 @@ flowchart TB
   - **GP** §2.4.2, §7.1.3  
   - **Build:** `dojoSignKiosks.ts` + `dojoSignCopy.ts` — two inward-facing kiosks on **±120°** from spawn **+Z** (5.2m), **1.2m** × **2.15m** vertical interaction cylinders; canvas panel copy derives labels from `KEY_ACTION_MAP` / `KEYBOARD_LOCOMOTION` + `INPUT_COMBAT.sequenceChainSec`. **Enter** opens interact only when `isPlayerInAnyDojoSignVolume` (`attachActionMap` `getInteractOpenAllowed`); closing interact always allowed.  
 
-- [ ] **WS-102** — HUD / screen prompts for interact + critical actions.  
+- [x] **WS-102** — HUD / screen prompts for interact + critical actions.  
   - **Depends:** WS-101  
   - **@** `role-ux-ui-designer`  
   - **GP** §9.1.2  
+  - **Build:** `attachContextPromptHud.ts` + `contextPromptResolve.ts` + `contextPromptCopy.ts` — bottom-center **context** line (16px body, `aria-live`): **Enter** + “Read sign” when **in sign volume + facing** (`getDojoSignReadPromptState`); **stamina** text when a strike is requested but **bar blocks**; **guard** copy (`Hold Shift + U/I…`) for **120s** from load or until first guard, lower priority than sign/stamina. Labels from `CONTEXT_HUD_KEY_LABELS` / `DOJO_SIGN_INTERACT_KEY_LABEL` (`dojoSignCopy.ts`, GP §3.4.2).  
 
 ### Wave 11 — Meta & settings
 

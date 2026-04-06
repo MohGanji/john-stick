@@ -1,22 +1,21 @@
 /**
- * Lightweight “press key to interact” hint (WS-102-adjacent onboarding). Shown when the game
- * reports the prompt should be visible; hidden during any global pause (`gamePause`).
+ * WS-102 / GP §9.1.2 — bottom-center **context prompts**: interact, stamina block, guard hint.
+ * Bindings use caller-supplied labels (same source as signs / `dojoSignCopy`).
  */
 
-export type InteractPromptHud = {
-  setVisible(visible: boolean): void;
+export type ContextPromptHudState =
+  | { visible: false }
+  | { visible: true; kind: "key"; keyLabel: string; body: string }
+  | { visible: true; kind: "text"; body: string };
+
+export type ContextPromptHud = {
+  setState(state: ContextPromptHudState): void;
   dispose(): void;
 };
 
-export function attachInteractPromptHud(
-  root: HTMLElement,
-  opts: {
-    keyLabel: string;
-    actionLabel: string;
-  },
-): InteractPromptHud {
+export function attachContextPromptHud(root: HTMLElement): ContextPromptHud {
   const wrap = document.createElement("div");
-  wrap.setAttribute("data-ui", "interact-prompt");
+  wrap.setAttribute("data-ui", "context-prompt");
   wrap.setAttribute("role", "status");
   wrap.setAttribute("aria-live", "polite");
   wrap.style.cssText = [
@@ -36,12 +35,12 @@ export function attachInteractPromptHud(
     "box-shadow:0 6px 24px rgba(0,0,0,0.4)",
     "font-family:system-ui,Segoe UI,sans-serif",
     "pointer-events:none",
+    "max-width:min(92vw,520px)",
   ].join(";");
 
   const keyBadge = document.createElement("kbd");
-  keyBadge.textContent = opts.keyLabel;
   keyBadge.style.cssText = [
-    "display:inline-flex",
+    "display:none",
     "min-width:2.1em",
     "justify-content:center",
     "padding:6px 10px",
@@ -55,22 +54,34 @@ export function attachInteractPromptHud(
     "box-shadow:inset 0 1px 0 rgba(255,255,255,0.12)",
   ].join(";");
 
-  const label = document.createElement("span");
-  label.textContent = opts.actionLabel;
-  label.style.cssText = [
-    "font-size:14px",
+  const body = document.createElement("span");
+  body.style.cssText = [
+    "font-size:16px",
     "font-weight:500",
+    "line-height:1.35",
     "color:rgba(230,236,255,0.92)",
-    "white-space:nowrap",
+    "text-align:left",
   ].join(";");
 
   wrap.appendChild(keyBadge);
-  wrap.appendChild(label);
+  wrap.appendChild(body);
   root.appendChild(wrap);
 
   return {
-    setVisible(visible: boolean): void {
-      wrap.style.display = visible ? "flex" : "none";
+    setState(state: ContextPromptHudState): void {
+      if (!state.visible) {
+        wrap.style.display = "none";
+        return;
+      }
+      wrap.style.display = "flex";
+      if (state.kind === "key") {
+        keyBadge.style.display = "inline-flex";
+        keyBadge.textContent = state.keyLabel;
+        body.textContent = state.body;
+      } else {
+        keyBadge.style.display = "none";
+        body.textContent = state.body;
+      }
     },
     dispose(): void {
       wrap.remove();
