@@ -627,21 +627,21 @@ flowchart TB
   - **∥** WS-050 soft  
   - **@** `role-gameplay-programmer` · `role-ux-ui-designer`  
   - **GP** §3 (keyboard-first)  
-  - **Source:** `docs/playtest/history.jsonl` (r01–r02), `docs/playtest/sessions/2026-04-06-bf355a4-r02.md`, `docs/playtest/AGENT_RUNBOOK.md`
+  - **Source:** `docs/playtest/history.jsonl` (r01–r02), `docs/playtest/sessions/2026-04-06-bf355a4-r02.md`, `docs/playtest/sessions/2026-04-05-bf355a4-r02.md`, `docs/playtest/AGENT_RUNBOOK.md`
 
 - [ ] **WS-224** — **Close the agent playtest smoke gap** — Runbook + automation can complete everything **`smoke_all_pass`** needs so **`/playtest`** reruns are not blocked on partial manual ritual: in-world **sign + Enter**, **~5 min** stress / memory spot-check, **simultaneous chord** (or document MCP limitation + human spot-check SOP), **audio** / SFX verification (Web Audio / capture strategy), **ragdoll** stress. **Also:** **`AGENT_RUNBOOK.md`** — document **multi-Vite** URL pitfalls (**`5173`** default vs second dev server **`5174`**, align with `package.json` / terminal output). **Tightens WS-120 / WS-135** evidence over time. *(JSONL blockers: smoke depth incomplete.)*  
   - **Depends:** WS-120  
   - **∥** WS-101 soft  
   - **@** `role-qa-playtest` · `role-gameplay-programmer` · **soft** `role-audio` · `role-physics-programmer`  
   - **GP** §11.2  
-  - **Source:** `docs/playtest/history.jsonl` (r01–r02), `docs/playtest/sessions/2026-04-05-bf355a4-r01.md` (Follow-ups: port note), `docs/playtest/sessions/2026-04-06-bf355a4-r02.md`
+  - **Source:** `docs/playtest/history.jsonl` (r01–r02), `docs/playtest/sessions/2026-04-05-bf355a4-r01.md` (Follow-ups: port note), `docs/playtest/sessions/2026-04-06-bf355a4-r02.md`, `docs/playtest/sessions/2026-04-05-bf355a4-r02.md`
 
-- [ ] **WS-227** — **Pause menu: dismiss Resume without pointer** — After **Esc**, **Resume** must work **keyboard-only** (e.g. **Enter** on focused primary control, roving tabindex, or “first key closes” policy). Sessions **r01/r02** only succeeded via **click**; that breaks **WS-120** “no mouse for gameplay” unless agents cheat on pause chrome.  
+- [ ] **WS-227** — **Pause menu: full keyboard affordance** — **Esc** toggle **does** close pause (**2026-04-05-bf355a4-r02**); still ship **Enter** on focused **Resume**, clear focus ring, and/or runbook SOP so agents are not pushed to **Resume** **click** (earlier **r01** / **2026-04-06-bf355a4-r02** used pointer).  
   - **Depends:** WS-111  
   - **∥** WS-112 soft  
   - **@** `role-ux-ui-designer` · `role-gameplay-programmer`  
   - **GP** §9.3.3, §3 (keyboard-first)  
-  - **Source:** `docs/playtest/sessions/2026-04-05-bf355a4-r01.md`, `docs/playtest/sessions/2026-04-06-bf355a4-r02.md`
+  - **Source:** `docs/playtest/sessions/2026-04-05-bf355a4-r01.md`, `docs/playtest/sessions/2026-04-06-bf355a4-r02.md`, `docs/playtest/sessions/2026-04-05-bf355a4-r02.md`
 
 ### Wave 13 — Production art, modular character & creative tooling
 
@@ -836,7 +836,7 @@ Track separately; **do not start** before WS-120 unless explicitly pulling forwa
 - [ ] **WS-226** — **Rapier init console deprecation** — Eliminate or suppress **“using deprecated parameters for the initialization function”** from `@dimforge/rapier3d-compat` (upgrade API usage per current docs). *(JSONL r01 blocker + session Evidence.)*  
   - **Depends:** WS-011  
   - **@** `role-physics-programmer` · `role-web-tools-engineer`  
-  - **Source:** `docs/playtest/history.jsonl` (r01), `docs/playtest/sessions/2026-04-05-bf355a4-r01.md` (Evidence)
+  - **Source:** `docs/playtest/history.jsonl` (r01), `docs/playtest/sessions/2026-04-05-bf355a4-r01.md` (Evidence), `docs/playtest/sessions/2026-04-05-bf355a4-r02.md` (Evidence)
 
 ---
 
