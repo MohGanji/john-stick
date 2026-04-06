@@ -18,7 +18,7 @@ export type GameLoopHooks = {
   update: (dtSeconds: number) => void;
   /**
    * WS-071 — scales real-time delta added to the fixed-step accumulator (0 = sim paused / hit-stop).
-   * Evaluated once per frame with the same `dt` as the accumulator (before `update`). Default 1.
+   * Evaluated once per frame **after** `update` so input (e.g. sign-read / interact pause) matches the same frame.
    */
   accumulatorTimeScale?: () => number;
   /**
@@ -41,7 +41,7 @@ export type GameLoopHooks = {
 };
 
 /**
- * Browser rAF driver: `update` → N×`fixedStep` → optional `lateUpdate` → `render`.
+ * Browser rAF driver: `update` → accumulator from `accumulatorTimeScale` → N×`fixedStep` → `lateUpdate` → `render`.
  * GP §4.3.1 — no simulation inside `render`.
  */
 export function runGameLoop(hooks: GameLoopHooks): () => void {
@@ -54,10 +54,10 @@ export function runGameLoop(hooks: GameLoopHooks): () => void {
     if (!running) return;
 
     const dt = Math.min(clock.getDelta(), MAX_FRAME_DT_SEC);
+    hooks.update(dt);
+
     const accScale = hooks.accumulatorTimeScale?.() ?? 1;
     accumulator += dt * accScale;
-
-    hooks.update(dt);
 
     hooks.beforeFixedSteps?.();
 

@@ -6,6 +6,26 @@
 
 ---
 
+## UI: global pause + Esc menu (future)
+
+**Context (2026-04):** `src/game/runtime/gamePause.ts` centralizes **simulation** vs **presentation** freeze flags. Today **`syncGamePause({ interactModalOpen })`** mirrors the sign-read / Enter modal (WS-101); **`pauseMenuOpen`** is reserved for a future **system pause** (e.g. **Esc** → WS-111-style menu).
+
+**Future work:** Wire **`pauseMenuOpen: true`** from a pause UI module; ensure **input** (combat intent, limb keys) is suppressed or routed the same way as interact so attacks cannot fire behind the menu; optionally **mute duck** music/SFX; **resume** on the same toggle. Prefer **one** place (`syncGamePause`) over ad-hoc checks in `bootstrap.ts` when adding new modal types.
+
+**Related:** `gamePause.ts`, `bootstrap.ts` (`accumulatorTimeScale`, `lateUpdate` presentation dt), GP §9.3.x, WS-110 / WS-111.
+
+---
+
+## UI: onboarding & interact affordances (future)
+
+**Context (2026-04):** Players cannot guess **Enter** reads a sign without a hint. Shipped v1: **`attachInteractPromptHud`** shows **`[Enter]` + “Read sign”** when **in kiosk volume** and **facing** the board (`getDojoSignReadPromptState` in `dojoSignKiosks.ts`).
+
+**Future ideas:** Context prompts for **bag**, **dummy**, **sparring partner** (what you can do from range); **first-time** tooltips or a **short scripted beat** on first spawn; **progressive** sign hints (GP §9.3.2, WS-215); **accessibility**: screen-reader strings, reduce-motion (prompts without pulse animations); unify prompt styling with WS-102 HUD spec.
+
+**Related:** `attachInteractPromptHud.ts`, `dojoSignKiosks.ts`, WS-102, `role-ux-ui-designer`.
+
+---
+
 ## Locomotion: WASD strafe + yaw on A/D (**shipped** in prototype, 2026-04-05)
 
 **What shipped first:** **No Q/E, no arrow-move** — **WASD only** for locomotion. **W/S** forward/back along facing; **A/D** apply **both** lateral **strafe** and **hold-to-yaw** at the same rate class as the old Q/E prototype (`KEYBOARD_LOCOMOTION.yawDegPerSec` in `src/game/input/keyboardLocomotion.ts`).

@@ -4,7 +4,8 @@
  *
  * **Shift held:** punch keys → **guard** (left/right); kick keys → **dock** to that side.
  * **Shift released:** same keys → **attack** holds for `combatIntent.ts` (WS-051) resolution.
- * **Enter:** each edge press toggles **interact mode** open ↔ closed.
+ * **Enter:** edge press toggles **interact mode** open ↔ closed; **open** may be gated by
+ * proximity to a sign kiosk (`AttachActionMapOptions.getInteractOpenAllowed`, WS-101).
  *
  * **Layout:** top row **U** / **I** = punches; home row **J** / **K** = kicks (row-based mnemonic).
  */
@@ -84,10 +85,23 @@ export type ActionMapInput = {
    * Call once per frame from `beforeFixedSteps` (same phase as jump latch).
    */
   takeInteractEnterLatch: () => boolean;
+  /** Programmatic close (e.g. Escape on sign-read modal); does not set interact-enter latch. */
+  closeInteractMode: () => void;
   dispose: () => void;
 };
 
-export function attachActionMap(target: Window = window): ActionMapInput {
+export type AttachActionMapOptions = {
+  /**
+   * WS-101 / GP §7.1.3 — when opening interact from **Enter**, require proximity to a sign
+   * unless this returns true. Closing interact is always allowed. Omit for “open anywhere” (tests / lab).
+   */
+  getInteractOpenAllowed?: () => boolean;
+};
+
+export function attachActionMap(
+  target: Window = window,
+  options?: AttachActionMapOptions,
+): ActionMapInput {
   const held = new Set<string>();
   let interactModeOpen = false;
   let interactEnterPending = false;
@@ -108,12 +122,17 @@ export function attachActionMap(target: Window = window): ActionMapInput {
   const onKeyDown = (e: KeyboardEvent): void => {
     if (target.document.visibilityState !== "visible") return;
 
-    if (
-      e.code === KEY_ACTION_MAP.interactToggle &&
-      !e.repeat
-    ) {
-      interactModeOpen = !interactModeOpen;
-      interactEnterPending = true;
+    if (e.code === KEY_ACTION_MAP.interactToggle && !e.repeat) {
+      if (interactModeOpen) {
+        interactModeOpen = false;
+        interactEnterPending = true;
+      } else {
+        const allow = options?.getInteractOpenAllowed?.() ?? true;
+        if (allow) {
+          interactModeOpen = true;
+          interactEnterPending = true;
+        }
+      }
     }
 
     if (trackLimbOrShift(e.code)) {
@@ -152,6 +171,10 @@ export function attachActionMap(target: Window = window): ActionMapInput {
       const v = interactEnterPending;
       interactEnterPending = false;
       return v;
+    },
+    closeInteractMode(): void {
+      if (!interactModeOpen) return;
+      interactModeOpen = false;
     },
     dispose(): void {
       target.removeEventListener("keydown", onKeyDown);

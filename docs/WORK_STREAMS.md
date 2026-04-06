@@ -568,11 +568,12 @@ flowchart TB
   - **GP** §7.1  
   - **Build:** `dojoEnvironmentMaterials.ts` — warm **wood-tone** floor (`MeshStandard` + seamless procedural albedo, ~2m tile repeat on 24×18m), **cool** wall/ceiling plaster colors; bag hanger cable tuned to match. **Not** final glTF kit / trim sheets (WS-130+); swap maps when assets land.  
 
-- [ ] **WS-101** — Sign geometry + interact volumes + copy (keys & chords).  
+- [x] **WS-101** — Sign geometry + interact volumes + copy (keys & chords).  
   - **Depends:** WS-050, WS-030  
   - **∥** WS-100  
   - **@** `role-level-designer` · `role-narrative-designer`  
   - **GP** §2.4.2, §7.1.3  
+  - **Build:** `dojoSignKiosks.ts` + `dojoSignCopy.ts` — two inward-facing kiosks on **±120°** from spawn **+Z** (5.2m), **1.2m** × **2.15m** vertical interaction cylinders; canvas panel copy derives labels from `KEY_ACTION_MAP` / `KEYBOARD_LOCOMOTION` + `INPUT_COMBAT.sequenceChainSec`. **Enter** opens interact only when `isPlayerInAnyDojoSignVolume` (`attachActionMap` `getInteractOpenAllowed`); closing interact always allowed.  
 
 - [ ] **WS-102** — HUD / screen prompts for interact + critical actions.  
   - **Depends:** WS-101  

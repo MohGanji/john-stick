@@ -50,6 +50,16 @@ import {
 } from "./combat/trainingDummyFeel";
 import { FIXED_DT } from "./gameLoop";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
+import {
+  getDojoSignReadContent,
+  DOJO_SIGN_INTERACT_KEY_LABEL,
+} from "./level/dojoSignCopy";
+import {
+  createDojoSignKiosks,
+  getDojoSignReadPromptState,
+  isPlayerInAnyDojoSignVolume,
+  resolveNearestDojoSignKioskIndex,
+} from "./level/dojoSignKiosks";
 import { createPunchingBagHangerVisual } from "./level/punchingBagHangerVisual";
 import { createPunchingBagSwingMesh } from "./level/punchingBagPlaceholder";
 import {
@@ -95,6 +105,12 @@ import { attachCombatHitAudio } from "./audio/attachCombatHitAudio";
 import { createAudioMixer } from "./audio/audioMixer";
 import { playTrainingBagImpact } from "./audio/playTrainingBagImpact";
 import { attachCombatHitBurstVfx } from "./vfx/attachCombatHitBurstVfx";
+import {
+  getGamePauseSnapshot,
+  syncGamePause,
+} from "./runtime/gamePause";
+import { attachInteractPromptHud } from "./ui/attachInteractPromptHud";
+import { attachSignReadModal } from "./ui/attachSignReadModal";
 import { attachStaminaHud } from "./ui/attachStaminaHud";
 
 export type MountGameResult = {
@@ -110,6 +126,10 @@ export async function mountGame(
   const { scene, camera, renderer } = createJohnStickRenderSetup(root);
 
   scene.add(createDojoPlaceholderLevel());
+
+  const dojoSignKiosks = createDojoSignKiosks();
+  scene.add(dojoSignKiosks.group);
+  const interactOpenGate = { nearSign: false };
 
   const punchingBagHanger = createPunchingBagHangerVisual();
   scene.add(punchingBagHanger.group);
@@ -157,7 +177,9 @@ export async function mountGame(
   const keyboardLocomotion = attachKeyboardLocomotion(window, {
     getYawDegPerSec: () => gameplayTuning.player.yawDegPerSec,
   });
-  const actionMap = attachActionMap(window);
+  const actionMap = attachActionMap(window, {
+    getInteractOpenAllowed: () => interactOpenGate.nearSign,
+  });
   const playerLocomotion = createPlayerLocomotionState();
   const jumpLatch: JumpLatch = { latched: false };
 
@@ -199,6 +221,15 @@ export async function mountGame(
    */
   let pendingStrikeLungeForwardMeters = 0;
   const staminaHud = attachStaminaHud(root);
+  const signReadModal = attachSignReadModal(root, {
+    dismissHintLine: `Press ${DOJO_SIGN_INTERACT_KEY_LABEL} or Escape to close`,
+    onRequestClose: () => actionMap.closeInteractMode(),
+  });
+  const signInteractPromptHud = attachInteractPromptHud(root, {
+    keyLabel: DOJO_SIGN_INTERACT_KEY_LABEL,
+    actionLabel: "Read sign",
+  });
+  let prevSignReadInteractOpen = false;
   /** WS-062 — abstract lab damage on the bag (no UI yet; tunable via `bagHitTuning`). */
   let punchingBagLabDamageTotal = 0;
   /** WS-090 — lab damage on the fixed dummy (same idea as bag total). */
@@ -306,10 +337,17 @@ export async function mountGame(
   }
 
   runGameLoop({
-    accumulatorTimeScale: () => combatJuice.getAccumulatorTimeScale(),
+    accumulatorTimeScale: () =>
+      getGamePauseSnapshot().simulationPaused
+        ? 0
+        : combatJuice.getAccumulatorTimeScale(),
     update(dtSeconds) {
       const prevAction = actionSample;
       actionSample = actionMap.snapshot();
+      syncGamePause({
+        interactModalOpen: actionSample.interactModeOpen,
+        pauseMenuOpen: false,
+      });
       const intentOut = resolveCombatIntent(
         combatIntentState,
         prevAction,
@@ -336,13 +374,30 @@ export async function mountGame(
       ) {
         strikeQueuedMoveId = press;
       }
-      if (!actionSample.interactModeOpen) {
+      if (!getGamePauseSnapshot().simulationPaused) {
         facingYawRad += keyboardLocomotion.facingYawDeltaRad(dtSeconds);
+      }
+
+      const interactNow = actionSample.interactModeOpen;
+      if (interactNow !== prevSignReadInteractOpen) {
+        if (interactNow) {
+          const ki = resolveNearestDojoSignKioskIndex(
+            scratchPos.x,
+            scratchPos.y,
+            scratchPos.z,
+            dojoSignKiosks.interactVolumes,
+          );
+          const content = getDojoSignReadContent(ki ?? 0);
+          if (content) signReadModal.show(content);
+        } else {
+          signReadModal.hide();
+        }
+        prevSignReadInteractOpen = interactNow;
       }
     },
     beforeFixedSteps() {
       void actionMap.takeInteractEnterLatch();
-      if (!actionSample.interactModeOpen) {
+      if (!getGamePauseSnapshot().simulationPaused) {
         jumpLatch.latched = keyboardLocomotion.takeJumpLatch();
       } else {
         void keyboardLocomotion.takeJumpLatch();
@@ -437,7 +492,7 @@ export async function mountGame(
 
       tryConsumeStrikeQueue("this");
 
-      const { forward, strafe } = actionSample.interactModeOpen
+      const { forward, strafe } = getGamePauseSnapshot().simulationPaused
         ? { forward: 0, strafe: 0 }
         : keyboardLocomotion.moveAxes();
       stepPlayerCapsule(
@@ -461,6 +516,12 @@ export async function mountGame(
         physics.playerRigidBody,
         scratchPos,
         scratchQuat,
+      );
+      interactOpenGate.nearSign = isPlayerInAnyDojoSignVolume(
+        scratchPos.x,
+        scratchPos.y,
+        scratchPos.z,
+        dojoSignKiosks.interactVolumes,
       );
 
       const hadActiveStrikeWindow = sphereStrike.activeFramesRemaining > 0;
@@ -711,9 +772,10 @@ export async function mountGame(
      * Player mesh reads integrated pose; interpolation buffers belong in a later polish pass.
      */
     lateUpdate(dtSeconds, _fixedStepAlpha) {
+      const presentationPaused = getGamePauseSnapshot().presentationPaused;
       combatHitAudio.flushQueuedCombatSounds();
       combatHitBurstVfx.flushQueuedSpawns();
-      combatHitBurstVfx.update(dtSeconds);
+      combatHitBurstVfx.update(presentationPaused ? 0 : dtSeconds);
       readRigidBodyTransform(
         physics.playerRigidBody,
         scratchPos,
@@ -742,7 +804,10 @@ export async function mountGame(
         bagScratchQuat.z,
         bagScratchQuat.w,
       );
-      punchingBagHanger.sync(dtSeconds, bagScratchPos);
+      punchingBagHanger.sync(
+        presentationPaused ? 0 : dtSeconds,
+        bagScratchPos,
+      );
 
       readRigidBodyTransform(
         physics.trainingDummyRigidBody,
@@ -770,7 +835,8 @@ export async function mountGame(
           trainingDummyArticulated.active ||
           trainingDummyFsm.phase === "ragdoll" ||
           trainingDummyFsm.phase === "stand_up" ||
-          trainingDummyFsm.phase === "recover",
+          trainingDummyFsm.phase === "recover" ||
+          presentationPaused,
       });
 
       readRigidBodyTransform(
@@ -799,24 +865,25 @@ export async function mountGame(
         ? 0
         : Math.min(1, spPlanarSpeed / SPARRING_NPC_WANDER_SPEED);
       sparringNpcCharacter.updateLocomotionAnim(dtSeconds, {
-        planarInput: sparringWalkBlend,
+        planarInput: presentationPaused ? 0 : sparringWalkBlend,
         grounded: true,
-        freezePose: sparringLocomotionFreeze,
+        freezePose: sparringLocomotionFreeze || presentationPaused,
       });
 
-      const { forward, strafe } = actionSample.interactModeOpen
+      const { forward, strafe } = getGamePauseSnapshot().simulationPaused
         ? { forward: 0, strafe: 0 }
         : keyboardLocomotion.moveAxes();
       const planarInput = Math.min(1, Math.hypot(forward, strafe));
       playerCharacter.updateLocomotionAnim(dtSeconds, {
         planarInput,
         grounded: playerLocomotion.wasGrounded,
+        freezePose: presentationPaused,
       });
       updateThirdPersonFollowCamera(
         camera,
         scratchPos,
         facingYawRad,
-        dtSeconds,
+        presentationPaused ? 0 : dtSeconds,
         followCamScratch,
         {
           world: physics.world,
@@ -849,7 +916,20 @@ export async function mountGame(
           Math.max(1e-6, gameplayTuning.combatStamina.maxStamina),
       );
       actionMapDebugHud?.refresh();
-      combatJuice.endFrame(dtSeconds);
+      combatJuice.endFrame(presentationPaused ? 0 : dtSeconds);
+
+      const signPrompt = getDojoSignReadPromptState({
+        px: scratchPos.x,
+        py: scratchPos.y,
+        pz: scratchPos.z,
+        facingYawRad,
+        volumes: dojoSignKiosks.interactVolumes,
+      });
+      signInteractPromptHud.setVisible(
+        signPrompt.inRange &&
+          signPrompt.facingSign &&
+          !getGamePauseSnapshot().simulationPaused,
+      );
     },
     render() {
       renderer.render(scene, camera);
