@@ -37,9 +37,14 @@ export type KeyboardLocomotionInput = {
 };
 
 export function attachKeyboardLocomotion(
-  target: Window = window,
+  doc: Document = document,
   options?: KeyboardLocomotionOptions,
 ): KeyboardLocomotionInput {
+  const win = doc.defaultView;
+  if (!win) {
+    throw new Error("attachKeyboardLocomotion: document has no defaultView");
+  }
+
   const held = new Set<string>();
   let jumpPending = false;
 
@@ -52,7 +57,7 @@ export function attachKeyboardLocomotion(
     if (
       e.code === KEYBOARD_LOCOMOTION.jump &&
       !e.repeat &&
-      target.document.visibilityState === "visible"
+      doc.visibilityState === "visible"
     ) {
       jumpPending = true;
     }
@@ -75,16 +80,17 @@ export function attachKeyboardLocomotion(
   };
 
   const onVisibilityChange = (): void => {
-    if (target.document.visibilityState === "hidden") {
+    if (doc.visibilityState === "hidden") {
       clearHeld();
       jumpPending = false;
     }
   };
 
-  target.addEventListener("keydown", onKeyDown);
-  target.addEventListener("keyup", onKeyUp);
-  target.addEventListener("blur", clearHeld);
-  target.document.addEventListener("visibilitychange", onVisibilityChange);
+  /** Capture phase on `document` — keys work on cold open without a prior click (WS-223). */
+  doc.addEventListener("keydown", onKeyDown, true);
+  doc.addEventListener("keyup", onKeyUp, true);
+  win.addEventListener("blur", clearHeld);
+  doc.addEventListener("visibilitychange", onVisibilityChange);
 
   function axisFromSets(
     positiveCodes: Set<string>,
@@ -124,10 +130,10 @@ export function attachKeyboardLocomotion(
       return j;
     },
     dispose(): void {
-      target.removeEventListener("keydown", onKeyDown);
-      target.removeEventListener("keyup", onKeyUp);
-      target.removeEventListener("blur", clearHeld);
-      target.document.removeEventListener("visibilitychange", onVisibilityChange);
+      doc.removeEventListener("keydown", onKeyDown, true);
+      doc.removeEventListener("keyup", onKeyUp, true);
+      win.removeEventListener("blur", clearHeld);
+      doc.removeEventListener("visibilitychange", onVisibilityChange);
       held.clear();
       jumpPending = false;
     },

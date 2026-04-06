@@ -98,7 +98,10 @@ import {
 import { loadPlayerCharacter } from "./player/playerCharacter";
 import { getCombatJuiceAccess } from "./accessibility/combatJuiceAccess";
 import { createCombatJuiceController } from "./combat/combatJuiceController";
-import { createJohnStickRenderSetup } from "./render";
+import {
+  createJohnStickRenderSetup,
+  requestJohnStickCanvasFocus,
+} from "./render";
 import { createGameplayRuntimeTuning } from "./tuning/gameplayRuntimeTuning";
 import { TRAINING_DUMMY_SPAWN_TRANSFORM } from "./level/trainingDummyConfig";
 import {
@@ -193,10 +196,11 @@ export async function mountGame(
   const sparringScratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const followCamScratch = createThirdPersonFollowScratch();
   const gameplayTuning = createGameplayRuntimeTuning();
-  const keyboardLocomotion = attachKeyboardLocomotion(window, {
+  const mountDoc = root.ownerDocument ?? document;
+  const keyboardLocomotion = attachKeyboardLocomotion(mountDoc, {
     getYawDegPerSec: () => gameplayTuning.player.yawDegPerSec,
   });
-  const actionMap = attachActionMap(window, {
+  const actionMap = attachActionMap(mountDoc, {
     getInteractOpenAllowed: () => interactOpenGate.nearSign,
   });
   const playerLocomotion = createPlayerLocomotionState();
@@ -993,6 +997,8 @@ export async function mountGame(
       renderer.render(scene, camera);
     },
   });
+
+  requestJohnStickCanvasFocus(renderer.domElement, root);
 
   return { combatEvents };
 }

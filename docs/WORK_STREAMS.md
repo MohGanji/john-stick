@@ -622,7 +622,7 @@ flowchart TB
   - **Note (taste / polish convergence):** **Wave 15** (**WS-150–WS-157**) still sharpens timing, camera, mix, and art reads; **WS-157** structured rounds and **WS-156** (optional deferrals) can align with the same `docs/playtest/` history when you want stricter sign-off.  
   - **Playtest → schedule:** **`/playtest`** (**`.cursor/commands/playtest.md`**) **must** update **`WORK_STREAMS.md`** after each run. **Source:** `history.jsonl` **`blockers`** + session Markdown (**Follow-ups**, **Evidence**, failed smoke). **Skip** meta-only strings. For each actionable item: **add** a new **`- [ ] **WS-NNN**`** in the **correct wave** (or **deferred**), or **extend** an existing row (**`Source:`** line + sub-bullets). **Prioritize** when impact is **high** or **multiple streams** depend on it (e.g. keyboard-first friction → stay in **Wave 12** near **WS-120**). **Park at the bottom** of **Deferred** when impact is **low** and coupling is **narrow** (dev-only overlay quirks, console noise). **Dedupe:** if it clearly belongs on an existing **WS-###**, don’t fork — point **`→ see WS-xxx`**; next free ID = max **WS-###** in this file + 1 (**never reuse** retired IDs). **Done:** **`[x]`** + optional **`done:`** commit hash.
 
-- [ ] **WS-223** — **Canvas receives keyboard focus without manual click** — After reload, `<canvas>` should focus (e.g. `tabindex` + `focus()` after mount, or explicit product policy + docs). Reduces friction for keyboard-first GP. *(JSONL blockers: canvas focus / product autofocus.)*  
+- [x] **WS-223** — **Canvas receives keyboard focus without manual click** — After reload, `<canvas>` should focus (e.g. `tabindex` + `focus()` after mount, or explicit product policy + docs). Reduces friction for keyboard-first GP. *(JSONL blockers: canvas focus / product autofocus.)*  
   - **Depends:** WS-112  
   - **∥** WS-050 soft  
   - **@** `role-gameplay-programmer` · `role-ux-ui-designer`  
@@ -647,11 +647,11 @@ flowchart TB
 
 Cross-disciplinary streams: **3D hero**, **outfit modularity**, **tooling investigations**, and **your** access to external services. Deliverables are often **assets + docs + thin code hooks**, not features alone.
 
-- [ ] **WS-130** — **Creative & toolchain access pack** (repo + team hygiene).  
+- [x] **WS-130** — **Creative & toolchain access pack** (repo + team hygiene).  
   - **Depends:** —  
   - **∥** WS-131, WS-132  
   - **USER** Document where API keys / tokens live (e.g. `.env.local`, OS keychain); enable **image / audio generation** accounts the project will use; Blender or other DCC **license/install** on a machine agents can target; Cursor **browser** or remote desktop if “click-through” authoring is the fallback. **Do not commit secrets.**  
-  - **Artifact** doc + optional `.env.example` keys only  
+  - **Artifact** `docs/TOOLCHAIN_ACCESS.md` + `.env.example` (key names only); `.gitignore` ignores `.env`/`.env.*` except `.env.example`  
   - **@** `role-web-tools-engineer` · `role-game-director`  
   - **GP** §4.4.1–4.4.2 (asset pipeline), §5.3.1 (export / validation hygiene)  
 

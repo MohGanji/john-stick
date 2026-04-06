@@ -24,6 +24,18 @@
       canvas {
         display: block;
       }
+      /* WS-223 — focus ring only for keyboard Tab; not on programmatic focus in most engines. */
+      /* Fallback focus target (`#app` tabindex -1) — no chrome ring on the full-screen shell. */
+      #app:focus {
+        outline: none;
+      }
+      #app canvas:focus {
+        outline: none;
+      }
+      #app canvas:focus-visible {
+        outline: 2px solid rgba(210, 208, 235, 0.55);
+        outline-offset: 2px;
+      }
     </style>
   </head>
   <body>

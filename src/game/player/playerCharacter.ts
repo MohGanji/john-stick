@@ -3,10 +3,20 @@ import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import type { StrikeMoveId } from "../input/combatIntent";
+import { PLAYER_CAPSULE } from "./playerCapsuleConfig";
 import { strikePresentationClipName } from "./strikePresentation";
 
-/** Served from `public/` (Vite). Regenerate via `npm run export:character`. */
-export const PLAYER_GLTF_URL = "/models/char_player_stick_v01.glb";
+/** Canonical mesh from `npm run export:character` (already scaled to capsule). */
+export const PLAYER_GLTF_URL_CANONICAL = "/models/char_player_stick_v01.glb";
+
+/**
+ * Sketchfab “Stickman Fighting” experiment (CC-BY — `CREDITS.md`). Swap `PLAYER_GLTF_URL` to toggle.
+ */
+export const PLAYER_GLTF_URL_SKETCHFAB_KAISOON =
+  "/models/stickman_fighting_kaisoon.glb";
+
+/** Active player glb (set to `PLAYER_GLTF_URL_CANONICAL` to revert). */
+export const PLAYER_GLTF_URL = PLAYER_GLTF_URL_SKETCHFAB_KAISOON;
 
 export const PLAYER_ANIM_IDLE = "Idle";
 export const PLAYER_ANIM_WALK = "Walk";
@@ -34,14 +44,58 @@ export type PlayerCharacter = {
   dispose(): void;
 };
 
-function findClip(gltf: GLTF, name: string): THREE.AnimationClip {
-  const clip = gltf.animations.find((a) => a.name === name);
-  if (!clip) {
-    throw new Error(
-      `Missing animation "${name}" in ${PLAYER_GLTF_URL} (got: ${gltf.animations.map((a) => a.name).join(", ") || "none"})`,
-    );
-  }
-  return clip;
+/** ~standing extent from foot to head read vs gameplay capsule. */
+const PLAYER_VISUAL_TARGET_HEIGHT =
+  PLAYER_CAPSULE.halfHeight * 2 + PLAYER_CAPSULE.radius * 2;
+
+/**
+ * Off-the-shelf glTF is often Y-up but wrong scale; skin root may not sit at feet.
+ * Scale to our capsule band and lift so AABB bottom is at local Y=0 on `wrapped` pivot.
+ */
+function normalizeImportedPlayerVisual(
+  wrapped: THREE.Group,
+  scene: THREE.Object3D,
+): void {
+  wrapped.add(scene);
+  scene.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(scene);
+  if (box.isEmpty()) return;
+  const size = box.getSize(new THREE.Vector3());
+  const h = Math.max(size.y, 1e-3);
+  const s = PLAYER_VISUAL_TARGET_HEIGHT / h;
+  scene.scale.setScalar(s);
+  scene.updateMatrixWorld(true);
+  const box2 = new THREE.Box3().setFromObject(scene);
+  scene.position.y -= box2.min.y;
+}
+
+function needsImportedVisualNormalization(url: string): boolean {
+  return url !== PLAYER_GLTF_URL_CANONICAL;
+}
+
+function resolveIdleWalkClips(
+  gltf: GLTF,
+  urlForErrors: string,
+): {
+  idle: THREE.AnimationClip;
+  walk: THREE.AnimationClip;
+} {
+  const idle = gltf.animations.find((a) => a.name === PLAYER_ANIM_IDLE);
+  const walk = gltf.animations.find((a) => a.name === PLAYER_ANIM_WALK);
+  if (idle && walk) return { idle, walk };
+  const fallback =
+    idle ??
+    walk ??
+    gltf.animations[0] ??
+    (() => {
+      throw new Error(
+        `No animations in ${urlForErrors} — need Idle+Walk or at least one clip`,
+      );
+    })();
+  return {
+    idle: idle ?? fallback,
+    walk: walk ?? fallback,
+  };
 }
 
 function tintTrainingDummyMaterials(root: THREE.Object3D): void {
@@ -81,25 +135,44 @@ function tintSparringPartnerMaterials(root: THREE.Object3D): void {
 export async function loadPlayerCharacter(
   options?: LoadPlayerCharacterOptions,
 ): Promise<PlayerCharacter> {
+  /**
+   * Lab targets use WS-094 articulated ragdoll bone names from `CHARACTER_RIG_MAP` / canonical export.
+   * Third-party hero glTF (see `PLAYER_GLTF_URL`) often uses different skeletons — always load canonical
+   * mesh for dummy + sparring so boot cannot fail on `computeArticulatedBindWorldTransforms`.
+   */
+  const gltfUrl =
+    options?.appearance === "training_dummy" ||
+    options?.appearance === "sparring_partner"
+      ? PLAYER_GLTF_URL_CANONICAL
+      : PLAYER_GLTF_URL;
+
   const loader = new GLTFLoader();
-  const gltf = await loader.loadAsync(PLAYER_GLTF_URL);
+  const gltf = await loader.loadAsync(gltfUrl);
+
+  const animScene = gltf.scene;
 
   if (options?.appearance === "training_dummy") {
-    tintTrainingDummyMaterials(gltf.scene);
+    tintTrainingDummyMaterials(animScene);
   }
   if (options?.appearance === "sparring_partner") {
-    tintSparringPartnerMaterials(gltf.scene);
+    tintSparringPartnerMaterials(animScene);
   }
 
-  gltf.scene.traverse((obj) => {
+  animScene.traverse((obj) => {
     if (obj instanceof THREE.Mesh) {
       obj.castShadow = true;
     }
   });
 
-  const mixer = new THREE.AnimationMixer(gltf.scene);
-  const idleClip = findClip(gltf, PLAYER_ANIM_IDLE);
-  const walkClip = findClip(gltf, PLAYER_ANIM_WALK);
+  const wrapped = new THREE.Group();
+  if (needsImportedVisualNormalization(gltfUrl)) {
+    normalizeImportedPlayerVisual(wrapped, animScene);
+  } else {
+    wrapped.add(animScene);
+  }
+
+  const mixer = new THREE.AnimationMixer(animScene);
+  const { idle: idleClip, walk: walkClip } = resolveIdleWalkClips(gltf, gltfUrl);
 
   const idleAction = mixer.clipAction(idleClip);
   const walkAction = mixer.clipAction(walkClip);
@@ -146,7 +219,7 @@ export async function loadPlayerCharacter(
   };
 
   return {
-    root: gltf.scene,
+    root: wrapped,
     updateLocomotionAnim(dtSeconds, { planarInput, grounded, freezePose }) {
       const dtAnim = freezePose ? 0 : dtSeconds;
       if (!strikePresentationBusy) {
@@ -190,7 +263,7 @@ export async function loadPlayerCharacter(
     dispose() {
       mixer.removeEventListener("finished", onMixerFinished);
       mixer.stopAllAction();
-      disposeMaterialsAndGeometry(gltf.scene);
+      disposeMaterialsAndGeometry(wrapped);
     },
   };
 }

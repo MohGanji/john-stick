@@ -99,9 +99,14 @@ export type AttachActionMapOptions = {
 };
 
 export function attachActionMap(
-  target: Window = window,
+  doc: Document = document,
   options?: AttachActionMapOptions,
 ): ActionMapInput {
+  const win = doc.defaultView;
+  if (!win) {
+    throw new Error("attachActionMap: document has no defaultView");
+  }
+
   const held = new Set<string>();
   let interactModeOpen = false;
   let interactEnterPending = false;
@@ -120,7 +125,7 @@ export function attachActionMap(
   };
 
   const onKeyDown = (e: KeyboardEvent): void => {
-    if (target.document.visibilityState !== "visible") return;
+    if (doc.visibilityState !== "visible") return;
 
     if (e.code === KEY_ACTION_MAP.interactToggle && !e.repeat) {
       if (interactModeOpen) {
@@ -149,16 +154,17 @@ export function attachActionMap(
   };
 
   const onVisibilityChange = (): void => {
-    if (target.document.visibilityState === "hidden") {
+    if (doc.visibilityState === "hidden") {
       clearHeld();
       interactEnterPending = false;
     }
   };
 
-  target.addEventListener("keydown", onKeyDown);
-  target.addEventListener("keyup", onKeyUp);
-  target.addEventListener("blur", clearHeld);
-  target.document.addEventListener("visibilitychange", onVisibilityChange);
+  /** Capture phase on `document` — keys work on cold open without a prior click (WS-223). */
+  doc.addEventListener("keydown", onKeyDown, true);
+  doc.addEventListener("keyup", onKeyUp, true);
+  win.addEventListener("blur", clearHeld);
+  doc.addEventListener("visibilitychange", onVisibilityChange);
 
   return {
     snapshot(): ActionMapSnapshot {
@@ -177,10 +183,10 @@ export function attachActionMap(
       interactModeOpen = false;
     },
     dispose(): void {
-      target.removeEventListener("keydown", onKeyDown);
-      target.removeEventListener("keyup", onKeyUp);
-      target.removeEventListener("blur", clearHeld);
-      target.document.removeEventListener("visibilitychange", onVisibilityChange);
+      doc.removeEventListener("keydown", onKeyDown, true);
+      doc.removeEventListener("keyup", onKeyUp, true);
+      win.removeEventListener("blur", clearHeld);
+      doc.removeEventListener("visibilitychange", onVisibilityChange);
       held.clear();
       interactEnterPending = false;
     },

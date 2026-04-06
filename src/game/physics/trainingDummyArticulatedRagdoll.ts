@@ -8,6 +8,7 @@ import { TRAINING_DUMMY_PHYSICS } from "../level/trainingDummyConfig";
 import {
   TRAINING_DUMMY_HINGE_LIMITS_RAD,
   TRAINING_DUMMY_PELVIS_CAPSULE,
+  TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS,
   TRAINING_DUMMY_RAGDOLL_BONE_ORDER,
   TRAINING_DUMMY_RAGDOLL_MASS_SHARE,
   TRAINING_DUMMY_RAGDOLL_PARENT,
@@ -97,6 +98,19 @@ function findBoneMap(root: THREE.Object3D): Map<string, THREE.Bone> {
     if (o instanceof THREE.Bone) map.set(o.name, o);
   });
   return map;
+}
+
+function resolveRagdollBone(
+  boneMap: Map<string, THREE.Bone>,
+  slot: TrainingDummyRagdollBoneName,
+): THREE.Bone {
+  for (const candidate of TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS[slot]) {
+    const b = boneMap.get(candidate);
+    if (b) return b;
+  }
+  throw new Error(
+    `WS-094: missing bone for slot "${slot}" (tried: ${TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS[slot].join(", ")})`,
+  );
 }
 
 export function findFirstSkinnedMesh(root: THREE.Object3D): THREE.SkinnedMesh | null {
@@ -196,10 +210,7 @@ export function computeArticulatedBindWorldTransforms(
   const boneMap = findBoneMap(skinnedRoot);
   const out: ArticulatedBodyTransform[] = [];
   for (const name of TRAINING_DUMMY_RAGDOLL_BONE_ORDER) {
-    const bone = boneMap.get(name);
-    if (!bone) {
-      throw new Error(`WS-094: missing bone "${name}" on training dummy`);
-    }
+    const bone = resolveRagdollBone(boneMap, name);
     const seg = buildSegmentDesc(bone, name);
     const t = new THREE.Vector3();
     const q = new THREE.Quaternion();
@@ -290,9 +301,7 @@ export function beginTrainingDummyArticulatedRagdoll(
   const boneMap = findBoneMap(skinnedRoot);
   const orderedBones: THREE.Bone[] = [];
   for (const name of TRAINING_DUMMY_RAGDOLL_BONE_ORDER) {
-    const b = boneMap.get(name);
-    if (!b) throw new Error(`WS-094: missing bone "${name}"`);
-    orderedBones.push(b);
+    orderedBones.push(resolveRagdollBone(boneMap, name));
   }
 
   world.removeCollider(physics.trainingDummySolidCollider, true);
@@ -318,7 +327,7 @@ export function beginTrainingDummyArticulatedRagdoll(
 
   const descByName = new Map<TrainingDummyRagdollBoneName, SegmentDesc>();
   for (const name of TRAINING_DUMMY_RAGDOLL_BONE_ORDER) {
-    descByName.set(name, buildSegmentDesc(boneMap.get(name)!, name));
+    descByName.set(name, buildSegmentDesc(resolveRagdollBone(boneMap, name), name));
   }
 
   const linVel = hips.linvel();
@@ -380,7 +389,7 @@ export function beginTrainingDummyArticulatedRagdoll(
     const parentIdx = TRAINING_DUMMY_RAGDOLL_BONE_ORDER.indexOf(parentName);
     const parentBody = bodies[parentIdx];
     const childBody = bodies[i];
-    const childBone = boneMap.get(name)!;
+    const childBone = resolveRagdollBone(boneMap, name);
     const jx = childBone.matrixWorld.elements[12];
     const jy = childBone.matrixWorld.elements[13];
     const jz = childBone.matrixWorld.elements[14];

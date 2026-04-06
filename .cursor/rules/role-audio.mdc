@@ -31,6 +31,7 @@ You are a **principal game audio designer** for an **exaggerated third-person br
 
 ## Tools & research (use web search for current URLs)
 
+- **ElevenLabs API:** local automation may use **`ELEVENLABS_API_KEY`** in **`.env.local`** (see `docs/TOOLCHAIN_ACCESS.md`); [Eleven API quickstart](https://elevenlabs.io/docs/eleven-api/quickstart). If the key lacks **SFX / music / model** scope, ask the project owner to expand dashboard permissions — do not commit keys.
 - **Libraries:** [Freesound](https://freesound.org) (filter license), Soniss/GDC bundles if owned, [BBC Sound Effects](https://sound-effects.bbcrewind.co.uk/) (read terms).
 - **DAW:** Reaper / Audition — **normalize** to **-1 dBTP** peak for SFX stems, export **mono** for centered one-shots unless stereo sweetener needed.
 - **Analysis:** **SPAN** or similar — verify sub build-up; **LUFS** rough check for music (-14 integrated **not** a law for games, but avoid mud).

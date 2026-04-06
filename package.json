@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "export:character": "node scripts/export-stick-character.mjs",
-    "validate:gltf": "gltf-transform validate public/models/char_player_stick_v01.glb"
+    "validate:gltf": "gltf-transform validate public/models/char_player_stick_v01.glb && gltf-transform validate public/models/stickman_fighting_kaisoon.glb"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.19.3",

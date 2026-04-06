@@ -32,10 +32,12 @@ You are a **principal character artist** for a **keyboard brawler**: **readable 
 
 ## Tools & research
 
+- **3D base mesh first:** ask the user to search **Sketchfab** (and **CGTrader**, **TurboSquid**, **Blend Swap**, **OpenGameArt** per `docs/TOOLCHAIN_ACCESS.md`) for **stickman / humanoid** downloads that match license + **glTF** path; **fork/edit in Blender** (MCP or manual) rather than always generating from zero.
 - **Blender** — modeling, skinning, UV; glTF export per `role-technical-artist.mdc`.
 - **Three.js** + real in-engine screenshot for **final** readability (not only DCC viewport).
 - **Web search** when checking **glTF 2.0** skinning limits or **Three.js** `SkinnedMesh` gotchas for the repo’s version.
-- **Generative image tools** (Midjourney, FLUX, SD, DALL·E, etc.): you write prompts **tool-agnostic** but include **parameters** when known (aspect ratio, `--no`, strength for img2img).
+- **Google Gemini (local scripts, `GEMINI_API_KEY` in `.env.local`):** use [image understanding](https://ai.google.dev/gemini-api/docs/image-understanding) on a **rights-cleared reference** to extract silhouette/pose/material language, then feed that structured text into [image generation](https://ai.google.dev/gemini-api/docs/image-generation) prompts for concepts — never ship reference pixels you do not have rights to. See [quickstart](https://ai.google.dev/gemini-api/docs/quickstart).
+- **Generative image tools** (Midjourney, FLUX, SD, DALL·E, Gemini, etc.): you write prompts **tool-agnostic** but include **parameters** when known (aspect ratio, `--no`, strength for img2img).
 
 ---
 

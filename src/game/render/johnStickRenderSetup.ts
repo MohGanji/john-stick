@@ -41,6 +41,9 @@ function applyRendererSize(
 export function createJohnStickRenderSetup(
   root: HTMLElement,
 ): JohnStickRenderSetup {
+  /** Programmatic fallback when `<canvas>` cannot hold focus in some WebGL + browser combos (WS-223). */
+  root.tabIndex = -1;
+
   const scene = new THREE.Scene();
   /** Warm dark interior void (enclosed hall). */
   scene.background = new THREE.Color(0x2a2622);
@@ -73,6 +76,12 @@ export function createJohnStickRenderSetup(
     Math.max(1, window.innerHeight),
   );
   root.appendChild(renderer.domElement);
+
+  const canvas = renderer.domElement;
+  /** WS-223 / GP §3 — keyboard-first: canvas must be focusable for automation + click-free cold open. */
+  canvas.tabIndex = 0;
+  canvas.setAttribute("role", "application");
+  canvas.setAttribute("aria-label", "John Stick game view");
 
   /** Bright airy bounce — pale ceiling + warm floor (shōji + pendants do most of the mood in-level). */
   const hemi = new THREE.HemisphereLight(0xfaf6f0, 0x8c7a68, 0.78);
@@ -122,4 +131,36 @@ export function createJohnStickRenderSetup(
   }
 
   return { scene, camera, renderer, sunLight, dispose };
+}
+
+/**
+ * WS-223 — after mount, move keyboard focus to the WebGL canvas without scrolling the page.
+ * Deferred so sync UI appended to `root` can finish; safe to call again (e.g. after closing a modal).
+ */
+export function requestJohnStickCanvasFocus(
+  canvas: HTMLCanvasElement,
+  surfaceRoot?: HTMLElement,
+): void {
+  const doc = canvas.ownerDocument;
+  const win = doc.defaultView;
+
+  const apply = (): void => {
+    try {
+      win?.focus();
+    } catch {
+      /* Embedded viewers may forbid window.focus(); game input still uses document capture. */
+    }
+    canvas.focus({ preventScroll: true });
+    if (surfaceRoot && doc.activeElement !== canvas) {
+      surfaceRoot.focus({ preventScroll: true });
+    }
+  };
+
+  queueMicrotask(() => {
+    apply();
+    requestAnimationFrame(apply);
+    requestAnimationFrame(() => requestAnimationFrame(apply));
+  });
+  win?.setTimeout(apply, 50);
+  win?.setTimeout(apply, 200);
 }

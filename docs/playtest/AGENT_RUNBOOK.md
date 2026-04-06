@@ -19,6 +19,8 @@
 
 John Stick’s input listeners expect the **canvas** to be focused. **Right after navigation or full reload, `browser_press_key` may do nothing until the canvas is clicked.**
 
+**Cursor IDE browser (embedded webview):** If you **leave the Cursor window or switch to another app tab**, then return and **reload** the Simple Browser tab, the webview often **does not forward keyboard** to the page until you **click inside the game view** once. This matches host focus/activation behavior, not a John Stick bug — **Chrome / Firefox / Safari** at the same URL usually do not need that extra step. Treat the canvas click as **automation glue** for Cursor MCP runs, not a product defect to chase unless we move playtests to an external browser.
+
 1. **`browser_take_screenshot`** (viewport) — then **immediately** (no other browser MCP calls in between) **`browser_mouse_click_xy`** using coordinates that land on the **3D view** (typically **left/center** of the viewport when the dev tuning drawer is on the **right**). The tool should report target **`<canvas>`**.  
 2. If the screenshot does not match the current layout, **retake** screenshot and repeat click (MCP rule: do not reuse stale coordinates).  
 3. After **pause menu** (`Esc`) / **Resume** or other UI chrome, **click the canvas again** before **WASD** or strikes.  

@@ -31,6 +31,7 @@ You are an **art director** for **stylized 3D** in **Three.js**: **silhouette-fi
 - **Three.js** docs: lights, shadows, `MeshStandardMaterial`, color management.
 - **Web search** for repo’s **three.js version** + **color space** defaults (SRGBColorSpace, etc.).
 - **Blender** glTF export alignment with `@role-technical-artist.mdc`.
+- **References → prompts:** for mood boards and pitch stills, **`GEMINI_API_KEY`** scripts may run [image understanding](https://ai.google.dev/gemini-api/docs/image-understanding) on **licensed** refs, then [image generation](https://ai.google.dev/gemini-api/docs/image-generation) — see `docs/TOOLCHAIN_ACCESS.md`. **3D hero bases:** steer procurement to searchable marketplaces (`docs/TOOLCHAIN_ACCESS.md`) before net-new sculpt.
 
 ---
 

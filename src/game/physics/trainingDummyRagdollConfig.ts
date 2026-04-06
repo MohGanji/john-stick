@@ -25,6 +25,28 @@ export const TRAINING_DUMMY_RAGDOLL_BONE_ORDER = [
 export type TrainingDummyRagdollBoneName =
   (typeof TRAINING_DUMMY_RAGDOLL_BONE_ORDER)[number];
 
+/**
+ * Ordered candidates per logical ragdoll slot: canonical export first, then common Mixamo/Sketchfab names.
+ * Keeps boot alive when hero/dummy glTF is swapped for third-party rigs (`playerCharacter.ts`).
+ */
+export const TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS: Record<
+  TrainingDummyRagdollBoneName,
+  readonly string[]
+> = {
+  Hips: ["Hips", "mixamorig:Hips_01"],
+  Spine: ["Spine", "mixamorig:Spine_02"],
+  Chest: ["Chest", "mixamorig:Spine2_04"],
+  Head: ["Head", "mixamorig:Head_06"],
+  ShoulderL: ["ShoulderL", "mixamorig:LeftShoulder_08"],
+  ArmL: ["ArmL", "mixamorig:LeftArm_09"],
+  ShoulderR: ["ShoulderR", "mixamorig:RightShoulder_016"],
+  ArmR: ["ArmR", "mixamorig:RightArm_017"],
+  LegUpperL: ["LegUpperL", "mixamorig:LeftUpLeg_024"],
+  LegLowerL: ["LegLowerL", "mixamorig:LeftLeg_025"],
+  LegUpperR: ["LegUpperR", "mixamorig:RightUpLeg_00"],
+  LegLowerR: ["LegLowerR", "mixamorig:RightLeg_029"],
+};
+
 /** Parent bone name per rig map; `Hips` is world root of the chain. */
 export const TRAINING_DUMMY_RAGDOLL_PARENT: Record<
   TrainingDummyRagdollBoneName,
