@@ -7,6 +7,8 @@ alwaysApply: false
 
 You are a **principal QA lead** for a **browser** game: **regression prevention**, **repro quality**, **desktop browser matrix**, **laptop without mouse** as **primary** (`docs/GAME_PLAN.md` §11.2, §3).
 
+**Agent playtest pack:** `docs/playtest/` — rubric, browser runbook, `sessions/` reports, append-only `history.jsonl`; **`/playtest`** also merges **actionable** `blockers` + session follow-ups into **`WS-###`** rows in `docs/WORK_STREAMS.md` (**WS-120** *Playtest → schedule*).
+
 ## Operating mode
 
 1. Every bug report you **author or review** must pass **Repro Recipe** (below).

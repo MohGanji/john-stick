@@ -25,6 +25,7 @@
 | **Artifact** | Expected output type: **code**, **3D asset** (glTF etc.), **2D/generated** (refs, icons, textures), **audio**, **doc**, or **pipeline** (scripts, MCP, SOP). |
 | **Tool** | Examples only (Blender, browser, image/SFX generators); **replaceable** — the stream stays valid if the specific tool changes. |
 | **Round** | For **Wave 15** taste streams: minimum **USER review cycles** (e.g. ≥2) and/or **gen A/B option count** before sign-off — written in each WS **Build** block. |
+| **Playtest → WS** | **`/playtest`** turns actionable **`blockers`** (+ substantive session follow-ups) into normal **`WS-###`** items (**WS-120** rules): prioritize by **impact / cross-stream deps**; **park** low-impact or isolated items at the **deferred** tail; **dedupe** existing rows. |
 
 ---
 
@@ -170,7 +171,10 @@ flowchart TB
   end
 
   subgraph W12["Wave 12 — Lock"]
-    WS120[WS-120 Playtest + tuning]
+    WS120[WS-120 Agent playtest]
+    WS223[WS-223 Canvas focus]
+    WS224[WS-224 Playtest smoke]
+    WS227[WS-227 Pause keyboard resume]
   end
 
   subgraph W13["Wave 13 — Production art & creative tooling"]
@@ -258,6 +262,10 @@ flowchart TB
   WS092 --> WS120
   WS102 --> WS120
   WS112 --> WS120
+  WS112 --> WS223
+  WS120 --> WS224
+  WS111 --> WS227
+  WS227 -.-> WS120
 
   WS041 --> WS133
   WS132 --> WS133
@@ -350,7 +358,10 @@ flowchart TB
 | WS-111 | 11 | WS-050 | — | `role-ux-ui-designer` + `role-gameplay-programmer` | Pause + binding help GP §9.3.3 |
 | WS-112 | 11 | WS-110 | — | `role-gameplay-programmer` + `role-web-tools-engineer` | `levelOrder` + restart GP §2.5 |
 | WS-113 | — | — | — | — | **Rejected** (was GP §9.2.2): multi-tier graphics presets + pause UI **withdrawn** — single renderer profile in `johnStickRenderSetup.ts`; see Wave 11 note. |
-| WS-120 | 12 | WS-081, WS-092, WS-102, WS-112 | — | `role-qa-playtest` + `role-game-director` | Rubric pass, cut list GP §11.2 |
+| WS-120 | 12 | WS-081, WS-092, WS-102, WS-112 | — | `role-qa-playtest` + `role-game-director` | Agent rubric 0–100 + `docs/playtest/`; **`/playtest` → WS-###** (see note) GP §11.2 |
+| WS-223 | 12 | WS-112 | WS-050 soft | `role-gameplay-programmer` + `role-ux-ui-designer` | Canvas keyboard focus after load (keyboard-first GP §3) |
+| WS-224 | 12 | WS-120 | WS-101 soft | `role-qa-playtest` + `role-gameplay-programmer` | Close agent playtest smoke gap (runbook + stress / audio / ragdoll) |
+| WS-227 | 12 | WS-111 | WS-112 soft | `role-ux-ui-designer` + `role-gameplay-programmer` | Pause **Resume** without pointer (keyboard/agent playtest) |
 | WS-130 | 13 | — | WS-131, WS-132 | `role-web-tools-engineer` + **USER** | Env + key slots; no secrets in repo |
 | WS-131 | 13 | — | WS-130, WS-132 | `role-technical-artist` + `role-web-tools-engineer` | MCP vs CLI vs browser SOP |
 | WS-132 | 13 | — | WS-130, WS-131 | `role-art-director` + `role-creative-director` | Art/audio **classes** of generation (tool-agnostic) |
@@ -603,12 +614,34 @@ flowchart TB
 
 ### Wave 12 — Lock / ship
 
-- [ ] **WS-120** — Playtest rubric (laptop, **no mouse**), tuning tickets, cut list for ship.  
+- [ ] **WS-120** — **Agent playtest loop:** rubric (**0–100**, AAA bar) + browser runbook in `docs/playtest/` (`README.md`, `RUBRIC.md`, `AGENT_RUNBOOK.md`); per-run reports in `docs/playtest/sessions/`; append-only scores in `docs/playtest/history.jsonl` (**schema_version 2**). Each **`/playtest`** run **also** merges actionable outcomes into normal **`WS-###`** checklist rows (see **Playtest → schedule** below). **Keyboard only / no mouse** for core loop during runs. **GP** §11.2.2 / §1.3.1 gates live in the rubric + JSONL. *(Classic “cut list for v1” is optional for a vision-led roadmap; **WS-156** remains available if you want explicit deferrals later.)*  
   - **Depends:** WS-081, WS-092, WS-102, WS-112  
   - **@** `role-qa-playtest` · `role-game-director` · `role-creative-director`  
   - **GP** §11.2, §1.3.1  
   - **Note:** **Recommended before marketing / “min-spec” claims:** **WS-133** (hero DCC silhouette), **WS-135** (documented perf + ragdoll stress), **WS-136** (browser matrix). None are hard blockers for an **internal** first rubric on mechanics.  
-  - **Note (taste / external ship):** For a **public or “we love this”** milestone, treat **Wave 15** (**WS-150–WS-157**) as **required** alongside this item: roles run prompt packs, multi-option gens, timing/read/camera/mix passes, **USER** pick + revision — then **WS-156** + **WS-157** feed the final rubric and cut list. Internal alpha can run WS-120 earlier with a subset of Wave 15.
+  - **Note (taste / polish convergence):** **Wave 15** (**WS-150–WS-157**) still sharpens timing, camera, mix, and art reads; **WS-157** structured rounds and **WS-156** (optional deferrals) can align with the same `docs/playtest/` history when you want stricter sign-off.  
+  - **Playtest → schedule:** **`/playtest`** (**`.cursor/commands/playtest.md`**) **must** update **`WORK_STREAMS.md`** after each run. **Source:** `history.jsonl` **`blockers`** + session Markdown (**Follow-ups**, **Evidence**, failed smoke). **Skip** meta-only strings. For each actionable item: **add** a new **`- [ ] **WS-NNN**`** in the **correct wave** (or **deferred**), or **extend** an existing row (**`Source:`** line + sub-bullets). **Prioritize** when impact is **high** or **multiple streams** depend on it (e.g. keyboard-first friction → stay in **Wave 12** near **WS-120**). **Park at the bottom** of **Deferred** when impact is **low** and coupling is **narrow** (dev-only overlay quirks, console noise). **Dedupe:** if it clearly belongs on an existing **WS-###**, don’t fork — point **`→ see WS-xxx`**; next free ID = max **WS-###** in this file + 1 (**never reuse** retired IDs). **Done:** **`[x]`** + optional **`done:`** commit hash.
+
+- [ ] **WS-223** — **Canvas receives keyboard focus without manual click** — After reload, `<canvas>` should focus (e.g. `tabindex` + `focus()` after mount, or explicit product policy + docs). Reduces friction for keyboard-first GP. *(JSONL blockers: canvas focus / product autofocus.)*  
+  - **Depends:** WS-112  
+  - **∥** WS-050 soft  
+  - **@** `role-gameplay-programmer` · `role-ux-ui-designer`  
+  - **GP** §3 (keyboard-first)  
+  - **Source:** `docs/playtest/history.jsonl` (r01–r02), `docs/playtest/sessions/2026-04-06-bf355a4-r02.md`, `docs/playtest/AGENT_RUNBOOK.md`
+
+- [ ] **WS-224** — **Close the agent playtest smoke gap** — Runbook + automation can complete everything **`smoke_all_pass`** needs so **`/playtest`** reruns are not blocked on partial manual ritual: in-world **sign + Enter**, **~5 min** stress / memory spot-check, **simultaneous chord** (or document MCP limitation + human spot-check SOP), **audio** / SFX verification (Web Audio / capture strategy), **ragdoll** stress. **Also:** **`AGENT_RUNBOOK.md`** — document **multi-Vite** URL pitfalls (**`5173`** default vs second dev server **`5174`**, align with `package.json` / terminal output). **Tightens WS-120 / WS-135** evidence over time. *(JSONL blockers: smoke depth incomplete.)*  
+  - **Depends:** WS-120  
+  - **∥** WS-101 soft  
+  - **@** `role-qa-playtest` · `role-gameplay-programmer` · **soft** `role-audio` · `role-physics-programmer`  
+  - **GP** §11.2  
+  - **Source:** `docs/playtest/history.jsonl` (r01–r02), `docs/playtest/sessions/2026-04-05-bf355a4-r01.md` (Follow-ups: port note), `docs/playtest/sessions/2026-04-06-bf355a4-r02.md`
+
+- [ ] **WS-227** — **Pause menu: dismiss Resume without pointer** — After **Esc**, **Resume** must work **keyboard-only** (e.g. **Enter** on focused primary control, roving tabindex, or “first key closes” policy). Sessions **r01/r02** only succeeded via **click**; that breaks **WS-120** “no mouse for gameplay” unless agents cheat on pause chrome.  
+  - **Depends:** WS-111  
+  - **∥** WS-112 soft  
+  - **@** `role-ux-ui-designer` · `role-gameplay-programmer`  
+  - **GP** §9.3.3, §3 (keyboard-first)  
+  - **Source:** `docs/playtest/sessions/2026-04-05-bf355a4-r01.md`, `docs/playtest/sessions/2026-04-06-bf355a4-r02.md`
 
 ### Wave 13 — Production art, modular character & creative tooling
 
@@ -796,6 +829,14 @@ Track separately; **do not start** before WS-120 unless explicitly pulling forwa
 - [ ] **WS-220** — Optional **checkpoint / persist** beyond restart GP §2.5.2 extension `[C]`  
 - [ ] **WS-221** — Sign content hierarchy / “movie beat” copy depth GP §9.3.1 `[C]` (beyond WS-101 baseline)  
 - [ ] **WS-222** — Reserved spawn markers / planner hooks GP §7.2.2 `[N]`  
+- [ ] **WS-225** — **Dev gameplay tuning overlay: Period toggle vs range focus** — When focus is on `<input type="range">`, **.** does not toggle; fix tab order, blur-to-canvas on overlay open, or global shortcut path. **Playtest-parked** (low coupling vs ship). *(JSONL r01: Period + slider friction — mitigated by canvas-first workflow; still fix for dev UX.)*  
+  - **Depends:** —  
+  - **@** `role-gameplay-programmer`  
+  - **Source:** `docs/playtest/history.jsonl` (r01), `docs/playtest/sessions/2026-04-05-bf355a4-r01.md`  
+- [ ] **WS-226** — **Rapier init console deprecation** — Eliminate or suppress **“using deprecated parameters for the initialization function”** from `@dimforge/rapier3d-compat` (upgrade API usage per current docs). *(JSONL r01 blocker + session Evidence.)*  
+  - **Depends:** WS-011  
+  - **@** `role-physics-programmer` · `role-web-tools-engineer`  
+  - **Source:** `docs/playtest/history.jsonl` (r01), `docs/playtest/sessions/2026-04-05-bf355a4-r01.md` (Evidence)
 
 ---
 
