@@ -189,7 +189,7 @@ These labels apply to **ingredients** in the index and in the tables below.
 │   └── [N] 9.1.3 Floating damage numbers (default off)
 ├── 9.2 Menus (client-only)
 │   ├── [E] 9.2.1 Title → play → level flow entry (dojo first)
-│   ├── [C] 9.2.2 Graphics / performance presets
+│   ├── [C] 9.2.2 Graphics / performance presets *(product decision: **single** shipped renderer profile; multi-tier UI rejected — WORK_STREAMS **WS-113**)*
 │   └── [N] 9.2.3 Full control remapping UI (nice; document defaults in README if cut)
 └── 9.3 Tutorialization
     ├── [E] 9.3.1 Sign-readable content hierarchy (basics → advanced)
@@ -568,7 +568,7 @@ Ship criteria: the game is **fully playable without a mouse** so laptops (trackp
 | Tier | ID | Ingredient | What “done” looks like | Best owner |
 |------|-----|------------|------------------------|------------|
 | **E** | **9.2.1** | Title → play flow | Entry into **dojo-first** experience or level list per your flow. | UX + UI Engineer |
-| **C** | **9.2.2** | Graphics presets | Shadows/post/physics quality toggles for min-spec machines. | UX + Graphics Programmer |
+| **C** | **9.2.2** | Graphics presets | *For this codebase:* **no** in-game quality steps — one profile in `johnStickRenderSetup`; min-spec handled via **perf docs / cuts** (WORK_STREAMS **WS-135**), not runtime toggles (WS-113 rejected). | UX + Graphics Programmer |
 | **N** | **9.2.3** | Remapping UI | Full rebind screen; if cut, ship **controls manifest** in README. | UX + Gameplay Programmer |
 
 ### 9.3 Tutorialization

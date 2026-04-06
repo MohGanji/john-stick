@@ -2,12 +2,7 @@ import * as THREE from "three";
 
 /**
  * WS-020 / GP §4.1.1 — baseline rendering: color space, tone mapping, one shadow-casting sun.
- * Preset hooks for WS-113 (`role-graphics-programmer` graphics preset table).
- *
- * | Preset | shadow_map | post | max_lights | notes |
- * |--------|------------|------|------------|-------|
- * | High (default) | 2048 | off | 1 dir + hemi + pendant points in level | traditional dojo interior |
- * | Low (future) | 512–1024 | off | 1 dir + hemi | reduce shadow casters, cap DPR |
+ * Single shipped tier (no in-game quality presets — see WORK_STREAMS **WS-113 rejected**).
  */
 export const GRAPHICS_PRESET_DEFAULT = {
   shadowMapSize: 2048,

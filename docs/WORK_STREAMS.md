@@ -65,7 +65,7 @@
 | §3.3.2 root-motion policy | **WS-137** (new) | Doc + implementation alignment |
 | §3.1.3 camera accessibility | Juice hooks exist | **WS-212** deferred (turn speed, shake/flash) |
 | §4.1.2 art direction lock | WS-100 + **WS-141** | Character+world coherence |
-| §4.1.3 post FX (fullscreen) | **WS-216** deferred | Per-object **shaders** **WS-139** / **WS-141**; **WS-100** baseline shipped; **WS-113** gates cost |
+| §4.1.3 post FX (fullscreen) | **WS-216** deferred | Per-object **shaders** **WS-139** / **WS-141**; **WS-100** baseline shipped; cost documented in **WS-135** |
 | §4.3.2 actor model | **WS-135** audit bullet | Composability refactor plan |
 | §4.4.5 cold-start | **WS-135** | |
 | §4.4.3 telemetry | **WS-217** deferred | |
@@ -167,7 +167,6 @@ flowchart TB
     WS110[WS-110 Title → play]
     WS111[WS-111 Pause + help]
     WS112[WS-112 Level order + restart]
-    WS113[WS-113 Settings presets]
   end
 
   subgraph W12["Wave 12 — Lock"]
@@ -254,7 +253,6 @@ flowchart TB
   WS040 --> WS110
   WS050 --> WS111
   WS110 --> WS112
-  WS020 --> WS113
 
   WS081 --> WS120
   WS092 --> WS120
@@ -267,7 +265,6 @@ flowchart TB
   WS133 --> WS134
   WS133 -.-> WS120
 
-  WS113 --> WS135
   WS094 --> WS135
   WS112 --> WS136
   WS040 --> WS137
@@ -349,17 +346,17 @@ flowchart TB
 | WS-100 | 10 | WS-021 | WS-101 | `role-environment-artist` + `role-art-director` | Replace placeholder geo GP §7.1 |
 | WS-101 | 10 | WS-050, WS-030 | WS-100 | `role-level-designer` + `role-narrative-designer` | Signs + interact GP §2.4.2 |
 | WS-102 | 10 | WS-101 | — | `role-ux-ui-designer` | Context prompts GP §9.1.2 |
-| WS-110 | 11 | WS-040 | WS-113 | `role-ux-ui-designer` + `role-gameplay-programmer` | Title → dojo GP §9.2.1 |
-| WS-111 | 11 | WS-050 | WS-113 | `role-ux-ui-designer` + `role-gameplay-programmer` | Pause + binding help GP §9.3.3 |
+| WS-110 | 11 | WS-040 | — | `role-ux-ui-designer` + `role-gameplay-programmer` | Title → dojo GP §9.2.1 |
+| WS-111 | 11 | WS-050 | — | `role-ux-ui-designer` + `role-gameplay-programmer` | Pause + binding help GP §9.3.3 |
 | WS-112 | 11 | WS-110 | — | `role-gameplay-programmer` + `role-web-tools-engineer` | `levelOrder` + restart GP §2.5 |
-| WS-113 | 11 | WS-020 | WS-110, WS-111 | `role-graphics-programmer` + `role-ux-ui-designer` | Low/med/high presets **+ shader / post feature flags** GP §9.2.2 |
+| WS-113 | — | — | — | — | **Rejected** (was GP §9.2.2): multi-tier graphics presets + pause UI **withdrawn** — single renderer profile in `johnStickRenderSetup.ts`; see Wave 11 note. |
 | WS-120 | 12 | WS-081, WS-092, WS-102, WS-112 | — | `role-qa-playtest` + `role-game-director` | Rubric pass, cut list GP §11.2 |
 | WS-130 | 13 | — | WS-131, WS-132 | `role-web-tools-engineer` + **USER** | Env + key slots; no secrets in repo |
 | WS-131 | 13 | — | WS-130, WS-132 | `role-technical-artist` + `role-web-tools-engineer` | MCP vs CLI vs browser SOP |
 | WS-132 | 13 | — | WS-130, WS-131 | `role-art-director` + `role-creative-director` | Art/audio **classes** of generation (tool-agnostic) |
 | WS-133 | 13 | WS-041, WS-132 | WS-131 | `role-character-artist` + `role-technical-artist` + `role-technical-animator` | Hero glTF; refs + `CHARACTER_RIG_MAP` |
 | WS-134 | 13 | WS-133 | WS-100 | `role-character-artist` + `role-gameplay-programmer` + `role-technical-artist` | Per-limb swap / mix-match outfits |
-| WS-135 | 14 | WS-011, WS-020, WS-094, WS-113 | WS-136 | `role-graphics-programmer` + `role-physics-programmer` + `role-qa-playtest` | Min-spec + ragdoll stress + cold-start + **shader/post GPU budget** GP §1.3.3 §11.1 |
+| WS-135 | 14 | WS-011, WS-020, WS-094 | WS-136 | `role-graphics-programmer` + `role-physics-programmer` + `role-qa-playtest` | Min-spec + ragdoll stress + cold-start + **shader/post GPU budget** GP §1.3.3 §11.1 |
 | WS-136 | 14 | WS-112 | WS-135 | `role-web-tools-engineer` + `role-qa-playtest` | Chrome / Firefox / Safari pass GP §11.2.3 |
 | WS-137 | 14 | WS-040, WS-021 | WS-100 | `role-physics-programmer` + `role-technical-animator` | Slopes/stairs + root-motion doc GP §3.3 |
 | WS-138 | 14 | WS-081 | WS-139 | `role-lead-game-designer` + `role-gameplay-programmer` | Combo caps + hit-type audit GP §2.2 |
@@ -585,7 +582,6 @@ flowchart TB
 
 - [x] **WS-110** — Title flow → load dojo (level 0).  
   - **Depends:** WS-040  
-  - **∥** WS-113  
   - **@** `role-ux-ui-designer` · `role-gameplay-programmer`  
   - **GP** §9.2.1  
   - **Intent (§9.2.1):** **No** conventional title / loading menu — **immediate playable dojo** on `mountGame` (already true). **Diegetic** game title on the **north wall** in the **opening sightline**: condensed **italic** sans (Wick-adjacent), **“JOHN STICK”** with the **i** as a **stickman silhouette** (WICK “I” replacement trope).  
@@ -593,7 +589,6 @@ flowchart TB
 
 - [x] **WS-111** — Pause menu + help text (bindings match live config).  
   - **Depends:** WS-050  
-  - **∥** WS-113  
   - **@** `role-ux-ui-designer` · `role-gameplay-programmer`  
   - **GP** §9.3.3, §3.4.2  
   - **Build:** `attachPauseMenuModal.ts` — **Esc** toggles overlay (**after** sign modal so Escape closes sign first); `syncGamePause({ pauseMenuOpen })`; help sections from `pauseHelpSections()` in `dojoSignCopy.ts` (same strings as kiosks). `resolveCombatIntent` / `strikePressIntent` take `{ pauseMenuOpen }`. Sign Escape uses `stopImmediatePropagation` so closing a sign does not open pause on the same key.  
@@ -604,12 +599,7 @@ flowchart TB
   - **GP** §2.5  
   - **Build:** `levelOrder.ts` — `LEVEL_ORDER` (dojo first), `?level=<index>` via `readLevelIndexFromLocation()` / `buildHrefWithLevelIndex`; pause **Restart level** → `location.reload()`; **Next level** disabled + stub copy until more rows exist.  
 
-- [ ] **WS-113** — Graphics presets (shadows/post/physics quality) wired.  
-  - **Depends:** WS-020  
-  - **∥** WS-110, WS-111  
-  - **@** `role-graphics-programmer` · `role-ux-ui-designer`  
-  - **GP** §9.2.2  
-  - **Build:** **Baseline:** extends **WS-020** renderer setup (`johnStickRenderSetup.ts`). Presets toggle **shadow map size / contact distance**, **physics substeps** (or body budget) where applicable, and **feature flags** for heavier work: **fullscreen post** (**WS-216**), **rim / toon / hit-flash** materials (**WS-139**), **bag physical / deform** + **hit-burst particle** upgrades (**WS-141**, code path from **WS-073**). Low tier should stay Web-first safe (no required MRT / heavy full-screen passes).  
+- **WS-113 (rejected)** — Multi-tier **graphics / performance presets** (GP §9.2.2) — **withdrawn** to keep the codebase essential: **one** shipped renderer profile (`johnStickRenderSetup.ts` / `GRAPHICS_PRESET_DEFAULT`), **no** pause-menu quality control, **no** `localStorage` preset matrix, **no** per-tier sim/VFX scaling. Future optional shaders/post (**WS-139**, **WS-141**, **WS-216**) are gated by **ship / perf** work (**WS-135**) and product cuts, not runtime quality steps.  
 
 ### Wave 12 — Lock / ship
 
@@ -650,7 +640,7 @@ Cross-disciplinary streams: **3D hero**, **outfit modularity**, **tooling invest
 - [ ] **WS-133** — **Hero stickman — DCC pass** (replace procedural placeholder when ready).  
   - **Depends:** WS-041, WS-132  
   - **∥** WS-131 (informing export automation)  
-  - **Build:** Mesh + rig in DCC aligned to **`docs/CHARACTER_RIG_MAP.md`** and refs under `docs/reference/character/` (hinge layout, rounded/readable silhouette vs separated pipes). Re-export **`Idle` / `Walk`** (+ existing strike clip names the runtime expects). Author strikes with **natural joint flex** and **flowy arcs** (not fully locked “pipe” poses) where refs allow — pairs with **WS-139** / **WS-151** anti-stiff goals. Validate via `docs/GLTF_EXPORT.md` / `npm run validate:gltf`. Optional: **Neck** bone per `docs/FUTURE_DESIGN_NOTES.md`. Optional **shader** pass with **WS-139**: **matcap / stepped diffuse / outline** for readable silhouette at distance (preset-gated via **WS-113**).  
+  - **Build:** Mesh + rig in DCC aligned to **`docs/CHARACTER_RIG_MAP.md`** and refs under `docs/reference/character/` (hinge layout, rounded/readable silhouette vs separated pipes). Re-export **`Idle` / `Walk`** (+ existing strike clip names the runtime expects). Author strikes with **natural joint flex** and **flowy arcs** (not fully locked “pipe” poses) where refs allow — pairs with **WS-139** / **WS-151** anti-stiff goals. Validate via `docs/GLTF_EXPORT.md` / `npm run validate:gltf`. Optional: **Neck** bone per `docs/FUTURE_DESIGN_NOTES.md`. Optional **shader** pass with **WS-139**: **matcap / stepped diffuse / outline** for readable silhouette at distance (enable/disable is a **ship / perf** decision, **WS-135**).  
   - **Artifact** `public/models/char_player_stick_v01.glb` (or versioned successor) + short changelog  
   - **Tool** Blender (recommended) or DCC per WS-131  
   - **@** `role-character-artist` · `role-technical-artist` · `role-technical-animator` · `role-art-director`  
@@ -668,8 +658,8 @@ Cross-disciplinary streams: **3D hero**, **outfit modularity**, **tooling invest
 
 Closes **essential / core** ingredients that were implied by earlier waves but lacked an explicit owner. See **GAME_PLAN index → work streams** table above for mapping.
 
-- [ ] **WS-135** — **Performance & ship budgets** — min-spec frame-time target, physics body / shadow / draw-call budget doc, **worst-case ragdoll** stress scenario, **cold-start / time-to-play** measurement (GP §1.3.3, §11.1.1, §11.1.3, §4.4.5). Include short **actor / module composability** audit vs GP §4.3.2 (refactor plan or “done as-is” sign-off). **Shader / post:** document **extra cost** of optional passes (rim, hit flash, bag `MeshPhysical`, particles with depth read, **WS-216** bloom/grade) per **WS-113** tier; call out **Safari / integrated GPU** risk for fullscreen effects.  
-  - **Depends:** WS-011, WS-020, WS-094, WS-113  
+- [ ] **WS-135** — **Performance & ship budgets** — min-spec frame-time target, physics body / shadow / draw-call budget doc, **worst-case ragdoll** stress scenario, **cold-start / time-to-play** measurement (GP §1.3.3, §11.1.1, §11.1.3, §4.4.5). Include short **actor / module composability** audit vs GP §4.3.2 (refactor plan or “done as-is” sign-off). **Shader / post:** document **extra cost** of optional passes (rim, hit flash, bag `MeshPhysical`, particles with depth read, **WS-216** bloom/grade) against the **single** shipped renderer profile; call out **Safari / integrated GPU** risk for fullscreen effects.  
+  - **Depends:** WS-011, WS-020, WS-094  
   - **∥** WS-136  
   - **@** `role-graphics-programmer` · `role-physics-programmer` · `role-web-tools-engineer` · `role-qa-playtest`  
 
@@ -696,7 +686,7 @@ Closes **essential / core** ingredients that were implied by earlier waves but l
   - **GP** §2.2.3, §2.1.2, §6.1.2  
   - **Build:** **Doc** the target matrix (what a “light” vs “knockdown” hit is). **Data:** extend base + compound move rows (or parallel table) with **receive reaction tier** / **stagger contribution** / **ragdoll eligibility** as needed — wire resolve so **training dummy + future grunts** reuse the same `trainingDummyFsm`-shaped pipeline (`docs/FUTURE_DESIGN_NOTES.md` — dummy as canonical enemy). **Validate** on dummy; **optional** on **WS-093** NPC when it ships. **Player** receive (fall only on combos / power shots) stays in `docs/FUTURE_DESIGN_NOTES.md` until enemy-vs-player hitting exists — align rules conceptually when implementing.
 
-- [ ] **WS-139** — **Strike presentation policy** — document + implement gaps for **keyframed vs procedural** exaggeration on strikes (GP §5.2.2); **hit flash / rim** rules consistent across targets (GP §5.1.3). Include **anti-stiff / flowy** goals: **secondary motion** (follow-through, slight overshoot, eased recovery), optional **soft IK / springy layers / joint bias** where they do not break hitboxes; **limb bend** reads natural at gameplay camera — not “pipe mannequin” unless pillar calls for it. **Shaders (optional, data-driven):** **rim light** / **Fresnel** accent on limbs for silhouette; **short emissive pulse** or **color lift** on hit (uniforms from combat events / **WS-070**); **toon-stepped** or **matcap** variant if art lock chooses stylized read — all **preset-gated** (**WS-113**) and costed in **WS-135**.  
+- [ ] **WS-139** — **Strike presentation policy** — document + implement gaps for **keyframed vs procedural** exaggeration on strikes (GP §5.2.2); **hit flash / rim** rules consistent across targets (GP §5.1.3). Include **anti-stiff / flowy** goals: **secondary motion** (follow-through, slight overshoot, eased recovery), optional **soft IK / springy layers / joint bias** where they do not break hitboxes; **limb bend** reads natural at gameplay camera — not “pipe mannequin” unless pillar calls for it. **Shaders (optional, data-driven):** **rim light** / **Fresnel** accent on limbs for silhouette; **short emissive pulse** or **color lift** on hit (uniforms from combat events / **WS-070**); **toon-stepped** or **matcap** variant if art lock chooses stylized read — ship/cut per **WS-135** budget (no runtime quality tiers).  
   - **Depends:** WS-081, WS-041  
   - **∥** WS-133, WS-095  
   - **@** `role-technical-animator` · `role-art-director` · `role-graphics-programmer`  
@@ -706,7 +696,7 @@ Closes **essential / core** ingredients that were implied by earlier waves but l
   - **∥** WS-133  
   - **@** `role-audio` · `role-creative-director`  
 
-- [ ] **WS-141** — **Bag-specific juice + character/world art lock** — swing arc readability, spring/chain feel, optional **shader displacement** or material treatment (GP §6.3.3); align stickman + dojo materials with **PBR-lite / toon-rim** decision (GP §4.1.2) alongside WS-100. **Shaders:** **`MeshPhysicalMaterial`** for vinyl/leather + **normal** or **height** map where art provides; **vertex / texture displacement** on strike impulse (driven from hit event, clamped); optional **decal** or **projected UV** for **武** / graffiti read (refs `docs/reference/environment/punching-bag/`); coordinate **soft** contact shadow or AO fake if bag still floats visually. **Hit VFX (extends WS-073):** optional **soft particles** (depth fade / near-camera clamp), **stretched billboard** sparks, **simple unlit** burst materials — **preset-aware** (**WS-113**) and costed (**WS-135**). **Dojo env (when glTF / trim replaces procedural):** optional **distance blend** / **triplanar** or **detail-normal** on large floors/walls to hide tiling without huge texture memory — same preset + budget gates.  
+- [ ] **WS-141** — **Bag-specific juice + character/world art lock** — swing arc readability, spring/chain feel, optional **shader displacement** or material treatment (GP §6.3.3); align stickman + dojo materials with **PBR-lite / toon-rim** decision (GP §4.1.2) alongside WS-100. **Shaders:** **`MeshPhysicalMaterial`** for vinyl/leather + **normal** or **height** map where art provides; **vertex / texture displacement** on strike impulse (driven from hit event, clamped); optional **decal** or **projected UV** for **武** / graffiti read (refs `docs/reference/environment/punching-bag/`); coordinate **soft** contact shadow or AO fake if bag still floats visually. **Hit VFX (extends WS-073):** optional **soft particles** (depth fade / near-camera clamp), **stretched billboard** sparks, **simple unlit** burst materials — costed and cut per **WS-135** (no runtime quality tiers). **Dojo env (when glTF / trim replaces procedural):** optional **distance blend** / **triplanar** or **detail-normal** on large floors/walls to hide tiling without huge texture memory — same budget / ship gates.  
   - **Depends:** WS-061, WS-070  
   - **∥** WS-100  
   - **@** `role-vfx-artist` · `role-graphics-programmer` · `role-art-director` · `role-environment-artist`  
@@ -786,7 +776,7 @@ Track separately; **do not start** before WS-120 unless explicitly pulling forwa
 - [ ] **WS-200** — In-world story: inspectables + unkillable NPCs GP §7.4  
 - [ ] **WS-201** — Additional levels + encounter director + pacing GP §7.3, §2.3.3; **one-vs-many** readability scaffold GP §1.1.1; pairs with **WS-219** (crowd knockback §6.2.3)  
 - [ ] **WS-202** — Faction outfits + enemy variety GP §10.2 — **scaffold:** WS-134 (per-limb / outfit slots); full faction tables + content volume remain V2+  
-- [ ] **WS-203** — Blood / decals tier GP §6.3.4 `[N]` — **shader** choices: alpha clip vs blended pool, optional **depth prepass** / **normal-facing** splat; gate cost with **WS-113** / **WS-135**.    
+- [ ] **WS-203** — Blood / decals tier GP §6.3.4 `[N]` — **shader** choices: alpha clip vs blended pool, optional **depth prepass** / **normal-facing** splat; gate cost with **WS-135** / ship cuts.    
 - [ ] **WS-204** — Gamepad rumble GP §8.3 `[N]`  
 - [ ] **WS-205** — Optional mouse yaw only GP §3.2.2 `[N]`  
 - [ ] **WS-206** — Online leaderboard / cloud GP §4.5 `[N]`  
@@ -799,7 +789,7 @@ Track separately; **do not start** before WS-120 unless explicitly pulling forwa
 - [ ] **WS-213** — Floating damage numbers GP §9.1.3 `[N]`  
 - [ ] **WS-214** — Full control remapping UI GP §9.2.3 `[N]`  
 - [ ] **WS-215** — Progressive unlock of move hints on signs GP §9.3.2 `[N]`  
-- [ ] **WS-216** — **Fullscreen post stack** (bloom, color grade / LUT, optional vignette, film grain) GP §4.1.3 `[N]` — implement after **WS-113** can disable or downgrade for low tier; **perf** sign-off in **WS-135** (extra blit passes, mobile Safari). Per-object **material** work (**WS-139**, **WS-141**); **WS-073** = shipped hit burst only; **WS-100** = shipped env baseline.
+- [ ] **WS-216** — **Fullscreen post stack** (bloom, color grade / LUT, optional vignette, film grain) GP §4.1.3 `[N]` — optional **V2+** stack; **perf** sign-off in **WS-135** (extra blit passes, mobile Safari); if shipped, treat as **on/off** or cut for min-spec builds rather than multi-tier runtime presets. Per-object **material** work (**WS-139**, **WS-141**); **WS-073** = shipped hit burst only; **WS-100** = shipped env baseline.
 - [ ] **WS-217** — Optional local telemetry / error hooks GP §4.4.3 `[N]`  
 - [ ] **WS-218** — Determinism / replay documentation GP §6.4.3 `[N]`  
 - [ ] **WS-219** — Crowd knockback chains + falloff + perf GP §6.2.3 `[C]` — ties **WS-201**  
