@@ -2,7 +2,7 @@
  * WS-094 / GP §5.2.1, §6.4.1–§6.4.2 — articulated training dummy: logical bone order matches
  * `docs/CHARACTER_RIG_MAP.md` + `scripts/export-stick-character.mjs`. The dummy uses the same
  * `STICKMAN_BASE_GLTF_URL` skin as the hero; `TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS` resolves
- * Mixamo (or other) node names to those slots.
+ * **Stick_FRig** (and procedural tooling) bone names to those slots.
  */
 
 /** GP §6.4.2 — single articulated knockdown target in dojo; keep body count explicit for perf reviews. */
@@ -28,26 +28,26 @@ export type TrainingDummyRagdollBoneName =
   (typeof TRAINING_DUMMY_RAGDOLL_BONE_ORDER)[number];
 
 /**
- * Ordered candidates per logical ragdoll slot: canonical export first, then common Mixamo/Sketchfab names
- * (**with** `mixamorig:…` as in the glTF JSON). Three’s `GLTFLoader` often exposes the same bones **without**
- * colons (`mixamorigHips_01`); `resolveRagdollBone` strips `:` as a fallback.
+ * Ordered candidates per logical ragdoll slot: **Stick_FRig** (`Pelvis`, `ThighL`, …), then procedural
+ * `Hips` / `Spine` / … for `PLAYER_GLTF_URL_PROCEDURAL` or `gltfUrlOverride`. glTF may use `:` in names;
+ * `resolveRagdollBone` also tries a flattened key (no colons).
  */
 export const TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS: Record<
   TrainingDummyRagdollBoneName,
   readonly string[]
 > = {
-  Hips: ["Hips", "mixamorig:Hips_01"],
-  Spine: ["Spine", "mixamorig:Spine_02"],
-  Chest: ["Chest", "mixamorig:Spine2_04"],
-  Head: ["Head", "mixamorig:Head_06"],
-  ShoulderL: ["ShoulderL", "mixamorig:LeftShoulder_08"],
-  ArmL: ["ArmL", "mixamorig:LeftArm_09"],
-  ShoulderR: ["ShoulderR", "mixamorig:RightShoulder_016"],
-  ArmR: ["ArmR", "mixamorig:RightArm_017"],
-  LegUpperL: ["LegUpperL", "mixamorig:LeftUpLeg_024"],
-  LegLowerL: ["LegLowerL", "mixamorig:LeftLeg_025"],
-  LegUpperR: ["LegUpperR", "mixamorig:RightUpLeg_00"],
-  LegLowerR: ["LegLowerR", "mixamorig:RightLeg_029"],
+  Hips: ["Pelvis", "Hips"],
+  Spine: ["TorsoLow_MCH", "TorsoBendy", "Torso_MCH", "Spine"],
+  Chest: ["TorsoHigh_MCH", "TorsoIK", "Chest"],
+  Head: ["Head"],
+  ShoulderL: ["Shoulder_MCHL", "UpperL", "ShoulderL"],
+  ArmL: ["ForeL", "UpperL", "ArmL"],
+  ShoulderR: ["Shoulder_MCHR", "UpperR", "ShoulderR"],
+  ArmR: ["ForeR", "UpperR", "ArmR"],
+  LegUpperL: ["ThighL", "Thigh_FKL", "Thigh_MCHL", "LegUpperL"],
+  LegLowerL: ["ShinL", "Shin_FKL", "Shin_MCHL", "LegLowerL"],
+  LegUpperR: ["ThighR", "Thigh_FKR", "Thigh_MCHR", "LegUpperR"],
+  LegLowerR: ["ShinR", "Shin_FKR", "Shin_MCHR", "LegLowerR"],
 };
 
 /** Parent bone name per rig map; `Hips` is world root of the chain. */
@@ -69,7 +69,7 @@ export const TRAINING_DUMMY_RAGDOLL_PARENT: Record<
   LegLowerR: "LegUpperR",
 };
 
-/** Capsule radius by bone (meters); from `scripts/export-stick-character.mjs` mesh radii. */
+/** Capsule radius by bone (meters); tuned against **`STICKMAN_BASE_GLTF_URL`**; tweak if mesh changes. */
 export const TRAINING_DUMMY_RAGDOLL_RADIUS: Record<
   TrainingDummyRagdollBoneName,
   number

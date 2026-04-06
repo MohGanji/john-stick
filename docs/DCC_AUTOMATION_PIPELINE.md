@@ -63,7 +63,15 @@ With **Blender running**, add-on **connected**, and **MCP enabled**, the agent c
 2. `importlib.util.spec_from_file_location` → `exec_module` → `export_hero_glb()`.
 3. Agent runs `npm run validate:gltf` after.
 
-The script selects **mesh + armature** objects only (skips default lights/camera) and exports under **`public/models/`** per `docs/GLTF_EXPORT.md` (GLB, Y-up, apply modifiers, animations). Default output name **`char_player_stick_v01.glb`** (procedural / authoring). For the **single runtime base** (`STICKMAN_BASE_GLTF_URL` in `playerCharacter.ts` — today often `stickman_fighting_kaisoon.glb`), overwrite **that** file via `export_hero_glb(out_name="…")` or env `JOHN_STICK_EXPORT_GLB` when using `-P` so **player + dummy + sparring** stay in sync.
+The script selects **mesh + armature** objects only (skips default lights/camera) and exports under **`public/models/`** per `docs/GLTF_EXPORT.md` (GLB, Y-up, apply modifiers, animations). Default output name **`char_player_stick_v01.glb`** (matches procedural slot / **WS-133** canonical). For **parametric** output (`PLAYER_GLTF_URL_PROCEDURAL` → **`char_player_stick_v01.glb`**), use `export_hero_glb(out_name="…")` or env `JOHN_STICK_EXPORT_GLB`. The **default runtime** hero is **`STICKMAN_BASE_GLTF_URL`** (**Stick_FRig** `stick_frig_v15_hero.glb`). **`build_thick_capsule_mixamo_hero.py`** is experimental only — do **not** ship its output as default. Thick capsule look: **`docs/BLENDER_THICK_CAPSULE_HERO_SOP.md`** (manual Blender on **Stick_FRig**); update ragdoll fallbacks if you rename bones.
+
+**Smoother parametric mesh (literal `Hips`/`Spine`/… + procedural clips):** `scripts/blender/refine_hero_subsurf_export.py` — import **`char_player_stick_v01.glb`**, **Subdivision** ×1, re-export. Purge stray **`Action`s** in Blender so you do not re-export orphan tracks onto the wrong rig.
+
+**Foundational hero glb (`WS-228`):** `scripts/blender/ws228_hero_glb_production.py` — import **`stick_frig_v15_hero.glb`** (or env override), ground feet, optional foot widen, layered-action **`Idle`** from **`Walk`**, re-export; then **`npm run validate:gltf`**. **(2026-04-06:** batch run **damaged** an earlier hero — **backup** `.glb`, verify in **viewport + engine**; see **`docs/GLTF_EXPORT.md`** changelog.)
+
+**Thick capsule + katana (manual):** [`docs/BLENDER_THICK_CAPSULE_HERO_SOP.md`](BLENDER_THICK_CAPSULE_HERO_SOP.md) — start from **`Stick_FRig_V15.blend`** / exported hero glb. **`build_thick_capsule_mixamo_hero.py`** is an optional **broken** seed only; do **not** point **`STICKMAN_BASE_GLTF_URL`** at its output without a full Blender fix.
+
+**Animation repair + clip export (`WS-229`):** Same file / rig — **action audit** (locomotion vs combat), **NLA** strips so glTF exports only intended clips; **retarget in Blender** if importing external mocap; hand off to **`WS-224`/`225`** for polish. Use MCP or headless Blender per `docs/GLTF_EXPORT.md`; **`@role-blender-expert`** owns the export pass.
 
 **You still run Blender** (app open + **Connect** once per session). You do **not** need to use Blender’s export menus if the agent runs the script for you.
 

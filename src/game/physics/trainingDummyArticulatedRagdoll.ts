@@ -100,7 +100,7 @@ function findBoneMap(root: THREE.Object3D): Map<string, THREE.Bone> {
   return map;
 }
 
-/** glTF may use `mixamorig:Hips`; Three's GLTFLoader often exposes bones as `mixamorigHips` (no colon). */
+/** glTF bone names may contain `:`; Three's GLTFLoader often exposes a flattened name (no colons). */
 function boneMapLookupKeys(gltfBoneName: string): string[] {
   if (!gltfBoneName.includes(":")) return [gltfBoneName];
   const flattened = gltfBoneName.replace(/:/g, "");

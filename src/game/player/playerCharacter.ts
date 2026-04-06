@@ -7,24 +7,46 @@ import { PLAYER_CAPSULE, playerCapsuleCenterY } from "./playerCapsuleConfig";
 import { strikePresentationClipName } from "./strikePresentation";
 
 /**
- * Procedural / script export path (`npm run export:character`). Use as `STICKMAN_BASE_GLTF_URL` when
- * the whole cast should share the in-repo stick until a single Mixamo-base `.glb` replaces it (WS-133).
+ * **Parametric** stick (`npm run export:character`) — exact **`Hips` / `Spine` / …** names for tooling
+ * and retarget experiments. Not **`STICKMAN_BASE_GLTF_URL`** (Stick_FRig hero).
  */
-export const PLAYER_GLTF_URL_CANONICAL = "/models/char_player_stick_v01.glb";
+export const PLAYER_GLTF_URL_PROCEDURAL = "/models/char_player_stick_v01.glb";
 
 /**
- * Sketchfab “Stickman Fighting” (CC-BY — `CREDITS.md`). Default `STICKMAN_BASE_GLTF_URL` until a
- * neutral `stickman_base_v01.glb` ships.
+ * **Single shipped hero** — Stick_FRig: `source_assets/Stick_FRig_V15.blend` →
+ * `scripts/blender/export_stick_frig_hero_glb.py` → **`stick_frig_v15_hero.glb`**.
+ *
+ * **Animations** — The runtime plays **glTF clips by name** (`Idle`, `Walk`, strike names from
+ * `strikePresentationClipName`, etc.). Author and export them **in Blender** on this armature. There is
+ * **no** in-game library that retargets Mixamo (or any other skeleton) onto this rig.
+ *
+ * **Physics / ragdoll** — Uses **logical bone slots** (`Hips`, `Spine`, …) in `TRAINING_DUMMY_RAGDOLL_*`.
+ * `TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS` maps each slot to **actual glTF bone names** (Stick_FRig
+ * first; extra strings are only for `gltfUrlOverride` experiments or legacy assets).
  */
-export const PLAYER_GLTF_URL_SKETCHFAB_KAISOON =
-  "/models/stickman_fighting_kaisoon.glb";
+export const STICKMAN_BASE_GLTF_URL = "/models/stick_frig_v15_hero.glb";
+
+/** Alias — same URL as `STICKMAN_BASE_GLTF_URL` (explicit “hero” name for imports). */
+export const PLAYER_GLTF_URL_STICKMAN_HERO = STICKMAN_BASE_GLTF_URL;
+
+/** Same as `STICKMAN_BASE_GLTF_URL`. */
+export const PLAYER_GLTF_URL_CANONICAL = STICKMAN_BASE_GLTF_URL;
 
 /**
- * **Single runtime glTF** for hero, training dummy, and sparring partner — one skeleton + clip set.
- * Variation = **instantiation** (`appearance` tints today; later: uniform scale, materials, outfit
- * segments) — not a separate GLB per character class.
+ * @deprecated Use **`STICKMAN_BASE_GLTF_URL`** or **`PLAYER_GLTF_URL_STICKMAN_HERO`**.
  */
-export const STICKMAN_BASE_GLTF_URL = PLAYER_GLTF_URL_SKETCHFAB_KAISOON;
+export const PLAYER_GLTF_URL_MIXAMO_FOUNDATION = STICKMAN_BASE_GLTF_URL;
+
+/**
+ * @deprecated Use **`STICKMAN_BASE_GLTF_URL`**.
+ */
+export const PLAYER_GLTF_URL_SKETCHFAB_KAISOON = STICKMAN_BASE_GLTF_URL;
+
+/**
+ * Removed from repo — failed headless capsule experiment. Symbol kept only for stray tooling references.
+ */
+export const PLAYER_GLTF_URL_THICK_CAPSULE_AUTOMATION_BROKEN =
+  "/models/char_thick_capsule_mixamo_v01.glb";
 
 /** @deprecated Use `STICKMAN_BASE_GLTF_URL` (same value). */
 export const PLAYER_GLTF_URL = STICKMAN_BASE_GLTF_URL;
@@ -33,15 +55,19 @@ export const PLAYER_GLTF_URL = STICKMAN_BASE_GLTF_URL;
  * Bump when stickman `.glb` files under `public/models/` change in dev so the browser does not serve
  * a stale cache for the same URL.
  */
-const DEV_STICKMAN_GLB_CACHE_BUST = 2;
+const DEV_STICKMAN_GLB_CACHE_BUST = 10;
 
 function withDevCacheBustStickmanGlb(url: string): string {
   if (!import.meta.env.DEV) return url;
   const base = url.split("?")[0];
   const knownBases = new Set<string>([
     STICKMAN_BASE_GLTF_URL,
+    PLAYER_GLTF_URL_STICKMAN_HERO,
     PLAYER_GLTF_URL_CANONICAL,
+    PLAYER_GLTF_URL_PROCEDURAL,
+    PLAYER_GLTF_URL_MIXAMO_FOUNDATION,
     PLAYER_GLTF_URL_SKETCHFAB_KAISOON,
+    PLAYER_GLTF_URL_THICK_CAPSULE_AUTOMATION_BROKEN,
   ]);
   if (!knownBases.has(base)) return url;
   const sep = url.includes("?") ? "&" : "?";
@@ -133,12 +159,12 @@ function normalizeImportedPlayerVisual(
 }
 
 function needsImportedVisualNormalization(url: string): boolean {
-  return url !== PLAYER_GLTF_URL_CANONICAL;
+  return url !== PLAYER_GLTF_URL_PROCEDURAL;
 }
 
 /**
  * Hold the source clip’s **first keyframe** on every track as a loopable “idle” so the mesh does not
- * bob when standing. **Required** when the glb only exports `Walk` (e.g. Sketchfab kaisoon) — otherwise
+ * bob when standing. **Required** when the glb only exports `Walk` — otherwise
  * `idle` and `walk` would be the **same** `AnimationClip` reference, standing would play a full walk
  * cycle (hips lift → feet no longer match floor alignment → visible float / flicker), and crossfades
  * would target duplicate actions on one clip.

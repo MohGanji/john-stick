@@ -1,5 +1,6 @@
 /**
- * WS-041 / GP §5.3.1 — Regenerate `public/models/char_player_stick_v01.glb`.
+ * WS-041 / GP §5.3.1 — Regenerate **`PLAYER_GLTF_URL_PROCEDURAL`** (`public/models/char_player_stick_v01.glb`).
+ * **Not** `STICKMAN_BASE_GLTF_URL` — default runtime uses Stick_FRig hero (`playerCharacter.ts`).
  * Run: `node scripts/export-stick-character.mjs`
  *
  * V1 mesh: **hero silhouette** — large **sphere** head, short **neck**, **blocky** torso (head-width read),

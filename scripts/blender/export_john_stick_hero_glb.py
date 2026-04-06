@@ -12,9 +12,10 @@ Or from repo root after `export JOHN_STICK_ROOT=$PWD`:
 
   /Applications/Blender.app/Contents/MacOS/Blender hero.blend -b -P scripts/blender/export_john_stick_hero_glb.py
 
-Agent + MCP (GUI Blender connected): set `JOHN_STICK_ROOT` and `importlib`-load this file, then call `export_hero_glb()` or `export_hero_glb(out_name="stickman_fighting_kaisoon.glb")` for the Sketchfab hero slot.
+Agent + MCP (GUI Blender connected): set `JOHN_STICK_ROOT` and `importlib`-load this file, then call
+`export_hero_glb()` or `export_hero_glb(out_name="stick_frig_v15_hero.glb")` for the runtime hero slot.
 
-Environment (optional): `JOHN_STICK_EXPORT_GLB=stickman_fighting_kaisoon.glb` when running `-P` without editing the script.
+Environment (optional): `JOHN_STICK_EXPORT_GLB=stick_frig_v15_hero.glb` when running `-P` without editing the script.
 """
 
 from __future__ import annotations

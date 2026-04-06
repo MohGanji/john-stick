@@ -7,14 +7,16 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { computeArticulatedBindWorldTransforms } from "../physics/trainingDummyArticulatedRagdoll";
+import { STICKMAN_BASE_GLTF_URL } from "./playerCharacter";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
-const kaisoonGlb = join(repoRoot, "public/models/stickman_fighting_kaisoon.glb");
+const pathFromPublicUrl = (url: string) =>
+  join(repoRoot, "public", "models", url.replace(/^\/models\//, ""));
 
 describe("stickman GLB + WS-094 bind", () => {
-  it("kaisoon glb: Mixamo bone names (no colon) resolve for ragdoll bind capture", async () => {
+  it("Stick_FRig hero glb: bone fallbacks resolve for ragdoll bind capture", async () => {
     const loader = new GLTFLoader();
-    const buf = readFileSync(kaisoonGlb);
+    const buf = readFileSync(pathFromPublicUrl(STICKMAN_BASE_GLTF_URL));
     const gltf = await loader.parseAsync(buf.buffer, "");
     const group = new THREE.Group();
     group.add(gltf.scene);

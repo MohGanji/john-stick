@@ -16,7 +16,7 @@ These rules are written as if you hired **staff–principal level** specialists.
 
 - **`docs/GAME_PLAN.md`** — keyboard-only, fixed-pitch camera + key yaw, four-limb + chord combat, dojo-first, Three.js web, no backend.
 - **`docs/WORK_STREAMS.md`** — DAG for **code + art + audio + tooling**; **Wave 13** (WS-130–WS-134) = DCC hero, creative-generation capability, **USER** access, modular outfits; **Wave 14** (WS-135–WS-141) = **GAME_PLAN** perf/browser/combat-audio/bag polish gaps; **Wave 15** (WS-150–WS-157) = **taste tickets** (pillars/rubric, timing reads, camera/mix sessions, multi-option visual gens, target feel matrix, cut list, scripted playtests — **USER** pick + revision); top of file has **GP index → WS** coverage table + expanded **WS-207+** deferred bucket.
-- **Blender MCP** — project server **`blender`** in **`.cursor/mcp.json`** ([BlenderMCP](https://github.com/ahujasid/blender-mcp) + local `addon.py`); enable in **Cursor → Settings → MCP** and connect from Blender’s **BlenderMCP** panel; details in `docs/TOOLCHAIN_ACCESS.md` / `docs/DCC_AUTOMATION_PIPELINE.md`.
+- **Blender MCP** — project server **`blender`** in **`.cursor/mcp.json`** ([BlenderMCP](https://github.com/ahujasid/blender-mcp) + local `addon.py`); enable in **Cursor → Settings → MCP** and connect from Blender’s **BlenderMCP** panel; details in `docs/TOOLCHAIN_ACCESS.md` / `docs/DCC_AUTOMATION_PIPELINE.md`. For **hero glTF production** (mesh vs ref, grounding, **Blender animation** repair, glTF export), invoke **`@role-blender-expert`** — owns **`WS-228`**, **`WS-229`**, and **export passes** for **`WS-224` / `WS-225`**.
 - **3D is primary**; “sprites” may mean **2D UI icons**, **flipbook particles**, **promotional frames**, or **texture reference** — the role must **disambiguate** in the task and pick the right prompt template.
 
 ## Rules by discipline
@@ -35,6 +35,7 @@ These rules are written as if you hired **staff–principal level** specialists.
 | `role-web-tools-engineer.mdc` | Web / Tools Engineer | Vite/hosting patterns, CI, bundle strategy |
 | `role-technical-animator.mdc` | Technical Animator | Clip lists, rig constraints, pose-phase prompts for ref |
 | `role-technical-artist.mdc` | Technical Artist | Export presets, validation, pipeline docs |
+| `role-blender-expert.mdc` | **Blender expert** | **MCP/headless Blender** — Stick_FRig hero **mesh std (`WS-228`)**, **animation repair (`WS-229`)**, export for **locomotion/strikes (`WS-224`/`225`)** |
 | `role-environment-artist.mdc` | Environment Artist | Modular kit prompts, glTF handoff, mood refs |
 | `role-character-artist.mdc` | Character Artist | **Per-move / per-combo image prompts**, turnaround prompts |
 | `role-vfx-artist.mdc` | VFX Artist | **Flipbook / sprite sheet / burst prompts**, shader params |

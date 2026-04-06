@@ -1,21 +1,28 @@
-# Player stick rig — bone ↔ future ragdoll map (GP §5.2.1)
+# Player stick rig — bone ↔ ragdoll map (GP §5.2.1)
 
-**Asset (authoring — procedural):** `public/models/char_player_stick_v01.glb` (root node `char_player_stick_v01`)  
-**Regenerate:** `npm run export:character` (`scripts/export-stick-character.mjs`)  
-**Runtime (all stickmen):** **One** glTF — `STICKMAN_BASE_GLTF_URL` in `src/game/player/playerCharacter.ts` — loads for **player**, **training_dummy**, and **sparring_partner**. **Instantiation** (material tint per `appearance`, future scale/outfit hooks) replaces maintaining **separate** character GLBs per role. To run the whole game on the procedural mesh, set `STICKMAN_BASE_GLTF_URL` to `PLAYER_GLTF_URL_CANONICAL` (same file). Iterate the active base in Blender/MCP (see `docs/GLTF_EXPORT.md`, `CREDITS.md` for current default).  
+**Foundational hero (runtime):** **Stick_FRig** — `source_assets/Stick_FRig_V15.blend` → `scripts/blender/export_stick_frig_hero_glb.py` → **`public/models/stick_frig_v15_hero.glb`**. Custom armature (`Pelvis`, `ThighL`, `ForeL`, `Head`, …), **not** Mixamo. **`CREDITS.md`**.
+
+**How the game uses it:** **Animations** are **authored in Blender** and exported as named clips in the glb (`Idle`, `Walk`, strikes — see checklist). The engine does **not** retarget from Mixamo or any other skeleton at runtime. **Physics / training dummy** use **logical slots** (`Hips`, `Spine`, …); `TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS` maps each slot to **Stick_FRig** bone names (and procedural `Hips`/`Spine`/… for tooling glbs).
+
+**Thick capsule + katana** art target: **`docs/reference/character/john-stick-ref-thick-capsule-katana-canonical.png`** — model on **this** armature in Blender (`docs/BLENDER_THICK_CAPSULE_HERO_SOP.md`). **DCC:** **`WS-228`/`229`** → **`WS-224`/`225`**.
+
+**Runtime (all stickmen):** **One** glTF — `STICKMAN_BASE_GLTF_URL` (alias `PLAYER_GLTF_URL_STICKMAN_HERO`) in `src/game/player/playerCharacter.ts` — loads for **player**, **training_dummy**, and **sparring_partner**. **Instantiation** (material tint per `appearance`, later scale/outfit) replaces separate GLBs per NPC class.
+
+**Parametric / authoring:** `public/models/char_player_stick_v01.glb` — **`PLAYER_GLTF_URL_PROCEDURAL`**; `npm run export:character` for literal **`Hips` / `Spine` / …**, procedural clips, Blender `refine_hero_subsurf_export.py` — **not** the default in-engine body.
+
 **Units / axes:** meters, **Y-up**, **+Z forward** (matches Three.js + current level blockout).
 
-## One default rig + instantiation (Mixamo-class skeleton)
+## One default rig + instantiation (Stick_FRig in glTF)
 
 **Policy:** There is a **single** runtime stickman asset. **Do not** add alternate GLB URLs per NPC class — vary **instances** (tint, later uniform scale, materials, modular segments / **WS-134**).
 
 | Layer | What it is |
 |--------|------------|
-| **Runtime glb** | **`STICKMAN_BASE_GLTF_URL`** — typically **Mixamo-compatible** for flowy motion and clip libraries (`mixamorig:…` tracks in-file). |
-| **Logical / physics map** | Bone **Hierarchy** table below — canonical **`Hips` / `Spine` / …** names are the **contract** for **WS-094** ragdoll and docs. **`TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS`** maps those slots to Mixamo node names when the mesh is not the procedural export. |
-| **Procedural export** | `char_player_stick_v01.glb` — **parametric** reference mesh + dev fallback; regenerate with `export:character`, **or** use as `STICKMAN_BASE_GLTF_URL` until **WS-133** lands the **foundational Blender/DCC** canonical base. |
+| **Runtime glb** | **`STICKMAN_BASE_GLTF_URL`** — Stick_FRig **bone names** in the file; animation tracks target those bones. Swap the binary by re-exporting from `Stick_FRig_V15.blend` (or successor). |
+| **Logical / physics map** | Slots **`Hips` / `Spine` / `Chest` / …** in code — **not** required as literal bone names in glTF. **`TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS`** resolves each slot to Stick_FRig names first, then procedural names. |
+| **Parametric export** | `char_player_stick_v01.glb` — tooling mesh + literal `Hips`/`Spine`/… |
 
-**Procurement:** Prefer **Mixamo-rigged** base meshes. Retarget all locomotion/strikes to **that** skeleton; clip names still follow the **Hero glTF export checklist** below.
+**Art bar:** Edit **mesh and actions** in Blender on **Stick_FRig** until silhouette matches refs. If you **rename bones**, update **`TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS`** and this doc. **Clip names** follow the checklist below (retarget any external mocap **in DCC**, not in the game loop).
 
 ### Hero glTF export checklist (runtime contract)
 
@@ -29,7 +36,7 @@ Rename or author actions so names match lookups (case-sensitive):
 
 **Validate:** `docs/GLTF_EXPORT.md` · `npm run validate:gltf`.
 
-**Swapping the base asset:** Overwrite or relink **`STICKMAN_BASE_GLTF_URL`** — every stickman in the scene picks it up. Ship **mesh + skeleton + animations** for one base, or **retarget** in Mixamo/Blender. Do not add a second “hero-only” path for the same cast; use **`gltfUrlOverride`** in `loadPlayerCharacter` only for dev experiments.
+**Swapping the base asset:** Overwrite or relink **`STICKMAN_BASE_GLTF_URL`** — every stickman in the scene picks it up. Ship **mesh + skeleton + animations** for one base; retarget external clips **in Blender** before export. Do not add a second “hero-only” path for the same cast; use **`gltfUrlOverride`** in `loadPlayerCharacter` only for dev experiments.
 
 ## Visual mesh vs gameplay physics (one stack, different owners per state)
 
@@ -48,7 +55,7 @@ Rename or author actions so names match lookups (case-sensitive):
 | Arm hinges | **`Shoulder*` → `Arm*`** (shoulder + elbow-style split as upper/lower cylinders) |
 | Head on neck | **`Head`** is parented to **`Chest`** today — works for head animation; a dedicated **`Neck`** bone is a **deferred** idea (`docs/FUTURE_MAYBE.md` → *Character: `Neck` bone…*) |
 
-So: the **player’s** gameplay proxy is still the **capsule** + **clips**; the **dummy** already uses **ragdoll** on these **same** bone names. **WS-133** lands the **foundational Blender** asset; **WS-223** keeps **handoffs** explicit so nothing forks.
+So: the **player’s** gameplay proxy is still the **capsule** + **clips**; the **dummy** already uses **ragdoll** on the **same logical slots** (resolved to **Mixamo** bones on the foundational hero). **WS-223** keeps **handoffs** explicit so nothing forks.
 
 ## Art direction & where this is “finalized”
 
@@ -67,30 +74,32 @@ Supporting character-folder PNGs (mood, combat poses, hinge language — not pos
 - `docs/reference/character/john-stick-ref-combat-katana-ready-stance.png` — **held** katana: two-hand grip, blade horizontal behind head/neck, **wide low stance**, **flat pill feet**, head can read **floating** (minimal neck). Use for a future **combat-ready clip** or **weapon state** (distinct from **sheathed-on-back** procedural mesh today).
 - `docs/reference/character/john-stick-ref-eyes-and-vector-blood.png` — **face / VFX language** (not skeleton): optional **angry eyes** (white + red glow, slanted almond), **blank** head for neutral; **blood** as solid red circles; sword **grey blade / warm guard & hilt** for keyed reads. Implementation likely **decal / emissive texture / sprite** on the head sphere — see `docs/FUTURE_MAYBE.md`.
 
-**WS-041** delivered the **pipeline** (glTF load, skinned mesh, Idle/Walk, validation, bone naming for ragdoll prep). The **in-repo procedural mesh** is a **temporary placeholder** that chases those refs until a **Blender (or DCC) hero export** replaces it under the same clip names and bone table. Final marketing/trailer silhouette = art pass + engine lighting, not a single closed ticket.
+**WS-041** delivered the **pipeline** (glTF load, skinned mesh, Idle/Walk, validation, bone naming for ragdoll prep). **Default runtime** uses **Stick_FRig** (`STICKMAN_BASE_GLTF_URL`); **procedural** `export:character` remains for tooling. **Blender** edits on **Stick_FRig** drive mesh + actions toward refs (**WS-224+** clips, **WS-139** presentation). Final marketing/trailer silhouette = art pass + engine lighting, not a single closed ticket.
 
-**Baseline locomotion** on the procedural export: keyframed **Idle** and **Walk** only (airborne clip ideas: `docs/FUTURE_MAYBE.md`). **Dummy** ragdoll (**WS-094**) already maps these bones to Rapier bodies; **player** extension follows **WS-223**. Do not rename bones without updating this table and the export script.
+**Baseline locomotion:** if the glb contains **only `Walk`**, **`resolveIdleWalkClips`** builds a **synthetic `Idle`** (hold first frame of `Walk`). Prefer authoring real **`Idle`** + **`Walk`** in Blender (**WS-229** / **WS-224**). **Dummy** ragdoll (**WS-094**) maps **logical** slots to **Stick_FRig** bones via fallbacks; **player** extension follows **WS-223**. If you rename glTF bones, update **fallbacks** + this doc (and `export-stick-character.mjs` only if you still use procedural).
 
-## Hierarchy (parent → child)
+## Hierarchy (logical slot → Stick_FRig bone)
 
-| Bone | Parent | Notes |
-|------|--------|--------|
-| `Hips` | *(armature root under skin)* | Vertical bob in Walk; future pelvis / root for ragdoll |
-| `Spine` | `Hips` | **Lower** torso cylinder; bend/twist vs pelvis |
-| `Chest` | `Spine` | **Upper** torso cylinder; shoulders attach here |
-| `Head` | `Chest` | Sphere mesh; optional future **`Neck`** between `Chest` and `Head` — see `docs/FUTURE_MAYBE.md` |
-| `ShoulderL` | `Chest` | Upper-arm cylinder |
-| `ArmL` | `ShoulderL` | Forearm cylinder |
-| `ShoulderR` | `Chest` | |
-| `ArmR` | `ShoulderR` | |
-| `LegUpperL` | `Hips` | Thigh cylinder |
-| `LegLowerL` | `LegUpperL` | Shin cylinder |
-| `LegUpperR` | `Hips` | |
-| `LegLowerR` | `LegUpperR` | |
+| Slot | Parent slot | Primary Stick_FRig bone | Notes |
+|------|-------------|-------------------------|--------|
+| `Hips` | — | `Pelvis` | Ragdoll root |
+| `Spine` | `Hips` | `TorsoLow_MCH` | Alternatives: `TorsoBendy`, `Torso_MCH` (see `trainingDummyRagdollConfig.ts`) |
+| `Chest` | `Spine` | `TorsoHigh_MCH` | Also `TorsoIK` |
+| `Head` | `Chest`* | `Head` | *Scene graph may use `Head_CTRL` / `TorsoIK`; fallbacks still resolve `Head` for colliders |
+| `ShoulderL` | `Chest` | `Shoulder_MCHL`, `UpperL` | |
+| `ArmL` | `ShoulderL` | `ForeL` | Ragdoll uses one **`ArmL`** capsule along upper/fore chain |
+| `ShoulderR` | `Chest` | `Shoulder_MCHR`, `UpperR` | |
+| `ArmR` | `ShoulderR` | `ForeR` | |
+| `LegUpperL` | `Hips` | `ThighL` | Also FK/IK helper bones (`Thigh_FKL`, …) in fallbacks |
+| `LegLowerL` | `LegUpperL` | `ShinL` | |
+| `LegUpperR` | `Hips` | `ThighR` | |
+| `LegLowerR` | `LegUpperR` | `ShinR` | |
+
+Procedural export uses the **same logical slots** with literal names **`Hips`**, **`Spine`**, …
 
 ## Clip manifest (technical animator handoff)
 
-Applies to **canonical** procedural export; **playable hero** uses the **same clip names** at runtime but animation tracks target **that file’s** bones (e.g. Mixamo). See **Hero glTF export checklist** above.
+**Parametric** export: table below approximates key motion on **`Hips` / …** bones. **Stick_FRig hero:** use the **same clip names** at runtime; tracks target **Stick_FRig** bones. See **Hero glTF export checklist** above.
 
 | clip_id | Approx. duration (s) | Loop | Notes |
 |---------|----------------------|------|--------|

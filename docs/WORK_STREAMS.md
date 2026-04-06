@@ -100,6 +100,8 @@ flowchart TB
     WS131[WS-131 DCC / MCP / automation spike]
     WS132[WS-132 Creative gen capability map]
     WS133[WS-133 Hero mesh + rig + skin]
+    WS228[WS-228 Hero DCC production Blender]
+    WS229[WS-229 Hero Blender anims + export]
     WS224[WS-224 Hero Idle + Walk]
     WS225[WS-225 Hero strike clips]
     WS134[WS-134 Modular limb outfits]
@@ -188,7 +190,11 @@ flowchart TB
   WS041 --> WS133
   WS132 --> WS133
   WS131 -.-> WS133
-  WS133 --> WS224
+  WS131 -.-> WS228
+  WS131 -.-> WS229
+  WS133 --> WS228
+  WS228 --> WS229
+  WS229 --> WS224
   WS224 --> WS225
   WS225 --> WS134
   WS225 -.-> WS120
@@ -289,10 +295,12 @@ flowchart TB
 | WS-130 | 13 | — | WS-131, WS-132 | `role-web-tools-engineer` + **USER** | Env + key slots; no secrets in repo |
 | WS-131 | 13 | — | WS-130, WS-132 | `role-technical-artist` + `role-web-tools-engineer` | MCP vs CLI vs browser SOP |
 | WS-132 | 13 | — | WS-130, WS-131 | `role-art-director` + `role-creative-director` + `role-audio` | [`CREATIVE_IP_CAPABILITY_MAP.md`](CREATIVE_IP_CAPABILITY_MAP.md) — classes, gates, vendor-neutral tooling |
-| WS-133 | 13 | WS-041, WS-132 | WS-131 | `role-character-artist` + `role-technical-artist` + `role-technical-animator` | Foundational hero **mesh + skeleton + skin** → canonical `STICKMAN_BASE_GLTF_URL` (bind pose; `CHARACTER_RIG_MAP`; `validate:gltf`) |
-| WS-224 | 13 | WS-133 | WS-131 | `role-technical-animator` + `role-character-artist` + `role-technical-artist` | Foundational hero **locomotion clips** — `Idle`, `Walk` per `GLTF_EXPORT` + runtime check |
-| WS-225 | 13 | WS-224 | WS-131 | `role-technical-animator` + `role-character-artist` | Foundational hero **strike clips** — names in `strikePresentation.ts` + `compoundMoveTable.ts` + `validate:gltf` |
-| WS-134 | 13 | WS-225 | WS-100 | `role-character-artist` + `role-gameplay-programmer` + `role-technical-artist` | Per-limb swap / mix-match outfits |
+| WS-133 | 13 | WS-041, WS-132 | WS-131 | `role-character-artist` + `role-technical-artist` + `role-technical-animator` | Foundational hero **mesh + skeleton + skin** → `STICKMAN_BASE_GLTF_URL` (**Stick_FRig** `stick_frig_v15_hero.glb` + logical ragdoll map; `CHARACTER_RIG_MAP`; `validate:gltf`) — **done** |
+| WS-228 | 13 | WS-133 | WS-131 | `role-blender-expert` + `role-technical-artist` + `role-art-director` | **Hero glb — mesh & file standardization** (Stick_FRig): ref silhouette, **grounding**, bind pose, weights; purge obvious **action** junk; preserve **Stick_FRig** bone names used in fallbacks; `validate:gltf` |
+| WS-229 | 13 | WS-228 | WS-131 | `role-blender-expert` + `role-technical-animator` + `role-technical-artist` | **Blender — animation repair & glTF clip export**: wrong **Walk**/idle bindings, NLA/action naming, **retarget in DCC** if needed; export only clips the engine expects (hands off to **WS-224**/225 for polish/sign-off) |
+| WS-224 | 13 | WS-133, WS-229 | WS-131 | `role-technical-animator` + `role-blender-expert` + `role-character-artist` + `role-technical-artist` | **Locomotion polish** — looping **`Idle`/`Walk`**, foot slide, timing vs capsule; **Blender re-export** as needed; `resolveIdleWalkClips` + engine playtest |
+| WS-225 | 13 | WS-224 | WS-131 | `role-technical-animator` + `role-blender-expert` + `role-character-artist` | **Strike clip set** — every name in `strikePresentation.ts` + `compoundMoveTable.ts`; **authored/exported in Blender** on **Stick_FRig**; `validate:gltf` + dojo read |
+| WS-134 | 13 | WS-225 | WS-100 | `role-character-artist` + `role-gameplay-programmer` + `role-technical-artist` + `role-blender-expert` (mesh split) | **Modular outfits** — segment IDs vs **Stick_FRig** / **`CHARACTER_RIG_MAP`** regions; glTF/material convention; **Blender** mesh split friendly |
 | WS-135 | 14 | WS-011, WS-020, WS-094, WS-113 | WS-136 | `role-graphics-programmer` + `role-physics-programmer` + `role-qa-playtest` | Min-spec + ragdoll stress + cold-start + **shader/post GPU budget** GP §1.3.3 §11.1 |
 | WS-136 | 14 | WS-112 | WS-135 | `role-web-tools-engineer` + `role-qa-playtest` | Chrome / Firefox / Safari pass GP §11.2.3 |
 | WS-137 | 14 | WS-040, WS-021 | WS-100 | `role-physics-programmer` + `role-technical-animator` | Slopes/stairs + root-motion doc GP §3.3 |
@@ -470,7 +478,7 @@ flowchart TB
   - **Depends:** WS-090, WS-011  
   - **@** `role-physics-programmer` · `role-technical-animator`  
   - **GP** §6.1  
-  - **Build (shipped):** **Training dummy:** **dynamic capsule** for knockdown tumble when not in **WS-094** articulated mode; recover blends to spawn / stand-up. **WS-094** adds **per-limb Rapier** bodies on the **same** bone map (`CHARACTER_RIG_MAP`). This is **one motion stack**, not a throwaway “dummy-only physics”: the player still uses **clip + kinematic capsule** for locomotion and authored strikes today; extending **receive / ragdoll** to the player (or other roles) uses the **identical** skeleton contract via **WS-223** — **never** a parallel physics codebase. **WS-133–WS-225** deliver the **foundational Blender/DCC** glb so clips and bones match code on that shared rig.
+  - **Build (shipped):** **Training dummy:** **dynamic capsule** for knockdown tumble when not in **WS-094** articulated mode; recover blends to spawn / stand-up. **WS-094** adds **per-limb Rapier** bodies on the **same** bone map (`CHARACTER_RIG_MAP`). This is **one motion stack**, not a throwaway “dummy-only physics”: the player still uses **clip + kinematic capsule** for locomotion and authored strikes today; extending **receive / ragdoll** to the player (or other roles) uses the **identical** skeleton contract via **WS-223** — **never** a parallel physics codebase. **WS-133** → **WS-228** → **WS-229** → **WS-224–WS-225** deliver the **foundational DCC** glb so clips and bones match code on that shared rig.
 
 - [x] **WS-094** — **Articulated ragdoll** — Rapier **multi-body** chain (or equivalent) mapped from `docs/CHARACTER_RIG_MAP.md`, joint limits, skinned mesh driven by physics poses; reuse dummy FSM + `trainingDummyFeel` as baseline. Respect **perf cap** (GP §6.4.2).  
   - **Build:** `trainingDummyArticulatedRagdoll.ts` — spawn on `ragdoll` phase, revolute limits on elbows/knees, multi-body kinematic recover, `skeleton.pose()` after teardown.  
@@ -590,37 +598,57 @@ Cross-disciplinary streams: **3D hero**, **outfit modularity**, **tooling invest
   - **Artifact** [`docs/CREATIVE_IP_CAPABILITY_MAP.md`](CREATIVE_IP_CAPABILITY_MAP.md) (brief templates: pointers to `role-art-director` / `role-audio` / adjacent role rules)  
   - **@** `role-art-director` · `role-creative-director` · `role-audio`  
 
-- [ ] **WS-133** — **Foundational hero — mesh, skeleton, skin** (canonical `STICKMAN_BASE_GLTF_URL`).  
+- [x] **WS-133** — **Foundational hero — mesh, skeleton, skin** (canonical `STICKMAN_BASE_GLTF_URL`).  
   - **Depends:** WS-041, WS-132  
   - **∥** WS-131 (informing export automation)  
   - **Build:** DCC mesh + armature + weights aligned to **`docs/CHARACTER_RIG_MAP.md`** and `docs/reference/character/`. **Bind pose** only — no locomotion or strike clips on this ticket. Export glb; `npm run validate:gltf`; set **`STICKMAN_BASE_GLTF_URL`**; changelog. Optional: **Neck** bone per `docs/FUTURE_MAYBE.md`.  
+  - **Shipped:** Runtime base = **`public/models/stick_frig_v15_hero.glb`** (`STICKMAN_BASE_GLTF_URL` / `PLAYER_GLTF_URL_STICKMAN_HERO`) — **Stick_FRig** skeleton + mesh (refs: `docs/reference/character/`, logo PNG). **`PLAYER_GLTF_URL_PROCEDURAL`** (`char_player_stick_v01.glb`) remains for parametric tooling. **Pipeline:** **`WS-228`** mesh/file standardization → **`WS-229`** Blender animation repair & export → **`WS-224`/225** locomotion/strike polish + sign-off. **Neck** still optional (`FUTURE_MAYBE`).  
   - **Artifact** glb + changelog  
   - **Tool** Blender (recommended) or DCC per WS-131  
   - **@** `role-character-artist` · `role-technical-artist` · `role-technical-animator` · `role-art-director`  
   - **GP** §5.2.1, §5.3.1  
 
-- [ ] **WS-224** — **Foundational hero — locomotion clips** (`Idle`, `Walk`).  
+- [x] **WS-228** — **Hero glb — mesh & file standardization (Blender, Stick_FRig)**.  
   - **Depends:** WS-133  
+  - **∥** WS-131 (pipeline); **unblocks** **WS-229** (systematic animation work)  
+  - **Build:** On **`STICKMAN_BASE_GLTF_URL`**: (1) **Silhouette** — mesh edits toward **`public/logo/dojo-stickman-i.png`** + `docs/reference/character/`; **preserve Stick_FRig bone names** in fallbacks and skinning. (2) **Grounding / scale** — eliminate hover; correct rest/bind and export root so engine normalization + dojo floor agree (`playerCapsuleConfig`). (3) **File hygiene** — materials, duplicate nodes, obvious bad empties; **optional** strip of orphan actions only if needed; full **action/NLA repair** = **WS-229**. (4) `validate:gltf`; `docs/GLTF_EXPORT.md` changelog; **`DEV_STICKMAN_GLB_CACHE_BUST`** when URL unchanged.  
+  - **Artifact** Updated **`stick_frig_v15_hero.glb`** (or successor path + `playerCharacter.ts` update) + optional **`scripts/blender/*.py`** SOP  
+  - **Tool** Blender + **Blender MCP** / headless per **`docs/DCC_AUTOMATION_PIPELINE.md`**  
+  - **@** `role-blender-expert` · `role-technical-artist` · `role-art-director`  
+  - **GP** §5.2.1, §5.3.1  
+  - **Shipped (2026-04-06):** Tooling + doc pipeline split (**`WS-229`** for animation); hero **`.glb` rollback** same day after an automated pass damaged the mesh — re-attempt DCC only with viewport + in-engine QC per **`role-blender-expert`**.  
+
+- [ ] **WS-229** — **Stick_FRig hero — Blender animation repair & glTF clip export**.  
+  - **Depends:** WS-228  
   - **∥** WS-131  
-  - **Build:** Looping **`Idle`** and **`Walk`**; re-export same glb target; `docs/GLTF_EXPORT.md`; `npm run validate:gltf`; in-engine check (`resolveIdleWalkClips`, foot alignment).  
+  - **Build:** On the **standardized** hero glb: (1) **Action audit** — list every exported clip; **locomotion** (`Idle`, `Walk`) must not be combat/punch mis-labels (fix in Graph Editor / retarget in Blender). (2) **NLA / export** — only intended strips export; name actions **exactly** as runtime expects (case-sensitive); no duplicate **`Walk.001`** surprises. (3) **External mocap** — retarget onto **Stick_FRig** in DCC; document source + license in **`CREDITS.md`** if applicable. (4) **Handoff** — **`role-blender-expert`** exports; **`role-technical-animator`** signs motion intent before **WS-224** / **WS-225** polish. (5) `validate:gltf`; cache bust coordination.  
+  - **Artifact** glb + `GLTF_EXPORT` changelog + optional **clip manifest** (spreadsheet or `docs/`)  
+  - **Tool** Blender MCP + **`role-blender-expert`**  
+  - **@** `role-blender-expert` · `role-technical-animator` · `role-technical-artist`  
+  - **GP** §5.2.1, §5.3.1  
+
+- [ ] **WS-224** — **Foundational hero — locomotion polish** (`Idle`, `Walk`).  
+  - **Depends:** WS-133, WS-229  
+  - **∥** WS-131  
+  - **Build:** After **WS-229** exports **correct** locomotion clips: **looping** **`Idle`/`Walk`**, foot plant vs capsule, timing; **Blender** iteration + re-export on **`STICKMAN_BASE_GLTF_URL`**; engine checks **`resolveIdleWalkClips`**, dojo walk cycle, no strike bleed-in. **Code** changes only if contract unchanged but normalization needs tuning.  
   - **Artifact** Updated glb + changelog  
-  - **@** `role-technical-animator` · `role-character-artist` · `role-technical-artist`  
+  - **@** `role-technical-animator` · `role-blender-expert` · `role-character-artist` · `role-technical-artist`  
   - **GP** §5.2.1, §3.3.1  
 
 - [ ] **WS-225** — **Foundational hero — strike clip set**.  
   - **Depends:** WS-224  
   - **∥** WS-131  
-  - **Build:** Author/export **every** clip name required by `src/game/player/strikePresentation.ts` and by compound rows in `src/game/combat/compoundMoveTable.ts` (e.g. `suggestedAnimClipName`); `validate:gltf`; dojo spot-check. Coordinate anti-stiff goals with **WS-139** / **WS-151**. Optional silhouette shaders with **WS-139** (**WS-113** gated).  
+  - **Build:** **Blender** (retarget external mocap in DCC if needed) author/export **every** clip in `strikePresentation.ts` + `compoundMoveTable.ts`; **same Stick_FRig** rig/object space; strip additive layers that break hit read; `validate:gltf`; dojo + dummy silhouette pass. **`role-blender-expert`** on **export**; coordinate **WS-139** anti-stiff / **WS-151** reads.  
   - **Artifact** Final foundational hero glb + changelog  
-  - **@** `role-technical-animator` · `role-character-artist` · `role-art-director`  
+  - **@** `role-technical-animator` · `role-blender-expert` · `role-character-artist` · `role-art-director`  
   - **GP** §5.2.1, §2.2.x  
 
 - [ ] **WS-134** — **Modular limbs / outfits** (mix-and-match look system).  
   - **Depends:** WS-225  
   - **∥** WS-100 (environment art can parallel once hero schema exists)  
-  - **Build:** **Design** segment IDs (e.g. head accessory, upper arm L/R, forearm, torso band, …) matching rig regions; **asset** convention (separate glTF parts, material slots, or skinned sub-meshes); **runtime** hook to swap mesh/material per segment from data (preserves animation + hit/ragdoll mapping). Feeds long-term **faction / enemy variety** (see WS-202).  
-  - **Artifact** doc + schema + minimal code path in engine  
-  - **@** `role-character-artist` · `role-gameplay-programmer` · `role-technical-artist` · `role-lead-game-designer`  
+  - **Build:** **Design** segment IDs vs **Stick_FRig** / **`CHARACTER_RIG_MAP`** body regions (not only procedural names); **asset** convention (sub-meshes / materials / optional separate glTF parts); **Blender** mesh splits that **preserve skinning**; **runtime** swap hook from data (animations + ragdoll unchanged). Feeds **faction / enemy** variety (**WS-202**).  
+  - **Artifact** doc + schema + minimal engine hook  
+  - **@** `role-character-artist` · `role-gameplay-programmer` · `role-technical-artist` · `role-blender-expert` (mesh topology) · `role-lead-game-designer`  
   - **GP** §10.2 (outfits / variety)  
 
 ### Wave 14 — GAME_PLAN closure: performance, platforms, combat & presentation polish
@@ -672,7 +700,7 @@ Closes **essential / core** ingredients that were implied by earlier waves but l
 
 - [ ] **WS-223** — **Unified motion stack — policy doc + integration checklist** —  
   - **Depends:** WS-225, WS-094  
-  - **Build:** (1) **Authoring contract:** satisfied when **WS-133–WS-225** are done — `STICKMAN_BASE_GLTF_URL` contains **mesh, skeleton, `Idle`, `Walk`, and all strike clips** required by code; `npm run validate:gltf`; playtest sign-off on mislabeled or missing clips. (2) **Runtime policy doc** in `docs/`: **per state**, whether **clips**, **kinematic capsule**, or **Rapier** own the pose; handoffs for **dummy**, **sparring (WS-226)**, **player receive (WS-227)**; **IK / partial motors** only as extensions of this stack. (3) **Code touchpoint list:** `playerCharacter`, ragdoll bind, strike presentation, training/sparring FSM — so asset changes stay single-path.  
+  - **Build:** (1) **Authoring contract:** satisfied when **WS-133**, **WS-228**, **WS-229**, **WS-224**, **WS-225** are done — `STICKMAN_BASE_GLTF_URL` contains **mesh, skeleton, `Idle`, `Walk`, and all strike clips** required by code; `npm run validate:gltf`; playtest sign-off on mislabeled or missing clips. (2) **Runtime policy doc** in `docs/`: **per state**, whether **clips**, **kinematic capsule**, or **Rapier** own the pose; handoffs for **dummy**, **sparring (WS-226)**, **player receive (WS-227)**; **IK / partial motors** only as extensions of this stack. (3) **Code touchpoint list:** `playerCharacter`, ragdoll bind, strike presentation, training/sparring FSM — so asset changes stay single-path.  
   - **@** `role-technical-animator` · `role-physics-programmer` · `role-gameplay-programmer` · `role-character-artist`  
   - **GP** §5.2, §6.1, `docs/FUTURE_MAYBE.md` (one motion system)  
 
@@ -691,7 +719,7 @@ Closes **essential / core** ingredients that were implied by earlier waves but l
 - [ ] **WS-151** — **Combat timing + enemy read pass** —  
   - **Depends:** WS-081, WS-071, WS-138, WS-095  
   - **∥** WS-152, WS-155  
-  - **Build:** **Timing tables** (startup / active / recovery) vs move data; **telegraph** audit on **bag, dummy, NPC**; list **misreads** → gameplay tuning tickets. Align with strike roles (poke / launcher / sweep) from WS-138 and **when targets stay up vs ragdoll** from WS-095. Add a **stiffness pass:** windups/recoveries should feel **organic** (easing, overlap, small anticipation) — file tickets against **WS-139** (presentation code), **WS-133 / WS-224 / WS-225** (poses / rig / clips), or juice (**WS-071**) where the fix belongs; the **player capsule** is not the art target.  
+  - **Build:** **Timing tables** (startup / active / recovery) vs move data; **telegraph** audit on **bag, dummy, NPC**; list **misreads** → gameplay tuning tickets. Align with strike roles (poke / launcher / sweep) from WS-138 and **when targets stay up vs ragdoll** from WS-095. Add a **stiffness pass:** windups/recoveries should feel **organic** (easing, overlap, small anticipation) — file tickets against **WS-139** (presentation code), **WS-133 / WS-228 / WS-229 / WS-224 / WS-225** (mesh / DCC / Blender anims / clips), or juice (**WS-071**) where the fix belongs; the **player capsule** is not the art target.  
   - **Round:** ≥2 **USER** review cycles with playable build; document deltas per round.  
   - **@** `role-lead-game-designer` · `role-gameplay-programmer` · **USER**  
   - **GP** §1.3.2, §2.1.1–2.1.2, §2.2.x  
