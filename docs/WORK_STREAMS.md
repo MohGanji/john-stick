@@ -288,7 +288,7 @@ flowchart TB
 | WS-120 | 12 | WS-081, WS-092, WS-102, WS-112 | — | `role-qa-playtest` + `role-game-director` | Rubric pass, cut list GP §11.2 |
 | WS-130 | 13 | — | WS-131, WS-132 | `role-web-tools-engineer` + **USER** | Env + key slots; no secrets in repo |
 | WS-131 | 13 | — | WS-130, WS-132 | `role-technical-artist` + `role-web-tools-engineer` | MCP vs CLI vs browser SOP |
-| WS-132 | 13 | — | WS-130, WS-131 | `role-art-director` + `role-creative-director` | Art/audio **classes** of generation (tool-agnostic) |
+| WS-132 | 13 | — | WS-130, WS-131 | `role-art-director` + `role-creative-director` + `role-audio` | [`CREATIVE_IP_CAPABILITY_MAP.md`](CREATIVE_IP_CAPABILITY_MAP.md) — classes, gates, vendor-neutral tooling |
 | WS-133 | 13 | WS-041, WS-132 | WS-131 | `role-character-artist` + `role-technical-artist` + `role-technical-animator` | Foundational hero **mesh + skeleton + skin** → canonical `STICKMAN_BASE_GLTF_URL` (bind pose; `CHARACTER_RIG_MAP`; `validate:gltf`) |
 | WS-224 | 13 | WS-133 | WS-131 | `role-technical-animator` + `role-character-artist` + `role-technical-artist` | Foundational hero **locomotion clips** — `Idle`, `Walk` per `GLTF_EXPORT` + runtime check |
 | WS-225 | 13 | WS-224 | WS-131 | `role-technical-animator` + `role-character-artist` | Foundational hero **strike clips** — names in `strikePresentation.ts` + `compoundMoveTable.ts` + `validate:gltf` |
@@ -583,11 +583,11 @@ Cross-disciplinary streams: **3D hero**, **outfit modularity**, **tooling invest
   - **Tool** Blender *or* equivalent DCC named in doc  
   - **@** `role-technical-artist` · `role-web-tools-engineer`  
 
-- [ ] **WS-132** — **Creative IP capability map** (generation & handoff, vendor-neutral).  
+- [x] **WS-132** — **Creative IP capability map** (generation & handoff, vendor-neutral).  
   - **Depends:** —  
   - **∥** WS-130, WS-131  
   - **Build:** Define **classes** of work: reference boards, turnaround, per-move stills, UI icons, texture tiles, SFX stems, etc. For each class: **inputs**, **outputs**, **review gate**, and **which @ role** owns prompts/briefs. **Do not** hard-code a single model vendor — use placeholders (“image gen API”, “DAW / stem export”) so tools can swap.  
-  - **Artifact** doc (brief templates may live beside `role-art-director` / `role-audio` rules)  
+  - **Artifact** [`docs/CREATIVE_IP_CAPABILITY_MAP.md`](CREATIVE_IP_CAPABILITY_MAP.md) (brief templates: pointers to `role-art-director` / `role-audio` / adjacent role rules)  
   - **@** `role-art-director` · `role-creative-director` · `role-audio`  
 
 - [ ] **WS-133** — **Foundational hero — mesh, skeleton, skin** (canonical `STICKMAN_BASE_GLTF_URL`).  

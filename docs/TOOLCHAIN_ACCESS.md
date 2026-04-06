@@ -126,7 +126,7 @@ Poly Haven and similar are stronger for **materials/environments** than hero cha
 ## Related docs
 
 - **WS-131** — `docs/DCC_AUTOMATION_PIPELINE.md` (MCP vs headless vs manual; crew decision).  
-- **WS-132** — Creative IP capability map (vendors, handoff).  
+- **WS-132** — [`docs/CREATIVE_IP_CAPABILITY_MAP.md`](CREATIVE_IP_CAPABILITY_MAP.md) (classes of work, review gates, vendor-neutral tooling placeholders).  
 - **`docs/GAME_PLAN.md`** section 4.4 (no-backend, static delivery), 5.3.1 (glTF validation discipline).
 
 ---
