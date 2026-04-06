@@ -18,7 +18,7 @@
 
 ## UI: onboarding & interact affordances (future)
 
-**Context (2026-04):** Players cannot guess **Enter** reads a sign without a hint. Shipped: **`attachContextPromptHud`** (WS-102) shows **`[Enter]` + “Read sign”** when **in kiosk volume** and **facing** the board (`getDojoSignReadPromptState` in `dojoSignKiosks.ts`), plus stamina / guard context lines.
+**Context (2026-04):** Players cannot guess **Enter** reads a sign without a hint. Shipped: **`attachContextPromptHud`** (WS-102) shows **`[Enter]` + “Read sign”** when **in kiosk volume** and **facing** the board (`getDojoSignReadPromptState` in `dojoSignKiosks.ts`), plus stamina context lines.
 
 **Future ideas:** Context prompts for **bag**, **dummy**, **sparring partner** (what you can do from range); **first-time** tooltips or a **short scripted beat** on first spawn; **progressive** sign hints (GP §9.3.2, WS-215); **accessibility**: screen-reader strings, reduce-motion (prompts without pulse animations); unify prompt styling with WS-102 HUD spec.
 
@@ -97,6 +97,18 @@
 **Future idea:** Insert a **`Neck`** bone: `Chest` → `Neck` → `Head`. Optionally a **short neck cylinder** (or invisible segment) skinned 100% to `Neck`; retarget **Idle/Walk** head motion onto `Neck` ± `Head`; update `CHARACTER_RIG_MAP.md` and any WS-091 bone ↔ collider tables. Coordinate with clip re-export so `PLAYER_ANIM_*` contracts stay stable.
 
 **Related:** `docs/CHARACTER_RIG_MAP.md` (visual vs physics, hinge table), `scripts/export-stick-character.mjs`, WS-091 ragdoll mapping.
+
+---
+
+## Character: eyes, faces, and vector-style hit VFX (idea)
+
+**Context (2026-04):** The hero mesh is a **matte black** silhouette; refs show **stateful** faces without rebuilding the head mesh.
+
+**Reference:** `docs/reference/character/john-stick-ref-eyes-and-vector-blood.png` — **Aggro / strike intent:** white eye shapes with **red outer glow**, top edge slanted inward; **Neutral / victim:** no facial features (plain black sphere). **Blood:** scattered **flat red circles** (vector spray), not realistic fluid. **Weapon read:** light blade, **orange/tan** guard and grip for silhouette separation from the body.
+
+**Future ideas:** Drive **expression** from FSM or combat phase (idle vs wind-up vs hit-stun): e.g. **emissive** eye quads on the head, **small billboard** sprites, or a **second material slot** / light mask on the head `SphereGeometry`. Keep **optional** so enemies and the player can share the same rig with different face rules. Coordinate with `role-vfx-artist` blood tier notes and `hitBurstVfxPresets` for circle-cluster reads.
+
+**Related:** `docs/CHARACTER_RIG_MAP.md` (new ref bullet), `john-stick-ref-combat-katana-ready-stance.png` (pose / weapon staging), `.cursor/rules/role-character-artist.mdc`, GP blood tier / VFX streams.
 
 ---
 

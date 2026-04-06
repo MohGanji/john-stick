@@ -51,6 +51,10 @@ import {
 import { FIXED_DT } from "./gameLoop";
 import { createDojoPlaceholderLevel } from "./level/dojoBlockout";
 import {
+  createDojoTitleLogoWall,
+  syncDojoTitleLogoWallFromTuning,
+} from "./level/dojoTitleLogoWall";
+import {
   getDojoSignReadContent,
   DOJO_SIGN_INTERACT_KEY_LABEL,
 } from "./level/dojoSignCopy";
@@ -113,10 +117,7 @@ import { attachContextPromptHud } from "./ui/attachContextPromptHud";
 import {
   contextPromptHudStateForVariant,
 } from "./ui/contextPromptCopy";
-import {
-  CONTEXT_PROMPT_GUARD_HINT_WALL_SEC,
-  resolveContextPromptVariant,
-} from "./ui/contextPromptResolve";
+import { resolveContextPromptVariant } from "./ui/contextPromptResolve";
 import { attachSignReadModal } from "./ui/attachSignReadModal";
 import { attachStaminaHud } from "./ui/attachStaminaHud";
 
@@ -133,6 +134,9 @@ export async function mountGame(
   const { scene, camera, renderer } = createJohnStickRenderSetup(root);
 
   scene.add(createDojoPlaceholderLevel());
+
+  const dojoTitleLogoWall = await createDojoTitleLogoWall();
+  scene.add(dojoTitleLogoWall.group);
 
   const dojoSignKiosks = createDojoSignKiosks();
   scene.add(dojoSignKiosks.group);
@@ -234,8 +238,6 @@ export async function mountGame(
   });
   const contextPromptHud = attachContextPromptHud(root);
   let hudStaminaBlocked = false;
-  let guardHintDismissed = false;
-  let sessionPlaySec = 0;
   let prevSignReadInteractOpen = false;
   /** WS-062 — abstract lab damage on the bag (no UI yet; tunable via `bagHitTuning`). */
   let punchingBagLabDamageTotal = 0;
@@ -386,10 +388,6 @@ export async function mountGame(
         !strikeBusy &&
         strikeCooldownAllowsStart(strikeCooldownGate, combatSimTimeSec) &&
         !staminaAllowsStrike(staminaState, gameplayTuning.combatStamina);
-      sessionPlaySec += dtSeconds;
-      if (actionSample.guardLeft || actionSample.guardRight) {
-        guardHintDismissed = true;
-      }
       if (!getGamePauseSnapshot().simulationPaused) {
         facingYawRad += keyboardLocomotion.facingYawDeltaRad(dtSeconds);
       }
@@ -792,6 +790,10 @@ export async function mountGame(
       combatHitAudio.flushQueuedCombatSounds();
       combatHitBurstVfx.flushQueuedSpawns();
       combatHitBurstVfx.update(presentationPaused ? 0 : dtSeconds);
+      syncDojoTitleLogoWallFromTuning(
+        dojoTitleLogoWall,
+        gameplayTuning.dojoTitleLogo,
+      );
       readRigidBodyTransform(
         physics.playerRigidBody,
         scratchPos,
@@ -946,9 +948,7 @@ export async function mountGame(
         signInRangeAndFacing:
           signPrompt.inRange && signPrompt.facingSign,
         staminaBlockedStrike: hudStaminaBlocked,
-        guardHintActive:
-          !guardHintDismissed &&
-          sessionPlaySec < CONTEXT_PROMPT_GUARD_HINT_WALL_SEC,
+        guardHintActive: false,
       });
       contextPromptHud.setState(
         contextPromptHudStateForVariant(promptVariant),

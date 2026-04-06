@@ -4,6 +4,11 @@ import {
   BAG_HIT_TUNING,
   bagDamageTierMultiplier,
 } from "../combat/bagHitTuning";
+import {
+  DOJO_TITLE_LOGO_BASE_PLANE_WIDTH_M,
+  DOJO_TITLE_LOGO_DEFAULT_CENTER_WORLD_X,
+  DOJO_TITLE_STICKMAN_RELATIVE_SCALE_DEFAULT,
+} from "../level/dojoTitleLogoWall";
 import { createGameplayRuntimeTuning } from "./gameplayRuntimeTuning";
 
 describe("WS-092 / GP §6.1.2 — stagger → ragdoll tuning defaults", () => {
@@ -17,6 +22,15 @@ describe("WS-092 / GP §6.1.2 — stagger → ragdoll tuning defaults", () => {
     const { basePunchDamage, baseEnemyHealth } = t.combatBasics;
     expect(baseEnemyHealth % basePunchDamage).toBe(0);
     expect(baseEnemyHealth / basePunchDamage).toBe(8);
+  });
+
+  it("dojo title logo tuning defaults match dojoTitleLogoWall authored constants", () => {
+    const t = createGameplayRuntimeTuning();
+    expect(t.dojoTitleLogo.planeWidthM).toBe(DOJO_TITLE_LOGO_BASE_PLANE_WIDTH_M);
+    expect(t.dojoTitleLogo.centerWorldX).toBe(DOJO_TITLE_LOGO_DEFAULT_CENTER_WORLD_X);
+    expect(t.dojoTitleLogo.stickRelativeScale).toBe(
+      DOJO_TITLE_STICKMAN_RELATIVE_SCALE_DEFAULT,
+    );
   });
 
   it("charge tiers deal strictly more lab damage (so KD comes sooner than tier-0 count)", () => {

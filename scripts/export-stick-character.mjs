@@ -2,9 +2,15 @@
  * WS-041 / GP §5.3.1 — Regenerate `public/models/char_player_stick_v01.glb`.
  * Run: `node scripts/export-stick-character.mjs`
  *
- * V1 mesh: **cylinders** (limbs + torso + pelvis) + **sphere** head. Two torso bones
- * (`Spine` + `Chest`) = two stacked torso cylinders for bend/twist in later clips.
- * Silhouette refs: `docs/reference/character/` + `CHARACTER_RIG_MAP.md`.
+ * V1 mesh: **hero silhouette** — large **sphere** head, short **neck**, **blocky** torso (head-width read),
+ * long **legs (~60% height)**, **mitten** hands, **wide stance**, **pill** feet.
+ * Two torso bones (`Spine` + `Chest`) for bend/twist.
+ *
+ * **Canonical 2D ref (proportions + look):** `docs/reference/logo/dojo-stickman-i.png`
+ * (runtime copy: `public/logo/dojo-stickman-i.png`). Match that read in 3D; older PNGs under
+ * `docs/reference/character/` are supporting mood refs.
+ *
+ * **Back katana:** optional mesh — default **off** (set `EXPORT_BACK_KATANA` to `true` below to include).
  * Replace with Blender when art lands; keep clip names **Idle** and **Walk** for the runtime.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -37,6 +43,9 @@ if (typeof globalThis.FileReader === "undefined") {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outPath = join(__dirname, "..", "public", "models", "char_player_stick_v01.glb");
+
+/** `true` = add Chest-weighted katana on back (same bone hierarchy either way). */
+const EXPORT_BACK_KATANA = false;
 
 /** @param {THREE.BufferGeometry} geom @param {number} boneIndex */
 function applySkin(geom, boneIndex) {
@@ -94,7 +103,7 @@ function skinSphere(c, radius, boneIndex) {
 }
 
 /**
- * Bind pose: long thin segments for strike/kick reach; two torso links for later spine flex.
+ * Bind pose: thick rounded tubes + wide legs (canonical ref silhouette in 3D).
  * Bone index order must match `bones[]` below.
  */
 function buildBindPoseBones() {
@@ -103,58 +112,58 @@ function buildBindPoseBones() {
 
   const spine = new THREE.Bone();
   spine.name = "Spine";
-  spine.position.set(0, 0.1, 0);
+  spine.position.set(0, 0.11, 0);
   hips.add(spine);
 
   const chest = new THREE.Bone();
   chest.name = "Chest";
-  chest.position.set(0, 0.14, 0);
+  chest.position.set(0, 0.15, 0);
   spine.add(chest);
 
   const head = new THREE.Bone();
   head.name = "Head";
-  head.position.set(0, 0.17, 0);
+  head.position.set(0, 0.28, 0);
   chest.add(head);
 
   const shoulderL = new THREE.Bone();
   shoulderL.name = "ShoulderL";
-  shoulderL.position.set(-0.15, 0.11, 0);
+  shoulderL.position.set(-0.17, 0.11, 0.02);
   chest.add(shoulderL);
 
   const armL = new THREE.Bone();
   armL.name = "ArmL";
-  armL.position.set(-0.24, -0.04, 0.055);
+  armL.position.set(-0.22, -0.09, 0.055);
   shoulderL.add(armL);
 
   const shoulderR = new THREE.Bone();
   shoulderR.name = "ShoulderR";
-  shoulderR.position.set(0.15, 0.11, 0);
+  shoulderR.position.set(0.17, 0.11, -0.02);
   chest.add(shoulderR);
 
   const armR = new THREE.Bone();
   armR.name = "ArmR";
-  armR.position.set(0.24, -0.04, 0.055);
+  armR.position.set(0.22, -0.09, -0.055);
   shoulderR.add(armR);
 
   const legUL = new THREE.Bone();
   legUL.name = "LegUpperL";
-  legUL.position.set(-0.07, -0.1, 0);
+  legUL.position.set(-0.1, -0.04, 0.04);
   hips.add(legUL);
 
   const legLL = new THREE.Bone();
   legLL.name = "LegLowerL";
-  /** Matches upper/lower cylinder lengths in `buildMergedGeometry`. */
-  legLL.position.set(0, -0.34, 0);
+  /** Matches upper/lower segments in `buildMergedGeometry`. */
+  legLL.position.set(-0.017, -0.398, 0.017);
   legUL.add(legLL);
 
   const legUR = new THREE.Bone();
   legUR.name = "LegUpperR";
-  legUR.position.set(0.07, -0.1, 0);
+  legUR.position.set(0.1, -0.04, -0.04);
   hips.add(legUR);
 
   const legLR = new THREE.Bone();
   legLR.name = "LegLowerR";
-  legLR.position.set(0, -0.34, 0);
+  legLR.position.set(0.017, -0.398, -0.017);
   legUR.add(legLR);
 
   const bones = [
@@ -175,27 +184,41 @@ function buildBindPoseBones() {
 }
 
 function buildMergedGeometry() {
-  /** Thinner tubes, longer reach — tuned for future kicks/punches, not stocky blockout. */
-  const limbR = 0.024;
-  const torsoLowerR = limbR * 1.05;
-  const torsoUpperR = limbR * 1.1;
-  const pelvisR = limbR * 1.2;
-  const headR = 0.074;
+  /** Radii stay in sync with `trainingDummyRagdollConfig`. Silhouette chases `dojo-stickman-i.png`. */
+  const limbR = 0.034;
+  const torsoLowerR = 0.039;
+  const torsoUpperR = 0.043;
+  const pelvisR = 0.043;
+  const neckR = 0.017;
+  const headR = 0.088;
 
   const parts = [
-    skinCylinderSegment([0, -0.09, 0], [0, 0.02, 0], pelvisR, 0),
-    skinCylinderSegment([0, 0.02, 0], [0, 0.17, 0], torsoLowerR, 1),
-    skinCylinderSegment([0, 0.17, 0], [0, 0.38, 0], torsoUpperR, 2),
-    skinSphere([0, 0.455, 0], headR, 3),
-    skinCylinderSegment([-0.15, 0.38, 0], [-0.28, 0.27, 0.04], limbR, 4),
-    skinCylinderSegment([-0.28, 0.27, 0.04], [-0.4, 0.12, 0.075], limbR, 5),
-    skinCylinderSegment([0.15, 0.38, 0], [0.28, 0.27, 0.04], limbR, 6),
-    skinCylinderSegment([0.28, 0.27, 0.04], [0.4, 0.12, 0.075], limbR, 7),
-    skinCylinderSegment([-0.07, -0.1, 0], [-0.07, -0.44, 0], limbR, 8),
-    skinCylinderSegment([-0.07, -0.44, 0], [-0.07, -0.74, 0], limbR * 0.96, 9),
-    skinCylinderSegment([0.07, -0.1, 0], [0.07, -0.44, 0], limbR, 10),
-    skinCylinderSegment([0.07, -0.44, 0], [0.07, -0.74, 0], limbR * 0.96, 11),
+    skinCylinderSegment([0, -0.115, 0], [0, 0.05, 0], pelvisR, 0),
+    skinCylinderSegment([0, 0.05, 0], [0, 0.22, 0], torsoLowerR, 1),
+    skinCylinderSegment([0, 0.22, 0], [0, 0.39, 0], torsoUpperR, 2),
+    skinCylinderSegment([0, 0.39, 0], [0, 0.48, 0], neckR, 2),
+    skinSphere([0, 0.575, 0], headR, 3),
+    skinCylinderSegment([-0.165, 0.352, 0.015], [-0.292, 0.288, 0.055], limbR, 4),
+    skinCylinderSegment([-0.292, 0.288, 0.055], [-0.392, 0.092, 0.088], limbR * 0.92, 5),
+    skinSphere([-0.415, 0.026, 0.095], limbR * 1.06, 5),
+    skinCylinderSegment([0.165, 0.352, -0.015], [0.292, 0.288, -0.055], limbR, 6),
+    skinCylinderSegment([0.292, 0.288, -0.055], [0.392, 0.092, -0.088], limbR * 0.92, 7),
+    skinSphere([0.415, 0.026, -0.095], limbR * 1.06, 7),
+    skinCylinderSegment([-0.098, -0.038, 0.038], [-0.112, -0.432, 0.056], limbR, 8),
+    skinCylinderSegment([-0.112, -0.432, 0.056], [-0.142, -0.805, 0.074], limbR * 0.95, 9),
+    skinSphere([-0.152, -0.872, 0.078], limbR * 0.98, 9),
+    skinCylinderSegment([0.098, -0.038, -0.038], [0.112, -0.432, -0.056], limbR, 10),
+    skinCylinderSegment([0.112, -0.432, -0.056], [0.142, -0.805, -0.074], limbR * 0.95, 11),
+    skinSphere([0.152, -0.872, -0.078], limbR * 0.98, 11),
   ];
+  if (EXPORT_BACK_KATANA) {
+    const katanaBladeR = 0.013;
+    const katanaGuardR = 0.026;
+    parts.push(
+      skinCylinderSegment([0.118, 0.455, 0.018], [-0.132, 0.045, -0.118], katanaBladeR, 2),
+      skinSphere([0.098, 0.448, 0.008], katanaGuardR, 2),
+    );
+  }
   const merged = mergeGeometries(parts, false);
   merged.computeVertexNormals();
   return merged;
@@ -272,18 +295,18 @@ function buildIdleClip() {
       "Spine",
       times,
       [
-        [0, 0.1, 0],
         [0, 0.11, 0],
-        [0, 0.1, 0],
+        [0, 0.115, 0],
+        [0, 0.11, 0],
       ],
     ),
     posTrack(
       "Chest",
       times,
       [
-        [0, 0.14, 0],
-        [0, 0.145, 0],
-        [0, 0.14, 0],
+        [0, 0.15, 0],
+        [0, 0.155, 0],
+        [0, 0.15, 0],
       ],
     ),
   ];

@@ -579,15 +579,17 @@ flowchart TB
   - **Depends:** WS-101  
   - **@** `role-ux-ui-designer`  
   - **GP** §9.1.2  
-  - **Build:** `attachContextPromptHud.ts` + `contextPromptResolve.ts` + `contextPromptCopy.ts` — bottom-center **context** line (16px body, `aria-live`): **Enter** + “Read sign” when **in sign volume + facing** (`getDojoSignReadPromptState`); **stamina** text when a strike is requested but **bar blocks**; **guard** copy (`Hold Shift + U/I…`) for **120s** from load or until first guard, lower priority than sign/stamina. Labels from `CONTEXT_HUD_KEY_LABELS` / `DOJO_SIGN_INTERACT_KEY_LABEL` (`dojoSignCopy.ts`, GP §3.4.2).  
+  - **Build:** `attachContextPromptHud.ts` + `contextPromptResolve.ts` + `contextPromptCopy.ts` — bottom-center **context** line (16px body, `aria-live`): **Enter** + “Read sign” when **in sign volume + facing** (`getDojoSignReadPromptState`); **stamina** text when a strike is requested but **bar blocks**. (Startup **guard** hint removed — still documented in `contextPromptCopy` if re-enabled.) Labels from `CONTEXT_HUD_KEY_LABELS` / `DOJO_SIGN_INTERACT_KEY_LABEL` (`dojoSignCopy.ts`, GP §3.4.2).  
 
 ### Wave 11 — Meta & settings
 
-- [ ] **WS-110** — Title flow → load dojo (level 0).  
+- [x] **WS-110** — Title flow → load dojo (level 0).  
   - **Depends:** WS-040  
   - **∥** WS-113  
   - **@** `role-ux-ui-designer` · `role-gameplay-programmer`  
   - **GP** §9.2.1  
+  - **Intent (§9.2.1):** **No** conventional title / loading menu — **immediate playable dojo** on `mountGame` (already true). **Diegetic** game title on the **north wall** in the **opening sightline**: condensed **italic** sans (Wick-adjacent), **“JOHN STICK”** with the **i** as a **stickman silhouette** (WICK “I” replacement trope).  
+  - **Build:** `dojoTitleLogoWall.ts` — canvas texture + `MeshBasicMaterial` plane on the north wall (**+X** = **viewer-left** at spawn, clear of bag at **x ≈ 0**), just inside **+Z** inner face (`DOJO_BLOCKOUT.floorHalfDepth`); wired in `bootstrap.ts`. **“I”** = `public/logo/dojo-stickman-i.png` (ref copy `docs/reference/logo/dojo-stickman-i.png`) composited after weathering, same italic skew as **ST** / **CK**. **Refs:** `docs/reference/logo/` (mood, scale, two-line lockup).  
 
 - [ ] **WS-111** — Pause menu + help text (bindings match live config).  
   - **Depends:** WS-050  

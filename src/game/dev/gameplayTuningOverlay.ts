@@ -1164,6 +1164,77 @@ export function attachGameplayTuningOverlay(
     });
   }
 
+  function wireDojoTitleLogo(): void {
+    body.appendChild(sectionTitle("Dojo title logo (WS-110)"));
+    const note = document.createElement("p");
+    note.style.cssText =
+      "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
+    note.textContent =
+      "North-wall title: plane width scales the entire lockup (letters + stickman) together. “I vs type (relative)” only changes the stickman versus line-2 typography (I-slot), not world meters. Copy winners into dojoTitleLogoWall.ts when locking defaults.";
+    body.appendChild(note);
+
+    const d = tuning.dojoTitleLogo;
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "dtl_w",
+          label: "Plane width (m)",
+          min: 6,
+          max: 30,
+          step: 0.1,
+          format: (v) => `${v.toFixed(1)} m`,
+        },
+        () => d.planeWidthM,
+        (v) => {
+          d.planeWidthM = Math.max(0.5, v);
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "dtl_x",
+          label: "Center world X (m)",
+          min: -6,
+          max: 6,
+          step: 0.05,
+          format: (v) => v.toFixed(2),
+        },
+        () => d.centerWorldX,
+        (v) => {
+          d.centerWorldX = v;
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "dtl_stick",
+          label: '"I" vs type (relative)',
+          min: 0.45,
+          max: 3,
+          step: 0.02,
+          format: (v) => `${v.toFixed(2)}×`,
+        },
+        () => d.stickRelativeScale,
+        (v) => {
+          d.stickRelativeScale = Math.max(0.2, Math.min(3, v));
+        },
+        () => {},
+      ),
+    );
+
+    resetRow(body, "Reset dojo title logo", () => {
+      tuning.resetDojoTitleLogo();
+      refreshAllSliders();
+    });
+  }
+
   function wireRenderCamera(): void {
     body.appendChild(sectionTitle("Render"));
     const r = tuning.camera;
@@ -1202,6 +1273,7 @@ export function attachGameplayTuningOverlay(
   wirePlayer();
   wireCameraFollow();
   wireRenderCamera();
+  wireDojoTitleLogo();
 
   resetRow(body, "Reset all to shipped defaults", () => {
     tuning.resetAll();

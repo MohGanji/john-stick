@@ -1,5 +1,5 @@
 /**
- * WS-102 / GP §9.1.2 — bottom-center **context prompts**: interact, stamina block, guard hint.
+ * WS-102 / GP §9.1.2 — bottom-center **context prompts**: interact, stamina block; optional guard copy (off in bootstrap).
  * Bindings use caller-supplied labels (same source as signs / `dojoSignCopy`).
  */
 

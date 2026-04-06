@@ -28,6 +28,11 @@ import {
   DEFAULT_COMBAT_STAMINA,
   type CombatStaminaTuning,
 } from "../combat/combatStamina";
+import {
+  DOJO_TITLE_LOGO_BASE_PLANE_WIDTH_M,
+  DOJO_TITLE_LOGO_DEFAULT_CENTER_WORLD_X,
+  DOJO_TITLE_STICKMAN_RELATIVE_SCALE_DEFAULT,
+} from "../level/dojoTitleLogoWall";
 
 /** Live bag scalars — impulses only; damage uses `combatBasics.basePunchDamage` × tier table. */
 export type BagHitScalars = {
@@ -126,6 +131,22 @@ export type VfxDevScalars = {
   hitBurstStyle: HitBurstVfxStyleId;
 };
 
+/** WS-110 — diegetic north-wall title; uniform scale from authored mesh width. */
+export type DojoTitleLogoDevScalars = {
+  /** Target world width (m); height scales with fixed canvas aspect. */
+  planeWidthM: number;
+  /**
+   * Group center **world X** on the north wall. **+X** ≈ **viewer-left** at spawn; **lower** nudges
+   * toward **room center** (often fixes left screen clip).
+   */
+  centerWorldX: number;
+  /**
+   * **“I” stickman** size vs auto-fit to line-2 type (`fontPx` + I-slot). `1` = max fit in slot; shipped
+   * default is `DOJO_TITLE_STICKMAN_RELATIVE_SCALE_DEFAULT`. Dimensionless — `planeWidthM` scales the whole texture.
+   */
+  stickRelativeScale: number;
+};
+
 export type GameplayRuntimeTuning = {
   juice: CombatJuiceTuningValues;
   bag: BagHitScalars;
@@ -142,6 +163,7 @@ export type GameplayRuntimeTuning = {
   camera: CameraRenderScalars;
   audio: AudioDevScalars;
   vfx: VfxDevScalars;
+  dojoTitleLogo: DojoTitleLogoDevScalars;
   resetJuice(): void;
   resetBag(): void;
   resetCombatBasics(): void;
@@ -153,6 +175,7 @@ export type GameplayRuntimeTuning = {
   resetCamera(): void;
   resetAudio(): void;
   resetVfx(): void;
+  resetDojoTitleLogo(): void;
   resetAll(): void;
 };
 
@@ -268,6 +291,14 @@ function defaultVfx(): VfxDevScalars {
   return { hitBurstStyle: DEFAULT_HIT_BURST_VFX_STYLE_ID };
 }
 
+function defaultDojoTitleLogo(): DojoTitleLogoDevScalars {
+  return {
+    planeWidthM: DOJO_TITLE_LOGO_BASE_PLANE_WIDTH_M,
+    centerWorldX: DOJO_TITLE_LOGO_DEFAULT_CENTER_WORLD_X,
+    stickRelativeScale: DOJO_TITLE_STICKMAN_RELATIVE_SCALE_DEFAULT,
+  };
+}
+
 function defaultCombatStamina(): CombatStaminaTuning {
   return { ...DEFAULT_COMBAT_STAMINA };
 }
@@ -288,6 +319,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
   const audio = defaultAudio();
   const vfx = defaultVfx();
   const combatStamina = defaultCombatStamina();
+  const dojoTitleLogo = defaultDojoTitleLogo();
 
   return {
     juice,
@@ -301,6 +333,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     camera,
     audio,
     vfx,
+    dojoTitleLogo,
     resetJuice() {
       Object.assign(juice, defaultJuice());
     },
@@ -334,6 +367,9 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     resetVfx() {
       Object.assign(vfx, defaultVfx());
     },
+    resetDojoTitleLogo() {
+      Object.assign(dojoTitleLogo, defaultDojoTitleLogo());
+    },
     resetAll() {
       Object.assign(juice, defaultJuice());
       Object.assign(bag, defaultBag());
@@ -346,6 +382,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
       Object.assign(vfx, defaultVfx());
       applyDefaultStrikesInPlace(strikes);
       Object.assign(combatStamina, defaultCombatStamina());
+      Object.assign(dojoTitleLogo, defaultDojoTitleLogo());
     },
   };
 }

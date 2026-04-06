@@ -44,23 +44,23 @@ export const TRAINING_DUMMY_RAGDOLL_PARENT: Record<
   LegLowerR: "LegUpperR",
 };
 
-/** Capsule radius by bone (meters); from export script limb/torso radii. */
+/** Capsule radius by bone (meters); from `scripts/export-stick-character.mjs` mesh radii. */
 export const TRAINING_DUMMY_RAGDOLL_RADIUS: Record<
   TrainingDummyRagdollBoneName,
   number
 > = {
-  Hips: 0.024 * 1.2,
-  Spine: 0.024 * 1.05,
-  Chest: 0.024 * 1.1,
-  Head: 0.074,
-  ShoulderL: 0.024,
-  ArmL: 0.024,
-  ShoulderR: 0.024,
-  ArmR: 0.024,
-  LegUpperL: 0.024,
-  LegLowerL: 0.024 * 0.96,
-  LegUpperR: 0.024,
-  LegLowerR: 0.024 * 0.96,
+  Hips: 0.043,
+  Spine: 0.039,
+  Chest: 0.043,
+  Head: 0.088,
+  ShoulderL: 0.034,
+  ArmL: 0.034,
+  ShoulderR: 0.034,
+  ArmR: 0.034,
+  LegUpperL: 0.034,
+  LegLowerL: 0.034 * 0.95,
+  LegUpperR: 0.034,
+  LegLowerR: 0.034 * 0.95,
 };
 
 /** Relative mass share (normalized when building). Total matches `TRAINING_DUMMY_PHYSICS.colliderMassKg`. */
@@ -84,10 +84,10 @@ export const TRAINING_DUMMY_RAGDOLL_MASS_SHARE: Record<
 
 /** Pelvis capsule on the existing hips body after removing the monolithic dummy capsule (hips bone local, Y-up). */
 export const TRAINING_DUMMY_PELVIS_CAPSULE = {
-  halfHeight: 0.055,
-  radius: 0.024 * 1.2,
+  halfHeight: 0.084,
+  radius: 0.043,
   /** COM offset from hips bone origin (meters). */
-  centerY: -0.035,
+  centerY: -0.032,
 } as const;
 
 /**
