@@ -1,15 +1,12 @@
 import * as THREE from "three";
 
-/**
- * WS-020 / GP §4.1.1 — baseline rendering: color space, tone mapping, one shadow-casting sun.
- * Single shipped tier (no in-game quality presets — see WORK_STREAMS **WS-113 rejected**).
- */
+/** Baseline rendering: color space, tone mapping, one shadow-casting sun. Single shipped tier (no in-game quality presets). */
 export const GRAPHICS_PRESET_DEFAULT = {
   shadowMapSize: 2048,
   maxPixelRatio: 2,
 } as const;
 
-/** WS-071 — baseline vertical FOV (degrees); combat FOV punch adds on top then decays. */
+/** Baseline vertical FOV (degrees); combat FOV punch adds on top then decays. */
 export const DEFAULT_PERSPECTIVE_FOV_DEG = 50;
 
 export type JohnStickRenderSetup = {

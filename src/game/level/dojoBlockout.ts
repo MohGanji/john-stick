@@ -4,7 +4,7 @@ import { createDojoEnvironmentMaterials } from "./dojoEnvironmentMaterials";
 import { createDojoTraditionalDressing } from "./dojoTraditionalDressing";
 
 /**
- * GP §7.1.1 — training floor scale (role-level-designer default: 24m × 18m).
+ * Training floor scale (default: 24m × 18m).
  * GP §7.2.1 — boundary envelope for physics + placeholder visuals.
  */
 export const DOJO_BLOCKOUT = {

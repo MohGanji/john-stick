@@ -7,7 +7,7 @@ export const PLAYER_CAPSULE = {
   radius: 0.22,
   /** Rapier KCC skin; must be > 0 (see Rapier character controller docs). */
   characterControllerOffset: 0.02,
-  /** W/S max planar speed (m/s); brisk “almost run” until walk/run split (`docs/FUTURE_MAYBE.md`). */
+  /** W/S max planar speed (m/s); brisk “almost run” until walk/run split if we add one. */
   moveSpeed: 7.35,
   /** A/D strafe max planar speed (m/s); lower than forward so turn-heavy A/D reads cleaner. */
   strafeMoveSpeed: 0.35,

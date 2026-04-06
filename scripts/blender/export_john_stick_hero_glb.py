@@ -1,7 +1,7 @@
 """
 Export the current Blender scene’s mesh + armature to the John Stick hero GLB.
 
-Uses `docs/GLTF_EXPORT.md` conventions (GLB, Y-up, animations, apply modifiers).
+Export GLB (Y-up, animations, apply modifiers); run `npm run validate:gltf` after landing under `public/models/`.
 
 Run headless (saved .blend with your hero as the only mesh/armature content, or adjust selection logic):
 

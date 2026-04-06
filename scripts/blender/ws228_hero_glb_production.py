@@ -1,14 +1,12 @@
 """
-WS-228 — Hero glb pass: import `stick_frig_v15_hero.glb` (or env override), ground feet,
+Hero glb pass: import `stick_frig_v15_hero.glb` (or env override), ground feet,
 optional foot widen, **`Idle`** from first key of **`Walk`**, re-export same path.
 
 **DANGER — 2026-04-06:** A fully automated run of this workflow **broke** the hero (bad deformation /
 silhouette). **Backup the `.glb`** before running. Verify every change in **Blender viewport** and in the
-**browser** before committing. Prefer **interactive MCP** + small steps over headless batch until SOP is
-re-validated.
+**browser** before committing. Prefer **interactive MCP** + small steps over headless batch until re-validated.
 
-Blender **5.1+** (layered actions API). **MCP** users can run the same steps live; this is the
-**Tier 2** replay from `docs/DCC_AUTOMATION_PIPELINE.md`.
+Blender **5.1+** (layered actions API). **MCP** users can run the same steps live; this script is the headless replay.
 
   export JOHN_STICK_ROOT=/path/to/john-stick
   \"$BLENDER\" -b -P \"$JOHN_STICK_ROOT/scripts/blender/ws228_hero_glb_production.py\"

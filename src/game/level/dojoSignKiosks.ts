@@ -9,12 +9,12 @@ import {
 
 /**
  * WS-101 / GP §7.1.3 — sign kiosks: placement on ±120° from spawn **+Z** (toward the bag),
- * inward-facing boards, capsule interaction footprint (role-level-designer default).
+ * inward-facing boards, capsule interaction footprint.
  */
 const PLACE_RADIUS = 5.2;
 const DEG_120 = (2 * Math.PI) / 3;
 
-/** Horizontal capsule radius (m); vertical span for standing player (`role-level-designer`). */
+/** Horizontal capsule radius (m); vertical span for standing player. */
 export const DOJO_SIGN_INTERACT_RADIUS_XZ = 1.2;
 export const DOJO_SIGN_INTERACT_Y_MIN = 0;
 export const DOJO_SIGN_INTERACT_Y_MAX = 2.15;

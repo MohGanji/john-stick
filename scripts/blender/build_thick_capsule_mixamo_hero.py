@@ -2,7 +2,7 @@
 Thick **capsule** silhouette — **experimental / not shippable** as default runtime.
 
 **Known failure:** `ARMATURE_AUTO` weights + merged primitives **collapse to blob** geometry under locomotion
-in Three.js (2026-04). Use **`docs/BLENDER_THICK_CAPSULE_HERO_SOP.md`** to model in Blender; do **not** set
+in Three.js (2026-04). Model thick-capsule silhouette by hand in Blender; do **not** set
 **`STICKMAN_BASE_GLTF_URL`** to this output without a full weight + mesh pass.
 
 Default import: **`stick_frig_v15_hero.glb`** (or override). Replaces meshes, re-exports. Legacy output name

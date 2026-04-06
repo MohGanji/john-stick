@@ -1,7 +1,7 @@
 import { TRAINING_HURT_VOLUME } from "../combat/combatHitConstants";
 
 /**
- * WS-061 / GP §7.1.2 — heavy bag blockout + Rapier capsule (role-level-designer + physics).
+ * Heavy bag blockout + Rapier capsule.
  * Geometry is locked to `TRAINING_HURT_VOLUME` so WS-060 hit probes stay aligned; hurt sensor is parented to this body.
  */
 const c = TRAINING_HURT_VOLUME.center;

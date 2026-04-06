@@ -3,19 +3,15 @@ import * as THREE from "three";
 import { DOJO_BLOCKOUT } from "./dojoBlockout";
 
 /**
- * WS-110 / GP §9.2.1 — Diegetic **two-line** hero logo (Wick-style stagger: line 2 inset).
+ * Diegetic **two-line** hero logo (Wick-style stagger: line 2 inset).
  * Transparent tex; **serious** high-contrast block type + distressed **blood / void** reads;
  * **“i”** = **authored PNG** (`public/logo/dojo-stickman-i.png`) composited **after** global weathering
  * so grain / scanlines never touch the figure. Drawn with the **same italic skew** as **ST** / **CK**
  * (`transform(0.7, 0, -0.46, 1, 0, 0)`) so it reads as one lockup. **Fallback:** `drawStickmanAsI`
- * (also in skew space) if the image fails to load.
- *
- * **Refs:** `docs/reference/logo/dojo-stickman-i.png` (same art), `dojo-stickman-i.svg` (optional vector).
- *
- * **Reference board:** `docs/reference/logo/` (+ `README.md`).
+ * (also in skew space) if the image fails to load. Optional vector: `public/logo/dojo-stickman-i.svg` if present.
  */
 
-/** Vite `public/` URL — same file copied under `docs/reference/logo/` for art handoff. */
+/** Vite `public/` URL for the stickman “I” mark. */
 export const DOJO_TITLE_STICKMAN_I_URL = "/logo/dojo-stickman-i.png";
 
 /**
@@ -184,8 +180,7 @@ function drawInternalShadeAndBlood(
 }
 
 /**
- * **I**-slot silhouette: **thick capsule** warrior (ref: `john-stick-ref-thick-capsule-katana-canonical.png`
- * + `docs/reference/logo/dojo-stickman-i.svg`). **Flat #060606** only — caller draws this **after**
+ * **I**-slot silhouette: **thick capsule** warrior (optional vector `public/logo/dojo-stickman-i.svg`). **Flat #060606** only — caller draws this **after**
  * `applyGlobalWeathering` so the figure stays clean. Draw **back-to-front** so blade reads behind torso.
  *
  * Call with **`cx` / `baselineY` in lockup-local space** after `translate(padX,baseY)` +

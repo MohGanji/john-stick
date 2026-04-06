@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 /**
  * WS-100 / GP §7.1 — Traditional dojo mood: polished warm floor, cream shōmen, side plaster,
- * dark timber beams / frames (`role-art-director` + reference board).
+ * dark timber beams / frames.
  */
 
 const FLOOR_TEX_SIZE = 512;

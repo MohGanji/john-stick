@@ -1,11 +1,10 @@
 /**
- * WS-094 / GP §5.2.1, §6.4.1–§6.4.2 — articulated training dummy: logical bone order matches
- * `docs/CHARACTER_RIG_MAP.md` + `scripts/export-stick-character.mjs`. The dummy uses the same
- * `STICKMAN_BASE_GLTF_URL` skin as the hero; `TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS` resolves
- * **Stick_FRig** (and procedural tooling) bone names to those slots.
+ * Articulated training dummy: logical bone order aligns with `TRAINING_DUMMY_RAGDOLL_BONE_ORDER` and
+ * `scripts/export-stick-character.mjs`. Same `STICKMAN_BASE_GLTF_URL` skin as the hero;
+ * `TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS` resolves **Stick_FRig** (and procedural) bone names to those slots.
  */
 
-/** GP §6.4.2 — single articulated knockdown target in dojo; keep body count explicit for perf reviews. */
+/** Single articulated knockdown target in dojo; keep body count explicit for perf reviews. */
 export const TRAINING_DUMMY_ARTICULATED_DYNAMIC_BODY_CAP = 12;
 
 /** Creation order = `bodies[]` / FSM articulated arrays index. */

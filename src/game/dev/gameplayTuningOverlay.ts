@@ -555,7 +555,7 @@ export function attachGameplayTuningOverlay(
     note.style.cssText =
       "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
     note.textContent =
-      "Per-limb procedural presets on training-bag hits. Each play picks a random pitch from the preset’s cents list; future: combo-specific voices + seeded variation (see docs/FUTURE_MAYBE.md).";
+      "Per-limb procedural presets on training-bag hits. Each play picks a random pitch from the preset’s cents list; future: combo-specific voices + seeded variation (track in docs/TODO.md).";
     body.appendChild(note);
 
     const a = tuning.audio;

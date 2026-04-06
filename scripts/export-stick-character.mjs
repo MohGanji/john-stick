@@ -1,5 +1,5 @@
 /**
- * WS-041 / GP §5.3.1 — Regenerate **`PLAYER_GLTF_URL_PROCEDURAL`** (`public/models/char_player_stick_v01.glb`).
+ * Regenerate **`PLAYER_GLTF_URL_PROCEDURAL`** (`public/models/char_player_stick_v01.glb`).
  * **Not** `STICKMAN_BASE_GLTF_URL` — default runtime uses Stick_FRig hero (`playerCharacter.ts`).
  * Run: `node scripts/export-stick-character.mjs`
  *
@@ -7,9 +7,7 @@
  * long **legs (~60% height)**, **mitten** hands, **wide stance**, **pill** feet.
  * Two torso bones (`Spine` + `Chest`) for bend/twist.
  *
- * **Canonical 2D ref (proportions + look):** `docs/reference/logo/dojo-stickman-i.png`
- * (runtime copy: `public/logo/dojo-stickman-i.png`). Match that read in 3D; older PNGs under
- * `docs/reference/character/` are supporting mood refs.
+ * **Canonical 2D ref:** `public/logo/dojo-stickman-i.png` (proportions + look).
  *
  * **Back katana:** optional mesh — default **off** (set `EXPORT_BACK_KATANA` to `true` below to include).
  * Replace with Blender when art lands; keep clip names **Idle** and **Walk** for the runtime.
@@ -440,7 +438,7 @@ async function main() {
     metalness: 0.04,
   });
   const skinned = new THREE.SkinnedMesh(geom, mat);
-  /** Root node name — matches `docs/CHARACTER_RIG_MAP.md` asset id. */
+  /** Procedural hero glTF root node name (keep stable for tooling). */
   skinned.name = "char_player_stick_v01";
   skinned.castShadow = true;
   skinned.receiveShadow = true;

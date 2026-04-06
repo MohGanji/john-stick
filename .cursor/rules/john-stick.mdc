@@ -1,0 +1,18 @@
+---
+description: John Stick — default project rule
+alwaysApply: true
+---
+
+# John Stick
+
+**Env:** Local secrets in **`.env.local`** (from **`.env.example`**). Never prefix API keys with **`VITE_`** (Vite inlines them into the browser bundle).
+
+**Tooling (details: `docs/TOOLCHAIN_ACCESS.md`):**
+
+- **Blender** — agents can drive it via **MCP** when the Blender add-on is connected (see `.cursor/mcp.json`).
+- **`ELEVENLABS_API_KEY`** — **audio asset** generation (TTS / SFX / related) in **local scripts only**, not shipped to the client.
+- **`GEMINI_API_KEY`** — **image asset** generation and image understanding in **local scripts only**.
+
+**How we work:** Pragmatic, **brief**, **YAGNI**. **Code is liability** — less code, no duplication, stay organized, keep the repo clean. Same for **docs and assets**: one canonical place for each fact; delete or merge instead of piling alternates.
+
+**Layout contract:** `docs/REPO_CONVENTIONS.md`. **Vision / backlog:** `docs/GAME_PLAN.md`, `docs/TODO.md`.
