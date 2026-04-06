@@ -1,8 +1,8 @@
-# Future design notes (non-binding)
+# Future / maybe (non-binding)
 
-**Purpose:** Park **ideas**, **maybes**, and **things we might simplify or replace** without editing `GAME_PLAN.md` or `WORK_STREAMS.md` until there is evidence (playtests, rig, combat interactions). Nothing here is a commitment.
+**Purpose:** **Future / maybe** — ideas not confused with **scheduled work** in `WORK_STREAMS.md`. The gap this file closes: **“might do, not on the board yet”** vs **“in the DAG / next iteration.”** Nothing here is a commitment.
 
-**How to use:** Add short dated or titled bullets. When something graduates to a real decision, move it into `GAME_PLAN.md`, `REPO_CONVENTIONS.md`, or a work stream, then trim or strike the note here.
+**How to use:** Short dated or titled bullets. When an idea is **real next work**, add or extend a **WS** (and GP anchor if needed), then **delete or trim** the note here so the doc does not go stale. If an idea is **dead**, **remove** it — we do not keep deprecated narratives. If it stays a **long-lived optional** (e.g. coyote time), it can remain until someone schedules it or cuts it.
 
 ---
 
@@ -109,6 +109,16 @@
 **Future ideas:** Drive **expression** from FSM or combat phase (idle vs wind-up vs hit-stun): e.g. **emissive** eye quads on the head, **small billboard** sprites, or a **second material slot** / light mask on the head `SphereGeometry`. Keep **optional** so enemies and the player can share the same rig with different face rules. Coordinate with `role-vfx-artist` blood tier notes and `hitBurstVfxPresets` for circle-cluster reads.
 
 **Related:** `docs/CHARACTER_RIG_MAP.md` (new ref bullet), `john-stick-ref-combat-katana-ready-stance.png` (pose / weapon staging), `.cursor/rules/role-character-artist.mdc`, GP blood tier / VFX streams.
+
+---
+
+## Character: one motion system (clips + physics on the same rig)
+
+**Context (2026-04):** The target is **a single implementation**, not two parallel “modes.” **One** foundational skeleton (`CHARACTER_RIG_MAP`) feeds both **authored glTF clips** (locomotion, strikes when keyed) and **Rapier-backed** bodies/constraints/ragdoll for **contact, knockback, balance loss, and fall** reads. **Per game state**, either **animation** or **simulation** (or a documented **blend / handoff**) owns the bones — that split is **policy inside one stack**, not a “temporary v1” to be replaced by a separate “v2 physics.” Third-party glbs can still be wrong (e.g. “Walk” that is really a fight cycle, or missing strike actions); fix the **asset or export** so the **same** pipeline has honest data.
+
+**Streams that compose this (one architecture):** **WS-133** (neutral hero glb + clip catalog), **WS-139** (strike presentation / blend), **WS-091 / WS-094** (ragdoll + articulated receive). **WS-223** ties the **contract** together: base file, naming, validation, and **one** written ownership map (when clips drive, when sim drives, how dummy and player stay aligned on the **same** bone ↔ physics map).
+
+**Related:** `docs/CHARACTER_RIG_MAP.md`, `docs/GLTF_EXPORT.md`, `playerCharacter.ts`, **WS-223**.
 
 ---
 

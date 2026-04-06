@@ -348,7 +348,7 @@ Ship criteria: the game is **fully playable without a mouse** so laptops (trackp
 | Tier | ID | Ingredient | What “done” looks like | Best owner |
 |------|-----|------------|------------------------|------------|
 | **E** | **3.1.1** | Fixed follow + collision | Camera maintains a **fixed pitch** (or very narrow clamp), **follows** the player, and **pulls in** through geometry so the character stays readable — **without** mouse look. | Gameplay Programmer |
-| **E** | **3.1.4** | Keyboard yaw / facing | Player changes **horizontal** facing using **keys only** — prototype: **A**/**D** **hold-to-yaw** combined with strafe on **WASD**; retune strafe vs turn rate with rig/playtests (`FUTURE_DESIGN_NOTES.md`). | Gameplay Programmer |
+| **E** | **3.1.4** | Keyboard yaw / facing | Player changes **horizontal** facing using **keys only** — prototype: **A**/**D** **hold-to-yaw** combined with strafe on **WASD**; retune strafe vs turn rate with rig/playtests (`docs/FUTURE_MAYBE.md`). | Gameplay Programmer |
 | **C** | **3.1.2** | Combat framing | Subtle FOV punch on big hits; comfortable defaults. | Creative Director + Gameplay Programmer |
 | **C** | **3.1.3** | Accessibility | **Keyboard:** camera turn speed, reduce shake/flash. If optional mouse yaw ships: invert X, sensitivity. | UX Designer |
 

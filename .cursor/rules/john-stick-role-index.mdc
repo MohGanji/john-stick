@@ -16,6 +16,7 @@ These rules are written as if you hired **staff–principal level** specialists.
 
 - **`docs/GAME_PLAN.md`** — keyboard-only, fixed-pitch camera + key yaw, four-limb + chord combat, dojo-first, Three.js web, no backend.
 - **`docs/WORK_STREAMS.md`** — DAG for **code + art + audio + tooling**; **Wave 13** (WS-130–WS-134) = DCC hero, creative-generation capability, **USER** access, modular outfits; **Wave 14** (WS-135–WS-141) = **GAME_PLAN** perf/browser/combat-audio/bag polish gaps; **Wave 15** (WS-150–WS-157) = **taste tickets** (pillars/rubric, timing reads, camera/mix sessions, multi-option visual gens, target feel matrix, cut list, scripted playtests — **USER** pick + revision); top of file has **GP index → WS** coverage table + expanded **WS-207+** deferred bucket.
+- **Blender MCP** — project server **`blender`** in **`.cursor/mcp.json`** ([BlenderMCP](https://github.com/ahujasid/blender-mcp) + local `addon.py`); enable in **Cursor → Settings → MCP** and connect from Blender’s **BlenderMCP** panel; details in `docs/TOOLCHAIN_ACCESS.md` / `docs/DCC_AUTOMATION_PIPELINE.md`.
 - **3D is primary**; “sprites” may mean **2D UI icons**, **flipbook particles**, **promotional frames**, or **texture reference** — the role must **disambiguate** in the task and pick the right prompt template.
 
 ## Rules by discipline

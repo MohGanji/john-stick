@@ -1,7 +1,7 @@
 /**
  * Maps dev-tuned `TrainingDummyFeelScalars` → FSM timing and hit impulse split.
  * Intended as the **shared template** for all enemies’ hit-receive timing/spin; dummy is reference instance.
- * Size/mass scaling vs this reference → `docs/FUTURE_DESIGN_NOTES.md` (“Enemies: training dummy…”).
+ * Size/mass scaling vs this reference → `docs/FUTURE_MAYBE.md` (“Enemies: training dummy…”).
  */
 import type { TrainingDummyFsmTiming } from "./trainingDummyFsm";
 import type { TrainingDummyFeelScalars } from "../tuning/gameplayRuntimeTuning";

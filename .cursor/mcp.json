@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "blender": {
+      "command": "/bin/sh",
+      "args": [
+        "-c",
+        "export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\"; exec uvx blender-mcp"
+      ]
+    }
+  }
+}

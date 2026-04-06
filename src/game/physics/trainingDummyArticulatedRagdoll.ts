@@ -100,16 +100,27 @@ function findBoneMap(root: THREE.Object3D): Map<string, THREE.Bone> {
   return map;
 }
 
+/** glTF may use `mixamorig:Hips`; Three's GLTFLoader often exposes bones as `mixamorigHips` (no colon). */
+function boneMapLookupKeys(gltfBoneName: string): string[] {
+  if (!gltfBoneName.includes(":")) return [gltfBoneName];
+  const flattened = gltfBoneName.replace(/:/g, "");
+  return flattened === gltfBoneName ? [gltfBoneName] : [gltfBoneName, flattened];
+}
+
 function resolveRagdollBone(
   boneMap: Map<string, THREE.Bone>,
   slot: TrainingDummyRagdollBoneName,
 ): THREE.Bone {
+  const tried: string[] = [];
   for (const candidate of TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS[slot]) {
-    const b = boneMap.get(candidate);
-    if (b) return b;
+    for (const key of boneMapLookupKeys(candidate)) {
+      tried.push(key);
+      const b = boneMap.get(key);
+      if (b) return b;
+    }
   }
   throw new Error(
-    `WS-094: missing bone for slot "${slot}" (tried: ${TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS[slot].join(", ")})`,
+    `WS-094: missing bone for slot "${slot}" (tried: ${[...new Set(tried)].join(", ")})`,
   );
 }
 

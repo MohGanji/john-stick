@@ -3,27 +3,62 @@ import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import type { StrikeMoveId } from "../input/combatIntent";
-import { PLAYER_CAPSULE } from "./playerCapsuleConfig";
+import { PLAYER_CAPSULE, playerCapsuleCenterY } from "./playerCapsuleConfig";
 import { strikePresentationClipName } from "./strikePresentation";
 
-/** Canonical mesh from `npm run export:character` (already scaled to capsule). */
+/**
+ * Procedural / script export path (`npm run export:character`). Use as `STICKMAN_BASE_GLTF_URL` when
+ * the whole cast should share the in-repo stick until a single Mixamo-base `.glb` replaces it (WS-133).
+ */
 export const PLAYER_GLTF_URL_CANONICAL = "/models/char_player_stick_v01.glb";
 
 /**
- * Sketchfab “Stickman Fighting” experiment (CC-BY — `CREDITS.md`). Swap `PLAYER_GLTF_URL` to toggle.
+ * Sketchfab “Stickman Fighting” (CC-BY — `CREDITS.md`). Default `STICKMAN_BASE_GLTF_URL` until a
+ * neutral `stickman_base_v01.glb` ships.
  */
 export const PLAYER_GLTF_URL_SKETCHFAB_KAISOON =
   "/models/stickman_fighting_kaisoon.glb";
 
-/** Active player glb (set to `PLAYER_GLTF_URL_CANONICAL` to revert). */
-export const PLAYER_GLTF_URL = PLAYER_GLTF_URL_SKETCHFAB_KAISOON;
+/**
+ * **Single runtime glTF** for hero, training dummy, and sparring partner — one skeleton + clip set.
+ * Variation = **instantiation** (`appearance` tints today; later: uniform scale, materials, outfit
+ * segments) — not a separate GLB per character class.
+ */
+export const STICKMAN_BASE_GLTF_URL = PLAYER_GLTF_URL_SKETCHFAB_KAISOON;
+
+/** @deprecated Use `STICKMAN_BASE_GLTF_URL` (same value). */
+export const PLAYER_GLTF_URL = STICKMAN_BASE_GLTF_URL;
+
+/**
+ * Bump when stickman `.glb` files under `public/models/` change in dev so the browser does not serve
+ * a stale cache for the same URL.
+ */
+const DEV_STICKMAN_GLB_CACHE_BUST = 2;
+
+function withDevCacheBustStickmanGlb(url: string): string {
+  if (!import.meta.env.DEV) return url;
+  const base = url.split("?")[0];
+  const knownBases = new Set<string>([
+    STICKMAN_BASE_GLTF_URL,
+    PLAYER_GLTF_URL_CANONICAL,
+    PLAYER_GLTF_URL_SKETCHFAB_KAISOON,
+  ]);
+  if (!knownBases.has(base)) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}cbStickman=${DEV_STICKMAN_GLB_CACHE_BUST}`;
+}
 
 export const PLAYER_ANIM_IDLE = "Idle";
 export const PLAYER_ANIM_WALK = "Walk";
 
 export type LoadPlayerCharacterOptions = {
-  /** `training_dummy` / `sparring_partner` tint the glTF so lab targets read distinct from the hero. */
+  /**
+   * Instance look: `training_dummy` / `sparring_partner` tint materials so lab targets read distinct.
+   * All roles load `STICKMAN_BASE_GLTF_URL` (or `gltfUrlOverride`).
+   */
   appearance?: "player" | "training_dummy" | "sparring_partner";
+  /** Dev / tools: load another glb without editing `STICKMAN_BASE_GLTF_URL`. */
+  gltfUrlOverride?: string;
 };
 
 const CROSS_FADE_SEC = 0.14;
@@ -50,51 +85,134 @@ const PLAYER_VISUAL_TARGET_HEIGHT =
 
 /**
  * Off-the-shelf glTF is often Y-up but wrong scale; skin root may not sit at feet.
- * Scale to our capsule band and lift so AABB bottom is at local Y=0 on `wrapped` pivot.
+ * `lateUpdate` places **`wrapped`** at the **capsule center** (`bootstrap.ts`). So the lowest sensible
+ * foot contact in **local** space must sit **`playerCapsuleCenterY()`** below `wrapped` origin — same
+ * offset Rapier uses from floor to capsule center (`playerCapsuleConfig.ts`). Without that, the mesh
+ * floats; walk hip-bob then flickers between “almost touching” and “high” frames.
+ *
+ * Uses the clip that matches **what plays first** (idle). Aligning with **Walk** at t=0 while the
+ * default state is **Idle** leaves hips/feet higher → visible hover in front of the dojo floor.
+ * Falls back to **`walkClip`** when idle and walk are the same reference.
+ *
+ * Samples at **t = 0** and uses **`setFromObject(…, true)`** for skinned AABB.
  */
 function normalizeImportedPlayerVisual(
   wrapped: THREE.Group,
   scene: THREE.Object3D,
+  idleClip: THREE.AnimationClip,
+  walkClip: THREE.AnimationClip,
 ): void {
   wrapped.add(scene);
+
+  const alignClip = idleClip === walkClip ? walkClip : idleClip;
+  const poseMixer = new THREE.AnimationMixer(scene);
+  const poseAction = poseMixer.clipAction(alignClip);
+  poseAction.reset();
+  poseAction.time = 0;
+  poseAction.enabled = true;
+  poseAction.setEffectiveWeight(1);
+  poseMixer.update(1e-6);
   scene.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(scene);
-  if (box.isEmpty()) return;
+
+  const box = new THREE.Box3().setFromObject(scene, true);
+  if (box.isEmpty()) {
+    poseMixer.stopAllAction();
+    return;
+  }
   const size = box.getSize(new THREE.Vector3());
   const h = Math.max(size.y, 1e-3);
   const s = PLAYER_VISUAL_TARGET_HEIGHT / h;
   scene.scale.setScalar(s);
+  poseMixer.update(1e-6);
   scene.updateMatrixWorld(true);
-  const box2 = new THREE.Box3().setFromObject(scene);
+
+  const box2 = new THREE.Box3().setFromObject(scene, true);
   scene.position.y -= box2.min.y;
+  scene.position.y -= playerCapsuleCenterY();
+  poseMixer.stopAllAction();
 }
 
 function needsImportedVisualNormalization(url: string): boolean {
   return url !== PLAYER_GLTF_URL_CANONICAL;
 }
 
-function resolveIdleWalkClips(
+/**
+ * Hold the source clip’s **first keyframe** on every track as a loopable “idle” so the mesh does not
+ * bob when standing. **Required** when the glb only exports `Walk` (e.g. Sketchfab kaisoon) — otherwise
+ * `idle` and `walk` would be the **same** `AnimationClip` reference, standing would play a full walk
+ * cycle (hips lift → feet no longer match floor alignment → visible float / flicker), and crossfades
+ * would target duplicate actions on one clip.
+ */
+function makeHoldFirstKeyframeClip(
+  source: THREE.AnimationClip,
+  name: string,
+): THREE.AnimationClip {
+  const duration = Math.max(source.duration, 1e-5);
+  const tracks: THREE.KeyframeTrack[] = [];
+
+  for (const track of source.tracks) {
+    if (track.times.length === 0) continue;
+    const valueSize = track.getValueSize();
+    const values = new Float32Array(valueSize * 2);
+    for (let j = 0; j < valueSize; j++) {
+      const v = track.values[j]!;
+      values[j] = v;
+      values[j + valueSize] = v;
+    }
+    const times = new Float32Array([0, duration]);
+    const TrackCtor = track.constructor as new (
+      n: string,
+      t: Float32Array,
+      v: Float32Array,
+      interpolation?: THREE.InterpolationModes,
+    ) => THREE.KeyframeTrack;
+    tracks.push(
+      new TrackCtor(
+        track.name,
+        times,
+        values,
+        track.getInterpolation(),
+      ),
+    );
+  }
+
+  return new THREE.AnimationClip(name, duration, tracks);
+}
+
+/** Exported for tests — see `locomotionClipResolve.test.ts`. */
+export function resolveIdleWalkClips(
   gltf: GLTF,
   urlForErrors: string,
 ): {
   idle: THREE.AnimationClip;
   walk: THREE.AnimationClip;
 } {
-  const idle = gltf.animations.find((a) => a.name === PLAYER_ANIM_IDLE);
-  const walk = gltf.animations.find((a) => a.name === PLAYER_ANIM_WALK);
-  if (idle && walk) return { idle, walk };
+  const byIdle = gltf.animations.find((a) => a.name === PLAYER_ANIM_IDLE);
+  const byWalk = gltf.animations.find((a) => a.name === PLAYER_ANIM_WALK);
+  if (byIdle && byWalk) return { idle: byIdle, walk: byWalk };
+
+  if (byWalk && !byIdle) {
+    return {
+      idle: makeHoldFirstKeyframeClip(byWalk, PLAYER_ANIM_IDLE),
+      walk: byWalk,
+    };
+  }
+
+  if (byIdle && !byWalk) {
+    return { idle: byIdle, walk: byIdle };
+  }
+
   const fallback =
-    idle ??
-    walk ??
     gltf.animations[0] ??
     (() => {
       throw new Error(
         `No animations in ${urlForErrors} — need Idle+Walk or at least one clip`,
       );
     })();
+
   return {
-    idle: idle ?? fallback,
-    walk: walk ?? fallback,
+    idle: makeHoldFirstKeyframeClip(fallback, PLAYER_ANIM_IDLE),
+    walk: fallback,
   };
 }
 
@@ -135,19 +253,10 @@ function tintSparringPartnerMaterials(root: THREE.Object3D): void {
 export async function loadPlayerCharacter(
   options?: LoadPlayerCharacterOptions,
 ): Promise<PlayerCharacter> {
-  /**
-   * Lab targets use WS-094 articulated ragdoll bone names from `CHARACTER_RIG_MAP` / canonical export.
-   * Third-party hero glTF (see `PLAYER_GLTF_URL`) often uses different skeletons — always load canonical
-   * mesh for dummy + sparring so boot cannot fail on `computeArticulatedBindWorldTransforms`.
-   */
-  const gltfUrl =
-    options?.appearance === "training_dummy" ||
-    options?.appearance === "sparring_partner"
-      ? PLAYER_GLTF_URL_CANONICAL
-      : PLAYER_GLTF_URL;
+  const gltfUrl = options?.gltfUrlOverride ?? STICKMAN_BASE_GLTF_URL;
 
   const loader = new GLTFLoader();
-  const gltf = await loader.loadAsync(gltfUrl);
+  const gltf = await loader.loadAsync(withDevCacheBustStickmanGlb(gltfUrl));
 
   const animScene = gltf.scene;
 
@@ -164,15 +273,16 @@ export async function loadPlayerCharacter(
     }
   });
 
+  const { idle: idleClip, walk: walkClip } = resolveIdleWalkClips(gltf, gltfUrl);
+
   const wrapped = new THREE.Group();
   if (needsImportedVisualNormalization(gltfUrl)) {
-    normalizeImportedPlayerVisual(wrapped, animScene);
+    normalizeImportedPlayerVisual(wrapped, animScene, idleClip, walkClip);
   } else {
     wrapped.add(animScene);
   }
 
   const mixer = new THREE.AnimationMixer(animScene);
-  const { idle: idleClip, walk: walkClip } = resolveIdleWalkClips(gltf, gltfUrl);
 
   const idleAction = mixer.clipAction(idleClip);
   const walkAction = mixer.clipAction(walkClip);

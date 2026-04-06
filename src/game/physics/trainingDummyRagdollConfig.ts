@@ -1,6 +1,8 @@
 /**
- * WS-094 / GP §5.2.1, §6.4.1–§6.4.2 — articulated training dummy: bone order matches
- * `docs/CHARACTER_RIG_MAP.md` + `scripts/export-stick-character.mjs`.
+ * WS-094 / GP §5.2.1, §6.4.1–§6.4.2 — articulated training dummy: logical bone order matches
+ * `docs/CHARACTER_RIG_MAP.md` + `scripts/export-stick-character.mjs`. The dummy uses the same
+ * `STICKMAN_BASE_GLTF_URL` skin as the hero; `TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS` resolves
+ * Mixamo (or other) node names to those slots.
  */
 
 /** GP §6.4.2 — single articulated knockdown target in dojo; keep body count explicit for perf reviews. */
@@ -26,8 +28,9 @@ export type TrainingDummyRagdollBoneName =
   (typeof TRAINING_DUMMY_RAGDOLL_BONE_ORDER)[number];
 
 /**
- * Ordered candidates per logical ragdoll slot: canonical export first, then common Mixamo/Sketchfab names.
- * Keeps boot alive when hero/dummy glTF is swapped for third-party rigs (`playerCharacter.ts`).
+ * Ordered candidates per logical ragdoll slot: canonical export first, then common Mixamo/Sketchfab names
+ * (**with** `mixamorig:…` as in the glTF JSON). Three’s `GLTFLoader` often exposes the same bones **without**
+ * colons (`mixamorigHips_01`); `resolveRagdollBone` strips `:` as a fallback.
  */
 export const TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS: Record<
   TrainingDummyRagdollBoneName,

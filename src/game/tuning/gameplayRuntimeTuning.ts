@@ -43,7 +43,7 @@ export type BagHitScalars = {
 /**
  * Global combat baseline for tuning (dev HUD).
  * **`baseEnemyHealth`** is authored for the **reference enemy** (training dummy today); other enemies multiply from these (×N later).
- * @see `docs/FUTURE_DESIGN_NOTES.md` — “Enemies: training dummy as canonical feel + size scaling”
+ * @see `docs/FUTURE_MAYBE.md` — “Enemies: training dummy as canonical feel + size scaling”
  */
 export type CombatBasicsScalars = {
   /** Tier-0 punch damage before `bagDamageTierMultiplier` (GP §6.2.2). */
@@ -59,7 +59,7 @@ export type CombatBasicsScalars = {
 /**
  * **Canonical enemy hit-receive feel** (dev HUD): kickback, spin, reaction timing, ragdoll get-up.
  * The training dummy is the first instance; future enemies should reuse these curves/scalars before adding per-archetype overrides.
- * **Size scaling** (mass/height vs reference) is deferred — see `docs/FUTURE_DESIGN_NOTES.md`.
+ * **Size scaling** (mass/height vs reference) is deferred — see `docs/FUTURE_MAYBE.md`.
  */
 export type TrainingDummyFeelScalars = {
   /** Multiplier on planar + upward strike impulse vs bag-tuned base. */

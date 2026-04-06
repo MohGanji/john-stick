@@ -13,7 +13,7 @@ export const KEYBOARD_LOCOMOTION = {
   jump: "Space" as const,
   /**
    * Hold-to-yaw rate for **KeyA** / **KeyD** (degrees per second).
-   * Retune with strafe vs turn balance once rig + locomotion clips exist (`FUTURE_DESIGN_NOTES.md`).
+   * Retune with strafe vs turn balance once rig + locomotion clips exist (`docs/FUTURE_MAYBE.md`).
    */
   yawDegPerSec: 170,
 } as const;

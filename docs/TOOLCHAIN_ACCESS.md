@@ -98,9 +98,20 @@ Poly Haven and similar are stronger for **materials/environments** than hero cha
 
 ## DCC (Blender or equivalent)
 
-1. **Install** a supported version; note it in your session notes or WS-131 spike doc.
+### Blender MCP (enabled in this repo)
+
+| Item | Detail |
+|------|--------|
+| **Config** | **`.cursor/mcp.json`** — MCP server id **`blender`**, runs **`uvx blender-mcp`** with `PATH` including `/opt/homebrew/bin` and `/usr/local/bin` so GUI Cursor finds Homebrew’s `uv` on macOS. |
+| **Stack** | [ahujasid/blender-mcp](https://github.com/ahujasid/blender-mcp). **Install from this repo:** `tools/blender-mcp/addon.py` → Blender **Edit → Preferences → Add-ons → Install…** → enable **Interface: Blender MCP** → 3D View **N** sidebar → **BlenderMCP** → **Connect** while agents use tools. |
+| **Cursor** | **Settings → MCP:** open this workspace, confirm **project** MCP is active, and enable the **blender** server. **Developer: Reload Window** if the server list didn’t refresh after pull. |
+| **Smoke** | Blender connected + agent chat: ask to **summarize the current Blender scene**; expect real object names, not a connection timeout. See `docs/DCC_AUTOMATION_PIPELINE.md`. |
+
+**Windows:** this `sh` wrapper is **macOS/Linux-oriented**. Use Cursor global MCP with the [upstream Windows JSON](https://github.com/ahujasid/blender-mcp) (`cmd` + `uvx`) or adjust `.cursor/mcp.json` locally (do not commit machine-specific hacks unless the team standardizes on them).
+
+1. **Install** a supported version; note it in your session notes or `docs/DCC_AUTOMATION_PIPELINE.md`.
 2. **License:** respect Blender Cloud / corporate policy if not using GPL defaults.
-3. **Cursor workflow:** prefer a **Blender MCP server** attached to a **local Blender** instance so agents can drive operations without guessing headless flags; fall back to **headless** `blender -b -P …` or manual export where MCP is unavailable (**WS-131** records the chosen path).
+3. **Cursor workflow:** **Blender MCP** (above) when `uv` + add-on are available; fall back to **headless** `blender -b -P …` or manual export per `docs/DCC_AUTOMATION_PIPELINE.md`.
 4. **Paths:** document the binary for scripts, e.g. macOS `/Applications/Blender.app/Contents/MacOS/Blender`, or `blender` on `PATH`.
 
 ---
@@ -114,7 +125,7 @@ Poly Haven and similar are stronger for **materials/environments** than hero cha
 
 ## Related docs
 
-- **WS-131** — DCC automation / integration spike.  
+- **WS-131** — `docs/DCC_AUTOMATION_PIPELINE.md` (MCP vs headless vs manual; crew decision).  
 - **WS-132** — Creative IP capability map (vendors, handoff).  
 - **`docs/GAME_PLAN.md`** section 4.4 (no-backend, static delivery), 5.3.1 (glTF validation discipline).
 
