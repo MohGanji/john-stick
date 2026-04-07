@@ -1,5 +1,5 @@
 """
-Hero glb pass: import `stick_frig_v15_hero.glb` (or env override), ground feet,
+Hero glb pass: import `stick_man_mixamo_base.glb` (or env override), ground feet,
 optional foot widen, **`Idle`** from first key of **`Walk`**, re-export same path.
 
 **DANGER — 2026-04-06:** A fully automated run of this workflow **broke** the hero (bad deformation /
@@ -11,7 +11,7 @@ Blender **5.1+** (layered actions API). **MCP** users can run the same steps liv
   export JOHN_STICK_ROOT=/path/to/john-stick
   \"$BLENDER\" -b -P \"$JOHN_STICK_ROOT/scripts/blender/ws228_hero_glb_production.py\"
 
-Optional env: `JOHN_STICK_WS228_SRC` / `JOHN_STICK_WS228_OUT` (default: Stick_FRig hero in/out),
+Optional env: `JOHN_STICK_WS228_SRC` / `JOHN_STICK_WS228_OUT` (default: Mixamo-base hero in/out),
 `JOHN_STICK_WS228_SKIP_MESH_EDIT=1` to skip foot widen.
 """
 
@@ -142,7 +142,7 @@ def _idle_from_walk_layered() -> None:
 def export_hero_glb_ws228(
     *,
     repo: Path | None = None,
-    src_name: str = "stick_frig_v15_hero.glb",
+    src_name: str = "stick_man_mixamo_base.glb",
     out_name: str | None = None,
     skip_mesh_edit: bool = False,
 ) -> Path:

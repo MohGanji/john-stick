@@ -1,7 +1,7 @@
 /**
- * Articulated training dummy: logical bone order aligns with `TRAINING_DUMMY_RAGDOLL_BONE_ORDER` and
- * `scripts/export-stick-character.mjs`. Same `STICKMAN_BASE_GLTF_URL` skin as the hero;
- * `TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS` resolves **Stick_FRig** (and procedural) bone names to those slots.
+ * Articulated training dummy: logical bone order = `TRAINING_DUMMY_RAGDOLL_BONE_ORDER` (same layout as
+ * **`STICKMAN_BASE_GLTF_URL`** Mixamo stick). `TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS` maps each slot
+ * to **`mixamorig:*`** (Three.js may flatten `:`); see `boneMapLookupKeys` in `trainingDummyArticulatedRagdoll.ts`.
  */
 
 /** Single articulated knockdown target in dojo; keep body count explicit for perf reviews. */
@@ -26,27 +26,23 @@ export const TRAINING_DUMMY_RAGDOLL_BONE_ORDER = [
 export type TrainingDummyRagdollBoneName =
   (typeof TRAINING_DUMMY_RAGDOLL_BONE_ORDER)[number];
 
-/**
- * Ordered candidates per logical ragdoll slot: **Stick_FRig** (`Pelvis`, `ThighL`, …), then procedural
- * `Hips` / `Spine` / … for `PLAYER_GLTF_URL_PROCEDURAL` or `gltfUrlOverride`. glTF may use `:` in names;
- * `resolveRagdollBone` also tries a flattened key (no colons).
- */
+/** Mixamo skeleton names (see `STICKMAN_BASE_GLTF_URL`). */
 export const TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS: Record<
   TrainingDummyRagdollBoneName,
   readonly string[]
 > = {
-  Hips: ["Pelvis", "Hips"],
-  Spine: ["TorsoLow_MCH", "TorsoBendy", "Torso_MCH", "Spine"],
-  Chest: ["TorsoHigh_MCH", "TorsoIK", "Chest"],
-  Head: ["Head"],
-  ShoulderL: ["Shoulder_MCHL", "UpperL", "ShoulderL"],
-  ArmL: ["ForeL", "UpperL", "ArmL"],
-  ShoulderR: ["Shoulder_MCHR", "UpperR", "ShoulderR"],
-  ArmR: ["ForeR", "UpperR", "ArmR"],
-  LegUpperL: ["ThighL", "Thigh_FKL", "Thigh_MCHL", "LegUpperL"],
-  LegLowerL: ["ShinL", "Shin_FKL", "Shin_MCHL", "LegLowerL"],
-  LegUpperR: ["ThighR", "Thigh_FKR", "Thigh_MCHR", "LegUpperR"],
-  LegLowerR: ["ShinR", "Shin_FKR", "Shin_MCHR", "LegLowerR"],
+  Hips: ["mixamorig:Hips"],
+  Spine: ["mixamorig:Spine"],
+  Chest: ["mixamorig:Spine2"],
+  Head: ["mixamorig:Head"],
+  ShoulderL: ["mixamorig:LeftShoulder"],
+  ArmL: ["mixamorig:LeftForeArm", "mixamorig:LeftArm"],
+  ShoulderR: ["mixamorig:RightShoulder"],
+  ArmR: ["mixamorig:RightForeArm", "mixamorig:RightArm"],
+  LegUpperL: ["mixamorig:LeftUpLeg"],
+  LegLowerL: ["mixamorig:LeftLeg"],
+  LegUpperR: ["mixamorig:RightUpLeg"],
+  LegLowerR: ["mixamorig:RightLeg"],
 };
 
 /** Parent bone name per rig map; `Hips` is world root of the chain. */

@@ -14,7 +14,7 @@ const pathFromPublicUrl = (url: string) =>
   join(repoRoot, "public", "models", url.replace(/^\/models\//, ""));
 
 describe("stickman GLB + WS-094 bind", () => {
-  it("Stick_FRig hero glb: bone fallbacks resolve for ragdoll bind capture", async () => {
+  it("Mixamo base hero glb: bone fallbacks resolve for ragdoll bind capture", async () => {
     const loader = new GLTFLoader();
     const buf = readFileSync(pathFromPublicUrl(STICKMAN_BASE_GLTF_URL));
     const gltf = await loader.parseAsync(buf.buffer, "");

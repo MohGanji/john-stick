@@ -7,8 +7,7 @@
     "build": "tsc --noEmit && npm run validate:gltf && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "export:character": "node scripts/export-stick-character.mjs",
-    "validate:gltf": "gltf-transform validate public/models/char_player_stick_v01.glb && gltf-transform validate public/models/stick_frig_v15_hero.glb"
+    "validate:gltf": "gltf-transform validate public/models/stick_man_mixamo_base.glb"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.19.3",

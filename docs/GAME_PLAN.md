@@ -6,7 +6,7 @@ A **3D “Stick Fight”–style** brawler with **Bruce Lee–flavored** combat,
 
 **Animations:** Authoring Bruce Lee–quality motion from scratch is out of scope — **do not** attempt it.
 
-**Mixamo hack:** Use Mixamo’s free **Martial Arts** library (mawashi geri, hooks, etc.). Download a small set as **`.fbx`**, then retarget / bind onto a **simple stickman** (spheres + cylinders) in the pipeline; runtime plays clips in Three.js like today’s direction, with **idle**, **walk**, and **jump** plus strike clips the player will specify.
+**Mixamo:** Canonical rig + mesh: `assets/stick-man-for-mixamo/stick-man-for-mixamo.fbx` → `scripts/blender/export_stick_man_mixamo_base_glb.py` → `stick_man_mixamo_base.glb`. Pull **Martial Arts** (and other) clips from Mixamo as **FBX**, merge in Blender, re-export GLB; runtime plays named clips (**idle**, **walk**, **jump**, strikes, …).
 
 ## Movement and physics
 

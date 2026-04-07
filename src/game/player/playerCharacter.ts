@@ -7,69 +7,26 @@ import { PLAYER_CAPSULE, playerCapsuleCenterY } from "./playerCapsuleConfig";
 import { strikePresentationClipName } from "./strikePresentation";
 
 /**
- * **Parametric** stick (`npm run export:character`) — exact **`Hips` / `Spine` / …** names for tooling
- * and retarget experiments. Not **`STICKMAN_BASE_GLTF_URL`** (Stick_FRig hero).
- */
-export const PLAYER_GLTF_URL_PROCEDURAL = "/models/char_player_stick_v01.glb";
-
-/**
- * **Single shipped hero** — Stick_FRig: `source_assets/Stick_FRig_V15.blend` →
- * `scripts/blender/export_stick_frig_hero_glb.py` → **`stick_frig_v15_hero.glb`**.
+ * **Default stickman** — Mixamo skeleton + stick mesh: `assets/stick-man-for-mixamo/stick-man-for-mixamo.fbx` →
+ * `scripts/blender/export_stick_man_mixamo_base_glb.py` → **`stick_man_mixamo_base.glb`**.
  *
- * **Animations** — The runtime plays **glTF clips by name** (`Idle`, `Walk`, strike names from
- * `strikePresentationClipName`, etc.). Author and export them **in Blender** on this armature. There is
- * **no** in-game library that retargets Mixamo (or any other skeleton) onto this rig.
+ * **Animations** — glTF clips by name (`Idle`, `Walk`, `strikePresentationClipName`, …). Author in Blender /
+ * Mixamo, re-export GLB; no in-engine retarget.
  *
- * **Physics / ragdoll** — Uses **logical bone slots** (`Hips`, `Spine`, …) in `TRAINING_DUMMY_RAGDOLL_*`.
- * `TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS` maps each slot to **actual glTF bone names** (Stick_FRig
- * first; extra strings are only for `gltfUrlOverride` experiments or legacy assets).
+ * **Ragdoll** — `TRAINING_DUMMY_RAGDOLL_BONE_NAME_FALLBACKS` maps **`mixamorig:*`** (Three.js may flatten to
+ * `mixamorigHips`, etc.); see `resolveRagdollBone` in `trainingDummyArticulatedRagdoll.ts`.
  */
-export const STICKMAN_BASE_GLTF_URL = "/models/stick_frig_v15_hero.glb";
-
-/** Alias — same URL as `STICKMAN_BASE_GLTF_URL` (explicit “hero” name for imports). */
-export const PLAYER_GLTF_URL_STICKMAN_HERO = STICKMAN_BASE_GLTF_URL;
-
-/** Same as `STICKMAN_BASE_GLTF_URL`. */
-export const PLAYER_GLTF_URL_CANONICAL = STICKMAN_BASE_GLTF_URL;
+export const STICKMAN_BASE_GLTF_URL = "/models/stick_man_mixamo_base.glb";
 
 /**
- * @deprecated Use **`STICKMAN_BASE_GLTF_URL`** or **`PLAYER_GLTF_URL_STICKMAN_HERO`**.
- */
-export const PLAYER_GLTF_URL_MIXAMO_FOUNDATION = STICKMAN_BASE_GLTF_URL;
-
-/**
- * @deprecated Use **`STICKMAN_BASE_GLTF_URL`**.
- */
-export const PLAYER_GLTF_URL_SKETCHFAB_KAISOON = STICKMAN_BASE_GLTF_URL;
-
-/**
- * Removed from repo — failed headless capsule experiment. Symbol kept only for stray tooling references.
- */
-export const PLAYER_GLTF_URL_THICK_CAPSULE_AUTOMATION_BROKEN =
-  "/models/char_thick_capsule_mixamo_v01.glb";
-
-/** @deprecated Use `STICKMAN_BASE_GLTF_URL` (same value). */
-export const PLAYER_GLTF_URL = STICKMAN_BASE_GLTF_URL;
-
-/**
- * Bump when stickman `.glb` files under `public/models/` change in dev so the browser does not serve
- * a stale cache for the same URL.
+ * Bump when **`STICKMAN_BASE_GLTF_URL`** changes in dev so the browser does not cache a stale `.glb`.
  */
 const DEV_STICKMAN_GLB_CACHE_BUST = 10;
 
 function withDevCacheBustStickmanGlb(url: string): string {
   if (!import.meta.env.DEV) return url;
   const base = url.split("?")[0];
-  const knownBases = new Set<string>([
-    STICKMAN_BASE_GLTF_URL,
-    PLAYER_GLTF_URL_STICKMAN_HERO,
-    PLAYER_GLTF_URL_CANONICAL,
-    PLAYER_GLTF_URL_PROCEDURAL,
-    PLAYER_GLTF_URL_MIXAMO_FOUNDATION,
-    PLAYER_GLTF_URL_SKETCHFAB_KAISOON,
-    PLAYER_GLTF_URL_THICK_CAPSULE_AUTOMATION_BROKEN,
-  ]);
-  if (!knownBases.has(base)) return url;
+  if (base !== STICKMAN_BASE_GLTF_URL) return url;
   const sep = url.includes("?") ? "&" : "?";
   return `${url}${sep}cbStickman=${DEV_STICKMAN_GLB_CACHE_BUST}`;
 }
@@ -156,10 +113,6 @@ function normalizeImportedPlayerVisual(
   scene.position.y -= box2.min.y;
   scene.position.y -= playerCapsuleCenterY();
   poseMixer.stopAllAction();
-}
-
-function needsImportedVisualNormalization(url: string): boolean {
-  return url !== PLAYER_GLTF_URL_PROCEDURAL;
 }
 
 /**
@@ -302,11 +255,7 @@ export async function loadPlayerCharacter(
   const { idle: idleClip, walk: walkClip } = resolveIdleWalkClips(gltf, gltfUrl);
 
   const wrapped = new THREE.Group();
-  if (needsImportedVisualNormalization(gltfUrl)) {
-    normalizeImportedPlayerVisual(wrapped, animScene, idleClip, walkClip);
-  } else {
-    wrapped.add(animScene);
-  }
+  normalizeImportedPlayerVisual(wrapped, animScene, idleClip, walkClip);
 
   const mixer = new THREE.AnimationMixer(animScene);
 

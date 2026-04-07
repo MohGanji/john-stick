@@ -10,7 +10,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   PLAYER_ANIM_IDLE,
   PLAYER_ANIM_WALK,
-  PLAYER_GLTF_URL_STICKMAN_HERO,
+  STICKMAN_BASE_GLTF_URL,
   resolveIdleWalkClips,
 } from "./playerCharacter";
 
@@ -18,15 +18,15 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const publicModel = (viteModelsUrl: string) =>
   join(repoRoot, "public", "models", viteModelsUrl.replace(/^\/models\//, ""));
 
-const heroGlb = publicModel(PLAYER_GLTF_URL_STICKMAN_HERO);
+const heroGlb = publicModel(STICKMAN_BASE_GLTF_URL);
 
 describe("resolveIdleWalkClips", () => {
-  it("Stick_FRig hero glb: Idle + Walk clip names", async () => {
+  it("Mixamo base hero glb: Idle + Walk among exported clips", async () => {
     const buf = readFileSync(heroGlb);
     const gltf = await new GLTFLoader().parseAsync(buf.buffer, "");
-    expect(gltf.animations.map((a) => a.name).sort()).toEqual(
-      [PLAYER_ANIM_IDLE, PLAYER_ANIM_WALK].sort(),
-    );
+    const names = gltf.animations.map((a) => a.name);
+    expect(names).toContain(PLAYER_ANIM_IDLE);
+    expect(names).toContain(PLAYER_ANIM_WALK);
 
     const { idle, walk } = resolveIdleWalkClips(gltf, heroGlb);
     expect(walk.name).toBe(PLAYER_ANIM_WALK);
