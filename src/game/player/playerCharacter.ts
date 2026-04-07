@@ -297,6 +297,10 @@ export async function loadPlayerCharacter(
     next.loop = THREE.LoopOnce;
     next.clampWhenFinished = true;
     next.setEffectiveTimeScale(tune.strikeJumpClipTimeScale);
+    // After a one-shot clip fully fades out, Three.js sets `enabled = false`. A faded-out action
+    // ignores weight fading (`_updateWeight` short-circuits), so the next crossFade would leave
+    // locomotion at weight 0 with no incoming pose → T-pose until something else enables the clip.
+    next.reset();
 
     const from = activePresentation ?? locomotionTargetAction();
     from.crossFadeTo(next, fadeIn, false);
