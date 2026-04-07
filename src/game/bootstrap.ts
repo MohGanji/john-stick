@@ -159,11 +159,22 @@ export async function mountGame(
   const punchingBagVisual = createPunchingBagSwingMesh();
   scene.add(punchingBagVisual);
 
+  const gameplayTuning = createGameplayRuntimeTuning();
+  const getPlayerPresentationTuning = () => gameplayTuning.playerPresentation;
+
   const [playerCharacter, trainingDummyCharacter, sparringNpcCharacter] =
     await Promise.all([
-      loadPlayerCharacter(),
-      loadPlayerCharacter({ appearance: "training_dummy" }),
-      loadPlayerCharacter({ appearance: "sparring_partner" }),
+      loadPlayerCharacter({
+        getPresentationTuning: getPlayerPresentationTuning,
+      }),
+      loadPlayerCharacter({
+        appearance: "training_dummy",
+        getPresentationTuning: getPlayerPresentationTuning,
+      }),
+      loadPlayerCharacter({
+        appearance: "sparring_partner",
+        getPresentationTuning: getPlayerPresentationTuning,
+      }),
     ]);
   scene.add(playerCharacter.root);
   scene.add(trainingDummyCharacter.root);
@@ -195,7 +206,6 @@ export async function mountGame(
   const sparringScratchPos = { x: 0, y: 0, z: 0 };
   const sparringScratchQuat = { x: 0, y: 0, z: 0, w: 1 };
   const followCamScratch = createThirdPersonFollowScratch();
-  const gameplayTuning = createGameplayRuntimeTuning();
   const mountDoc = root.ownerDocument ?? document;
   const keyboardLocomotion = attachKeyboardLocomotion(mountDoc, {
     getYawDegPerSec: () => gameplayTuning.player.yawDegPerSec,
@@ -931,11 +941,16 @@ export async function mountGame(
         ? { forward: 0, strafe: 0 }
         : keyboardLocomotion.moveAxes();
       const planarInput = Math.min(1, Math.hypot(forward, strafe));
+      const jumpDispatched = playerLocomotion.jumpDispatchedForPresentation;
       playerCharacter.updateLocomotionAnim(dtSeconds, {
         planarInput,
         grounded: playerLocomotion.wasGrounded,
         freezePose: presentationPaused,
+        jumpDispatched,
       });
+      if (jumpDispatched) {
+        playerLocomotion.jumpDispatchedForPresentation = false;
+      }
       updateThirdPersonFollowCamera(
         camera,
         scratchPos,

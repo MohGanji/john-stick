@@ -1083,6 +1083,93 @@ export function attachGameplayTuningOverlay(
     });
   }
 
+  function wirePlayerPresentation(): void {
+    body.appendChild(sectionTitle("Player presentation (clip fades)"));
+    const note = document.createElement("p");
+    note.style.cssText =
+      "margin:0 0 8px 0;font-size:11px;line-height:1.35;opacity:0.78;color:#a8b8d8;";
+    note.textContent =
+      "Strike / jump clips: snappier in, softer out. Locomotion = idle ↔ walk only on ground.";
+    body.appendChild(note);
+    const pr = tuning.playerPresentation;
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "pj_ts",
+          label: "Strike / jump time scale",
+          min: 0.65,
+          max: 1.45,
+          step: 0.02,
+          format: (v) => v.toFixed(2),
+        },
+        () => pr.strikeJumpClipTimeScale,
+        (v) => {
+          pr.strikeJumpClipTimeScale = Math.max(0.35, Math.min(2, v));
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "pj_in",
+          label: "→ strike / jump crossfade (s)",
+          min: 0.02,
+          max: 0.35,
+          step: 0.01,
+          format: (v) => v.toFixed(2),
+        },
+        () => pr.presentationCrossFadeInSec,
+        (v) => {
+          pr.presentationCrossFadeInSec = Math.max(0.01, v);
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "pj_out",
+          label: "strike / jump → idle (s)",
+          min: 0.08,
+          max: 0.95,
+          step: 0.02,
+          format: (v) => v.toFixed(2),
+        },
+        () => pr.presentationCrossFadeOutSec,
+        (v) => {
+          pr.presentationCrossFadeOutSec = Math.max(0.05, v);
+        },
+        () => {},
+      ),
+    );
+    syncSliders.push(
+      bindSlider(
+        body,
+        {
+          key: "pj_loc",
+          label: "Idle ↔ walk crossfade (s)",
+          min: 0.05,
+          max: 0.45,
+          step: 0.01,
+          format: (v) => v.toFixed(2),
+        },
+        () => pr.locomotionCrossFadeSec,
+        (v) => {
+          pr.locomotionCrossFadeSec = Math.max(0.02, v);
+        },
+        () => {},
+      ),
+    );
+    resetRow(body, "Reset player presentation", () => {
+      tuning.resetPlayerPresentation();
+      refreshAllSliders();
+    });
+  }
+
   function wireCameraFollow(): void {
     body.appendChild(sectionTitle("Follow camera"));
     const c = tuning.cameraFollow;
@@ -1271,6 +1358,7 @@ export function attachGameplayTuningOverlay(
   wireTrainingDummyFeel();
   wireBag();
   wirePlayer();
+  wirePlayerPresentation();
   wireCameraFollow();
   wireRenderCamera();
   wireDojoTitleLogo();

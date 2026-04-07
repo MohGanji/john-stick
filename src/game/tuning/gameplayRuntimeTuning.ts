@@ -99,6 +99,24 @@ export type PlayerLocomotionScalars = {
   gravityY: number;
 };
 
+/**
+ * Dev HUD: strike / jump glTF clips + `AnimationAction.crossFadeTo` (`playerCharacter`).
+ */
+export type PlayerPresentationScalars = {
+  /** `AnimationAction.setEffectiveTimeScale` on strike + jump clips (>1 = snappier). */
+  strikeJumpClipTimeScale: number;
+  /**
+   * Locomotion (idle/walk) → strike/jump: `crossFadeTo` duration — short = snappy hit (“Bruce Lee”).
+   */
+  presentationCrossFadeInSec: number;
+  /**
+   * Strike/jump (one-shot ends) → idle/walk: `crossFadeTo` duration — longer = softer recover / balance.
+   */
+  presentationCrossFadeOutSec: number;
+  /** Idle ↔ walk on the ground only. */
+  locomotionCrossFadeSec: number;
+};
+
 export type CameraFollowScalars = {
   armLength: number;
   smoothHalfLifeSec: number;
@@ -159,6 +177,7 @@ export type GameplayRuntimeTuning = {
   /** GP §2.2.2 — strike stamina pool + regen (HUD bar); also drives strike lunge scalar. */
   combatStamina: CombatStaminaTuning;
   player: PlayerLocomotionScalars;
+  playerPresentation: PlayerPresentationScalars;
   cameraFollow: CameraFollowScalars;
   camera: CameraRenderScalars;
   audio: AudioDevScalars;
@@ -171,6 +190,7 @@ export type GameplayRuntimeTuning = {
   resetStrikes(): void;
   resetCombatStamina(): void;
   resetPlayer(): void;
+  resetPlayerPresentation(): void;
   resetCameraFollow(): void;
   resetCamera(): void;
   resetAudio(): void;
@@ -221,6 +241,15 @@ function defaultPlayer(): PlayerLocomotionScalars {
     yawDegPerSec: KEYBOARD_LOCOMOTION.yawDegPerSec,
     jumpVelocity: PLAYER_CAPSULE.jumpVelocity,
     gravityY: PLAYER_CAPSULE.gravityY,
+  };
+}
+
+export function defaultPlayerPresentation(): PlayerPresentationScalars {
+  return {
+    strikeJumpClipTimeScale: 1,
+    presentationCrossFadeInSec: 0.06,
+    presentationCrossFadeOutSec: 0.4,
+    locomotionCrossFadeSec: 0.14,
   };
 }
 
@@ -314,6 +343,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
   const trainingDummyFeel = defaultTrainingDummyFeel();
   const strikes = defaultStrikes();
   const player = defaultPlayer();
+  const playerPresentation = defaultPlayerPresentation();
   const cameraFollow = defaultCameraFollow();
   const camera = defaultCamera();
   const audio = defaultAudio();
@@ -329,6 +359,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     strikes,
     combatStamina,
     player,
+    playerPresentation,
     cameraFollow,
     camera,
     audio,
@@ -355,6 +386,9 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
     resetPlayer() {
       Object.assign(player, defaultPlayer());
     },
+    resetPlayerPresentation() {
+      Object.assign(playerPresentation, defaultPlayerPresentation());
+    },
     resetCameraFollow() {
       Object.assign(cameraFollow, defaultCameraFollow());
     },
@@ -376,6 +410,7 @@ export function createGameplayRuntimeTuning(): GameplayRuntimeTuning {
       Object.assign(combatBasics, defaultCombatBasics());
       Object.assign(trainingDummyFeel, defaultTrainingDummyFeel());
       Object.assign(player, defaultPlayer());
+      Object.assign(playerPresentation, defaultPlayerPresentation());
       Object.assign(cameraFollow, defaultCameraFollow());
       Object.assign(camera, defaultCamera());
       Object.assign(audio, defaultAudio());

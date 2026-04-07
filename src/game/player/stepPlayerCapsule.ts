@@ -19,11 +19,21 @@ export type PlayerLocomotionState = {
   verticalVelocity: number;
   /** GP §3.2.3 — time left (seconds) to jump after leaving ground. */
   coyoteRemainingSec: number;
+  /**
+   * Set when this fixed step applies an upward jump impulse; read in `lateUpdate` for jump clip,
+   * then cleared by the caller. Not used by physics itself.
+   */
+  jumpDispatchedForPresentation: boolean;
 };
 
 export function createPlayerLocomotionState(): PlayerLocomotionState {
   /** Spawn on dojo floor — allows first-frame jump; KCC overwrites after first step. */
-  return { wasGrounded: true, verticalVelocity: 0, coyoteRemainingSec: 0 };
+  return {
+    wasGrounded: true,
+    verticalVelocity: 0,
+    coyoteRemainingSec: 0,
+    jumpDispatchedForPresentation: false,
+  };
 }
 
 export type JumpLatch = { latched: boolean };
@@ -66,6 +76,7 @@ export function stepPlayerCapsule(
     if (state.wasGrounded || state.coyoteRemainingSec > 0) {
       vy = loc.jumpVelocity;
       state.coyoteRemainingSec = 0;
+      state.jumpDispatchedForPresentation = true;
     }
     jumpLatch.latched = false;
   }

@@ -3,6 +3,8 @@ import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import type { StrikeMoveId } from "../input/combatIntent";
+import type { PlayerPresentationScalars } from "../tuning/gameplayRuntimeTuning";
+import { defaultPlayerPresentation } from "../tuning/gameplayRuntimeTuning";
 import { PLAYER_CAPSULE, playerCapsuleCenterY } from "./playerCapsuleConfig";
 import { strikePresentationClipName } from "./strikePresentation";
 
@@ -21,7 +23,7 @@ export const STICKMAN_BASE_GLTF_URL = "/models/stick_man_mixamo_base.glb";
 /**
  * Bump when **`STICKMAN_BASE_GLTF_URL`** changes in dev so the browser does not cache a stale `.glb`.
  */
-const DEV_STICKMAN_GLB_CACHE_BUST = 10;
+const DEV_STICKMAN_GLB_CACHE_BUST = 16;
 
 function withDevCacheBustStickmanGlb(url: string): string {
   if (!import.meta.env.DEV) return url;
@@ -33,6 +35,8 @@ function withDevCacheBustStickmanGlb(url: string): string {
 
 export const PLAYER_ANIM_IDLE = "Idle";
 export const PLAYER_ANIM_WALK = "Walk";
+/** Single in-place jump clip name in the Mixamo merge GLB. */
+export const PLAYER_ANIM_JUMP = "Jump_Standing";
 
 export type LoadPlayerCharacterOptions = {
   /**
@@ -42,17 +46,25 @@ export type LoadPlayerCharacterOptions = {
   appearance?: "player" | "training_dummy" | "sparring_partner";
   /** Dev / tools: load another glb without editing `STICKMAN_BASE_GLTF_URL`. */
   gltfUrlOverride?: string;
+  /** Live tuning: crossfade + clip time scale (dev HUD). */
+  getPresentationTuning?: () => PlayerPresentationScalars;
 };
 
-const CROSS_FADE_SEC = 0.14;
 const WALK_BLEND_THRESHOLD = 0.06;
+
+const FALLBACK_PRESENTATION = defaultPlayerPresentation();
 
 export type PlayerCharacter = {
   /** Add to scene; sync from capsule each frame. */
   readonly root: THREE.Object3D;
   updateLocomotionAnim(
     dtSeconds: number,
-    opts: { planarInput: number; grounded: boolean; freezePose?: boolean },
+    opts: {
+      planarInput: number;
+      grounded: boolean;
+      freezePose?: boolean;
+      jumpDispatched?: boolean;
+    },
   ): void;
   /**
    * WS-081 — if `strikePresentationClipName(moveId)` exists in the glb, briefly cross-fade to it
@@ -233,6 +245,8 @@ export async function loadPlayerCharacter(
   options?: LoadPlayerCharacterOptions,
 ): Promise<PlayerCharacter> {
   const gltfUrl = options?.gltfUrlOverride ?? STICKMAN_BASE_GLTF_URL;
+  const getPresentation = (): PlayerPresentationScalars =>
+    options?.getPresentationTuning?.() ?? FALLBACK_PRESENTATION;
 
   const loader = new GLTFLoader();
   const gltf = await loader.loadAsync(withDevCacheBustStickmanGlb(gltfUrl));
@@ -267,28 +281,44 @@ export async function loadPlayerCharacter(
 
   let mode: "idle" | "walk" = "idle";
 
-  let strikePresentationAction: THREE.AnimationAction | null = null;
-  let strikePresentationBusy = false;
+  let activePresentation: THREE.AnimationAction | null = null;
+  let presentationRecoverSecRemaining = 0;
 
-  const restoreLocomotionAfterStrike = (): void => {
-    strikePresentationBusy = false;
-    if (strikePresentationAction) {
-      strikePresentationAction.stop();
-      strikePresentationAction = null;
-    }
-    if (mode === "walk") {
-      walkAction.reset().play();
-      idleAction.crossFadeTo(walkAction, CROSS_FADE_SEC, false);
-    } else {
-      idleAction.reset().play();
-      walkAction.crossFadeTo(idleAction, CROSS_FADE_SEC, false);
-    }
+  function locomotionTargetAction(): THREE.AnimationAction {
+    return mode === "walk" ? walkAction : idleAction;
+  }
+
+  function beginPresentationClip(clip: THREE.AnimationClip): void {
+    const tune = getPresentation();
+    const fadeIn = tune.presentationCrossFadeInSec;
+    presentationRecoverSecRemaining = 0;
+
+    const next = mixer.clipAction(clip);
+    next.loop = THREE.LoopOnce;
+    next.clampWhenFinished = true;
+    next.setEffectiveTimeScale(tune.strikeJumpClipTimeScale);
+
+    const from = activePresentation ?? locomotionTargetAction();
+    from.crossFadeTo(next, fadeIn, false);
+    next.play();
+    activePresentation = next;
+  }
+
+  const restoreLocomotionAfterPresentation = (
+    finishedAction: THREE.AnimationAction,
+  ): void => {
+    if (finishedAction !== activePresentation) return;
+    const tune = getPresentation();
+    const fadeOut = tune.presentationCrossFadeOutSec;
+    const toAction = locomotionTargetAction();
+    toAction.reset().play();
+    finishedAction.crossFadeTo(toAction, fadeOut, false);
+    activePresentation = null;
+    presentationRecoverSecRemaining = fadeOut;
   };
 
   const onMixerFinished = (e: { action: THREE.AnimationAction }): void => {
-    if (e.action === strikePresentationAction) {
-      restoreLocomotionAfterStrike();
-    }
+    restoreLocomotionAfterPresentation(e.action);
   };
   mixer.addEventListener("finished", onMixerFinished);
 
@@ -305,25 +335,52 @@ export async function loadPlayerCharacter(
 
   return {
     root: wrapped,
-    updateLocomotionAnim(dtSeconds, { planarInput, grounded, freezePose }) {
+    updateLocomotionAnim(
+      dtSeconds,
+      { planarInput, grounded, freezePose, jumpDispatched },
+    ) {
       const dtAnim = freezePose ? 0 : dtSeconds;
-      if (!strikePresentationBusy) {
+      const canBlendLocomotion =
+        activePresentation === null && presentationRecoverSecRemaining <= 0;
+
+      if (presentationRecoverSecRemaining > 0) {
+        presentationRecoverSecRemaining = Math.max(
+          0,
+          presentationRecoverSecRemaining - dtAnim,
+        );
+      }
+
+      if (canBlendLocomotion) {
         const moving = grounded && planarInput > WALK_BLEND_THRESHOLD;
+        const locFade = getPresentation().locomotionCrossFadeSec;
         if (moving && mode === "idle") {
           walkAction.reset().play();
-          idleAction.crossFadeTo(walkAction, CROSS_FADE_SEC, false);
+          idleAction.crossFadeTo(walkAction, locFade, false);
           mode = "walk";
         } else if (!moving && mode === "walk") {
           idleAction.reset().play();
-          walkAction.crossFadeTo(idleAction, CROSS_FADE_SEC, false);
+          walkAction.crossFadeTo(idleAction, locFade, false);
           mode = "idle";
         }
+      }
 
-        if (mode === "walk") {
-          const t = THREE.MathUtils.clamp(planarInput, 0, 1);
-          walkAction.setEffectiveTimeScale(0.82 + 0.55 * t);
-        } else {
-          walkAction.setEffectiveTimeScale(1);
+      if (mode === "walk") {
+        const t = THREE.MathUtils.clamp(planarInput, 0, 1);
+        walkAction.setEffectiveTimeScale(0.82 + 0.55 * t);
+      } else {
+        walkAction.setEffectiveTimeScale(1);
+      }
+
+      if (
+        jumpDispatched &&
+        activePresentation === null &&
+        presentationRecoverSecRemaining <= 0
+      ) {
+        const jumpClip = gltf.animations.find(
+          (a) => a.name === PLAYER_ANIM_JUMP,
+        );
+        if (jumpClip) {
+          beginPresentationClip(jumpClip);
         }
       }
 
@@ -334,16 +391,7 @@ export async function loadPlayerCharacter(
       if (!clipName) return;
       const clip = gltf.animations.find((a) => a.name === clipName);
       if (!clip) return;
-
-      strikePresentationAction?.stop();
-      strikePresentationAction = mixer.clipAction(clip);
-      strikePresentationAction.loop = THREE.LoopOnce;
-      strikePresentationAction.clampWhenFinished = true;
-      strikePresentationBusy = true;
-
-      idleAction.fadeOut(0.08);
-      walkAction.fadeOut(0.08);
-      strikePresentationAction.reset().fadeIn(0.1).play();
+      beginPresentationClip(clip);
     },
     dispose() {
       mixer.removeEventListener("finished", onMixerFinished);
